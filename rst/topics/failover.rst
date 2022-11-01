@@ -193,8 +193,9 @@ election mode using the argparse option ``TARANTOOL_ELECTION_MODE`` or
 Raft failover can be enabled only on replicasets of 3 or more instances
 and can't be enabled with ``ALL_RW`` replicasets.
 
-Note that Raft failover in Cartridge is in beta.
-Don't use it in production.
+..  important::
+
+    Raft failover in Cartridge is in beta. Don't use it in production.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Manual leader promotion

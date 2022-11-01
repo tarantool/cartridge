@@ -556,7 +556,8 @@ Enabling automatic failover
 In a master-replica cluster configuration with automatic failover enabled, if
 the user-specified master of any replica set fails, the cluster automatically
 chooses a replica from the priority list and grants it the active master
-role (read/write). To learn more about details of failover work, see **LINK**
+role (read/write). To learn more about details of failover work, see
+:ref:`failover documentation <cartridge-failover>`.
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Failover disabled (default)
@@ -588,11 +589,15 @@ To disable failover:
 Eventual failover (not recommended for production)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+..  important::
+
+    The eventual failover mode is **not recommended** for use on large clusters
+    in production. If you have a high load production cluster, use the stateful
+    failover with ``etcd`` instead.
+
 The leader isn’t elected consistently. Every instance thinks the leader is the
 first healthy server in the replicaset. The instance health is determined
 according to the membership status (the SWIM protocol).
-**Not recommended** to use on large clusters in production. If you have highload
-production cluster, use stateful failover with ``etcd`` instead.
 
 To set the priority in a replica set:
 
@@ -631,14 +636,18 @@ To enable eventual failover:
 Stateful failover
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+..  important::
+
+    The stateful failover mode with Tarantool Stateboard is **not recommended**
+    for use on large clusters in production. If you have a high load production
+    cluster, use the stateful failover with ``etcd`` instead.
+
 Leader appointments are polled from the external state provider.
 Decisions are made by one of the instances with the ``failover-coordinator``
 role enabled. There are two options of external state provider:
 
 - Tarantool Stateboard - you need to run instance of stateboard with command
-  ``tarantool stateboard.init.lua``. Not recommended to use on large clusters
-  in production. If you have highload production cluster, use stateful failover
-  with ``etcd`` instead.
+  ``tarantool stateboard.init.lua``.
 
 - etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
   is supported**.
@@ -679,8 +688,12 @@ GraphQL request).
 Raft failover (beta)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The replicaset leader is chosen by built-in Raft, then the other replicasets
-get information about leader change from membership.
+..  important::
+
+    Raft failover in Cartridge is in beta. Don't use it in production.
+
+The replicaset leader is chosen by :ref:`built-in Raft <repl_leader_elect>`,
+then the other replicasets get information about leader change from membership.
 Raft parameters can be configured by environment variables.
 
 To enable the Raft failover:
@@ -839,16 +852,23 @@ YAML format.
 To connect to a Tarantool instance via the console, you can choose
 one of the commands:
 
-..  code-block:: bash
+#.  Old-fashioned way:
 
-    # old-fashioned way
-    $ tarantoolctl connect <instance_hostname>:<port>
+    ..  code-block:: bash
 
-    # if you have cartridge-cli installed
-    $ cartridge connect <instance_hostname>:<port>
+        $ tarantoolctl connect <instance_hostname>:<port>
 
-    # if you ran Cartridge locally
-    $ cartridge enter <node_name>
+#.  If you have cartridge-cli installed:
+
+    ..  code-block:: bash
+
+        $ cartridge connect <instance_hostname>:<port>
+
+#.  If you ran Cartridge locally:
+
+    ..  code-block:: bash
+
+        $ cartridge enter <node_name>
 
 where the ``<instance_hostname>:<port>`` is the instance's URI.
 
