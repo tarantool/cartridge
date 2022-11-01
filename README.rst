@@ -111,7 +111,7 @@ you need to install several packages:
 Create your first application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Long story short, copy-paste this into the console line-by-line:
+Long story short, enter these commands into the console one-by-one:
 
 .. code-block:: bash
 

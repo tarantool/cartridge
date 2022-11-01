@@ -555,18 +555,18 @@ Enabling automatic failover
 
 In a master-replica cluster configuration with automatic failover enabled, if
 the user-specified master of any replica set fails, the cluster automatically
-chooses one of replica from the priority list and grants it the active master
+chooses a replica from the priority list and grants it the active master
 role (read/write). To learn more about details of failover work, see **LINK**
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Failover disabled (default)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The leader is the first instance according to topology configuration.
-No automatic decisions are taken. You can manually change leader in failover
+The leader is the first instance according to the topology configuration.
+No automatic decisions are made. You can manually change the leader in the failover
 priority list or call ``box.cfg{read_only = false}`` on any instance.
 
-To disable it:
+To disable failover:
 
 #.  Click **Failover**:
 
@@ -576,7 +576,7 @@ To disable it:
 
     |nbsp|
 
-#.  In the **Failover control** box, click **Disabled**:
+#.  In the **Failover control** box, select the **Disabled** mode:
 
     ..  image:: images/failover-disabled.png
         :align: left
@@ -609,7 +609,7 @@ To set the priority in a replica set:
 
     |nbsp|
 
-To enable it:
+To enable eventual failover:
 
 #.  Click **Failover**:
 
@@ -619,7 +619,7 @@ To enable it:
 
     |nbsp|
 
-#.  In the **Failover control** box, click **Eventual**:
+#.  In the **Failover control** box, select the **Eventual** mode:
 
     ..  image:: images/failover-eventual.png
         :align: left
@@ -632,7 +632,7 @@ Stateful failover
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Leader appointments are polled from the external state provider.
-Decisions are taken by one of the instances with the ``failover-coordinator``
+Decisions are made by one of the instances with the ``failover-coordinator``
 role enabled. There are two options of external state provider:
 
 - Tarantool Stateboard - you need to run instance of stateboard with command
@@ -643,7 +643,7 @@ role enabled. There are two options of external state provider:
 - etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
   is supported**.
 
-To enable it:
+To enable stateful failover:
 
 #.  Run stateboard or etcd
 
@@ -655,7 +655,7 @@ To enable it:
 
     |nbsp|
 
-#.  In the **Failover control** box, click **Stateful**:
+#.  In the **Failover control** box, select the **Stateful** mode:
 
     ..  image:: images/failover-stateful.png
         :align: left
@@ -663,10 +663,10 @@ To enable it:
 
     |nbsp|
 
-#.  Check necessary parameters.
+#.  Check the necessary parameters.
 
 
-In this mode you can choose leader by "promote a leader" button in WebUI (or
+In this mode, you can choose the leader with the **Promote a leader** button in the WebUI (or a
 GraphQL request).
 
 ..  image:: images/failover-promote.png
@@ -683,7 +683,7 @@ The replicaset leader is chosen by built-in Raft, then the other replicasets
 get information about leader change from membership.
 Raft parameters can be configured by environment variables.
 
-To enable it:
+To enable the Raft failover:
 
 #.  Make sure that your Tarantool version higher than 2.10.0
 
@@ -695,7 +695,7 @@ To enable it:
 
     |nbsp|
 
-#.  In the **Failover control** box, click **Raft**:
+#.  In the **Failover control** box, select the **Raft** mode:
 
     ..  image:: images/failover-raft.png
         :align: left
@@ -703,10 +703,10 @@ To enable it:
 
     |nbsp|
 
-#.  Check necessary parameters.
+#.  Check the necessary parameters.
 
 
-In this mode you can choose leader by "promote a leader" button in WebUI (or
+In this mode, you can choose the leader with the**Promote a leader** button in the WebUI (or a
 GraphQL request or manual call ``box.ctl.promote``).
 
 ..  image:: images/failover-promote.png
@@ -742,7 +742,7 @@ To change failover priority list:
 
 #.  Drag a required server to the top position and click **Save**.
 
-In case of eventual failover the new master will automatically enter the
+In case of eventual failover, the new master will automatically enter the
 read/write mode, while the ex-master will become read-only. This works for any roles.
 
 .. _cartridge-users:
@@ -834,7 +834,9 @@ Connecting to nodes via CLI
 Each Tarantool node (``router``/``storage``) provides an administrative console
 (Command Line Interface) for debugging, monitoring, and troubleshooting. The
 console acts as a Lua interpreter and displays the result in the human-readable
-YAML format. To connect to a Tarantool instance via the console, you can choose
+YAML format.
+
+To connect to a Tarantool instance via the console, you can choose
 one of the commands:
 
 ..  code-block:: bash

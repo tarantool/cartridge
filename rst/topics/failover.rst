@@ -172,7 +172,7 @@ Case: coordinator outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An active coordinator may be absent in a cluster either because of a failure
-or due to disabling the role everywhere. Just like in the previous case,
+or due to disabling the role on all instances. Just like in the previous case,
 instances do nothing about it: they keep fetching the leadership map from the
 state provider. But it will remain the same until a coordinator appears.
 
