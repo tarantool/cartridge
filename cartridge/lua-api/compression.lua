@@ -193,5 +193,9 @@ return {
 
 
     tarantoolctl connect admin:@127.0.0.1:3302
-    box.space.myspace:insert{123, "qwe"}
+
+    box.schema.space.create('test')
+    box.space.test:format({{'idx',type='number'},{'str',type='string'}})
+    box.space.test:create_index('pk', {unique = true, parts = {{field = 1, type = 'number'},}})
+    box.space.test:insert{123, "qwe"}
 ]]--

@@ -1,150 +1,134 @@
 local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
-
-local helpers = require('test.helper')
 local log = require('log')
 
+local helpers = require('test.helper')
+
 g.before_all(function()
+    local datadir = fio.tempdir()
+    --local ok, err = fio.copytree(  -- какие полезные данные тут есть? 
+    --    fio.pathjoin(
+    --        helpers.project_root,
+    --        'test/upgrade/data_1.10.5'
+    --    ),
+    --    datadir
+    --)
+    --assert(ok, err)
+
     g.cluster = helpers.Cluster:new({
-        datadir = fio.tempdir(),
+        datadir = datadir,
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = helpers.random_cookie(),
-
-        replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {'vshard-router'},
-                servers = {
-                    {
-                        alias = 'router',
-                        instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 13301,
-                        http_port = 8081
-                    }
-                }
+        env = {
+            TARANTOOL_UPGRADE_SCHEMA = 'true', -- а надо ли ?
+            --TARANTOOL_LOG = '| cat', -- добавил из api_join_test.lua
+        },
+        replicasets = {{
+            uuid = helpers.uuid('a'),
+            roles = {'vshard-router'},
+            servers = {{
+                alias = 'router',
+                instance_uuid = helpers.uuid('a', 'a', 1),
+                advertise_port = 13301,
+            }},
+        }, {
+            uuid = helpers.uuid('b'),
+            roles = {'vshard-storage'},
+            servers = {{
+                alias = 'storage-1',
+                instance_uuid = helpers.uuid('b', 'b', 1),
+                advertise_port = 13303,
             }, {
-                uuid = helpers.uuid('b'),
-                roles = {'vshard-storage'},
-                all_rw = true,
-                servers = {
-                    {
-                        alias = 'storage',
-                        instance_uuid = helpers.uuid('b', 'b', 1),
-                        advertise_port = 13302,
-                        http_port = 8082
-                    }, {
-                        alias = 'storage-2',
-                        instance_uuid = helpers.uuid('b', 'b', 2),
-                        advertise_port = 13304,
-                        http_port = 8084
-                    }
-                }
-            }
-        }
+                alias = 'storage-2',
+                instance_uuid = helpers.uuid('b', 'b', 2),
+                advertise_port = 13305,
+            }},
+        }},
     })
+
+    -- We start cluster from existing snapshots
+    -- Don't try to bootstrap it again
+    --g.cluster.bootstrapped = true
+
     g.cluster:start()
 
-    g.cluster:server('router'):graphql({
-        query = [[
-            mutation($uuid: String!) {
-                expelServerResponse: cluster{edit_topology(
-                    servers: [{
-                        uuid: $uuid
-                        expelled: true
-                    }]
-                ) {
-                    servers{status}
-                }}
-            }
-        ]],
-        variables = {
-            uuid = g.cluster:server('expelled').instance_uuid
-        }
-    })
-
-    g.server = helpers.Server:new({
-        workdir = fio.tempdir(),
-        alias = 'spare',
-        command = helpers.entrypoint('srv_basic'),
-        replicaset_uuid = helpers.uuid('b'),
-        instance_uuid = helpers.uuid('b', 'b', 1),
-        http_port = 8083,
-        cluster_cookie = g.cluster.cookie,
-        advertise_port = 13303,
-        env = {
-            TARANTOOL_WEBUI_BLACKLIST = '/cluster/code:/cluster/schema',
-        }
-    })
-
-    g.server:start()
-    t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{ servers { uri } }'})
-        g.cluster.main_server:graphql({
-            query = 'mutation($uri: String!) { probe_server(uri:$uri) }',
-            variables = {uri = g.server.advertise_uri},
-        })
-    end)
-end)
-
-g.before_each(function()
-    helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
-    end)
 end)
 
 g.after_all(function()
     g.cluster:stop()
-    g.server:stop()
     fio.rmtree(g.cluster.datadir)
-    fio.rmtree(g.server.workdir)
 end)
 
+function g.test_compression()
+    local tarantool_version = _G._TARANTOOL
+    --t.skip_if(tarantool_version < '2.8', 'Tarantool version '..tarantool_version..' should be greater 2.8') -- с какой верси включена компресия и  как включить ентерпрайс
 
+    for _, srv in pairs(g.cluster.servers) do
+        local ok, v = pcall(function()
+            return srv.net_box.space._schema:get({'version'})
+        end)
+        t.assert(ok, string.format("Error inspecting %s: %s", srv.alias, v))
+        t.assert(v[1] > '1', srv.alias .. ' upgrate to 2.x failed')
+    end
 
-function g.test_replicasets()
-    local resp = g.cluster:server('router'):graphql({
-        query = [[
-            {
-                replicasets {
-                    uuid
-                    alias
-                    roles
-                    status
-                    master { uuid }
-                    active_master { uuid }
-                    servers { uri priority }
-                    all_rw
-                    weight
+    local router = g.cluster:server('router')
+    local storage_1 = g.cluster:server('storage-1').net_box
+    -- compressed
+    --local storage_2 = g.cluster:server('storage-2').net_box
+    -- compressed 'zstd' -- zstd lz4
+
+    storage_1:eval([[
+        box.schema.space.create('test')
+        box.space.test:format({{'idx',type='number'},{'str',type='string'}})
+        box.space.test:create_index('pk', {unique = true, parts = {{field = 1, type = 'number'},}})
+    ]])
+
+    for i=1,400 do
+        local str = ""
+        for i = 1, math.random(100, 1000) do
+            str = str .. string.char(math.random(97, 122))
+        end
+        local tuple = {i, str}
+        storage_1.space.test:insert(tuple)
+    end
+
+    local cluster_compression = g.cluster.main_server:graphql({query = [[
+        {
+            cluster {
+                cluster_compression {
+                    compression_info {
+                        instance_id
+                        instance_compression_info {
+                            space_name
+                            fields_be_compressed {
+                                field_name
+                                compression_percentage
+                            }
+                        }
+                    }
                 }
             }
-        ]]
+        }
+    ]]}).data.cluster.cluster_compression
+
+    t.assert_equals(cluster_compression, {
+        compression_info = {
+            {
+                instance_id = "bbbbbbbb-bbbb-0000-0000-000000000001",
+                instance_compression_info = {
+                    {
+                        space_name = "test",
+                        fields_be_compressed = {
+                            {
+                                compression_percentage = 69, field_name = "str"
+                            }
+                        },
+                    },
+                },
+            },
+        },
     })
 
-    t.assert_items_equals(resp.data.replicasets, {{
-            uuid = helpers.uuid('a'),
-            alias = 'unnamed',
-            roles = {'vshard-router'},
-            status = 'healthy',
-            master = {uuid = helpers.uuid('a', 'a', 1)},
-            active_master = {uuid = helpers.uuid('a', 'a', 1)},
-            servers = {{uri = 'localhost:13301', priority = 1}},
-            all_rw = false,
-            weight = box.NULL,
-        }, {
-            uuid = helpers.uuid('b'),
-            alias = 'unnamed',
-            roles = {'vshard-storage'},
-            status = 'healthy',
-            master = {uuid = helpers.uuid('b', 'b', 1)},
-            active_master = {uuid = helpers.uuid('b', 'b', 1)},
-            weight = 1,
-            all_rw = true,
-            servers = {
-                {uri = 'localhost:13302', priority = 1},
-                {uri = 'localhost:13304', priority = 2},
-            }
-        }
-    })
 end
