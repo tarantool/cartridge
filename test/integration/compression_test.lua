@@ -1,7 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
-local log = require('log')
 
 local helpers = require('test.helper')
 
@@ -58,7 +57,6 @@ function g.test_compression()
         t.assert(v[1] > '1', srv.alias .. ' upgrate to 2.x failed')
     end
 
-    local router = g.cluster:server('router')
     local storage_1 = g.cluster:server('storage-1').net_box
 
     storage_1:eval([[
@@ -73,7 +71,7 @@ function g.test_compression()
 
     for i=1,200 do
         local str = ""
-        for i = 1, math.random(100, 10000) do
+        for _ = 1, math.random(100, 10000) do
             str = str .. string.char(math.random(97, 122))
         end
         local tuple = {i, str}
