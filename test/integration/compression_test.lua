@@ -7,24 +7,13 @@ local helpers = require('test.helper')
 
 g.before_all(function()
     local datadir = fio.tempdir()
-    --local ok, err = fio.copytree(  -- какие полезные данные тут есть? 
-    --    fio.pathjoin(
-    --        helpers.project_root,
-    --        'test/upgrade/data_1.10.5'
-    --    ),
-    --    datadir
-    --)
-    --assert(ok, err)
 
     g.cluster = helpers.Cluster:new({
         datadir = datadir,
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = helpers.random_cookie(),
-        env = {
-            TARANTOOL_UPGRADE_SCHEMA = 'true', -- а надо ли ?
-            --TARANTOOL_LOG = '| cat', -- добавил из api_join_test.lua
-        },
+
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {'vshard-router'},
@@ -48,10 +37,6 @@ g.before_all(function()
         }},
     })
 
-    -- We start cluster from existing snapshots
-    -- Don't try to bootstrap it again
-    --g.cluster.bootstrapped = true
-
     g.cluster:start()
 
 end)
@@ -63,7 +48,7 @@ end)
 
 function g.test_compression()
     local tarantool_version = _G._TARANTOOL
-    --t.skip_if(tarantool_version < '2.8', 'Tarantool version '..tarantool_version..' should be greater 2.8') -- с какой верси включена компресия и  как включить ентерпрайс
+    t.skip_if(tarantool_version < '2.10', 'Tarantool version '..tarantool_version..' should be 2.10 or greater')
 
     for _, srv in pairs(g.cluster.servers) do
         local ok, v = pcall(function()
@@ -75,23 +60,34 @@ function g.test_compression()
 
     local router = g.cluster:server('router')
     local storage_1 = g.cluster:server('storage-1').net_box
-    -- compressed
-    --local storage_2 = g.cluster:server('storage-2').net_box
-    -- compressed 'zstd' -- zstd lz4
 
     storage_1:eval([[
-        box.schema.space.create('test')
-        box.space.test:format({{'idx',type='number'},{'str',type='string'}})
-        box.space.test:create_index('pk', {unique = true, parts = {{field = 1, type = 'number'},}})
+        box.schema.space.create('test1')
+        box.space.test1:format({ {'idx',type='number'}, {'str',type='string'} })
+        box.space.test1:create_index('pk', {unique = true, parts = { {field = 1, type = 'number'}, }})
+
+        box.schema.space.create('test2')
+        box.space.test2:format({ {'idx',type='number'}, {'arr1',type='array'} })
+        box.space.test2:create_index('pk', {unique = true, parts = { {field = 1, type = 'number'}, }})
     ]])
 
-    for i=1,400 do
+    for i=1,200 do
         local str = ""
-        for i = 1, math.random(100, 1000) do
+        for i = 1, math.random(100, 10000) do
             str = str .. string.char(math.random(97, 122))
         end
         local tuple = {i, str}
-        storage_1.space.test:insert(tuple)
+        storage_1.space.test1:insert(tuple)
+    end
+
+
+    for i=1,200 do
+        local arr = {}
+        for i = 1, math.random(100, 10000) do
+            arr[i] = math.random(-1000000000, 1000000000)
+        end
+        local tuple = {i, arr}
+        storage_1.space.test2:insert(tuple)
     end
 
     local cluster_compression = g.cluster.main_server:graphql({query = [[
@@ -119,10 +115,18 @@ function g.test_compression()
                 instance_id = "bbbbbbbb-bbbb-0000-0000-000000000001",
                 instance_compression_info = {
                     {
-                        space_name = "test",
+                        space_name = "test1",
                         fields_be_compressed = {
                             {
-                                compression_percentage = 69, field_name = "str"
+                                compression_percentage = 61, field_name = "str"
+                            }
+                        },
+                    },
+                    {
+                        space_name = "test2",
+                        fields_be_compressed = {
+                            {
+                                compression_percentage = 90, field_name = "arr1"
                             }
                         },
                     },

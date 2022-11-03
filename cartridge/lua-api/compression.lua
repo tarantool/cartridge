@@ -29,7 +29,7 @@ local function get_cluster_compression_info()
                 log.info(storage_compression_info)
                 table.insert(compression_info, {
                     instance_id = master.uuid,
-                    instance_compression_info = storage_compression_info})
+                    instance_compression_info = storage_compression_info[1]})
             end
         end
     end
@@ -87,13 +87,6 @@ function _G.getStorageCompressionInfo(_)
         local space_info_name_pos = 3
         local space_name = space_info[space_info_name_pos]
 
-        if space_name:endswith('_test_compressed') or
-        space_name:endswith('_test_uncompressed') or
-        space_name:endswith('_test_index') then -- debug
-            box.space[space_name]:drop()
-            goto continue
-        end
-
         local space_compression_info = {}
         if not space_name:startswith("_") then
             local space = box.space[space_name]
@@ -110,10 +103,11 @@ function _G.getStorageCompressionInfo(_)
                         end
                     end
 
-                    if (not field_in_index) and field_format.type == "string" then
+                    if (not field_in_index) and (field_format.type == "string" or field_format.type == "array") then
                         local uncompressed_space =
                             create_test_space(space_name..'_test_uncompressed', space, field_format)
                         field_format.compression = 'zstd' -- zstd lz4
+                        --field_format.compression = 'lz4' -- zstd lz4
                         local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
                         local index_space = create_test_space(space_name..'_test_index', space, nil)
 
@@ -163,11 +157,10 @@ function _G.getStorageCompressionInfo(_)
                 space_name = space_name,
                 fields_be_compressed = space_compression_info})
         end
-        ::continue::
     end
 
     return {
-        storage_compression_info[1],
+        storage_compression_info,
     }
 end
 
@@ -198,4 +191,6 @@ return {
     box.space.test:format({{'idx',type='number'},{'str',type='string'}})
     box.space.test:create_index('pk', {unique = true, parts = {{field = 1, type = 'number'},}})
     box.space.test:insert{123, "qwe"}
+
+    https://habr.com/ru/company/vk/blog/672760/
 ]]--
