@@ -255,7 +255,7 @@ const FailoverModalFormForm = ({
       {
         label: (
           <>
-            <span>Raft </span>
+            <span>Raft</span>
             <sup style={{ marginLeft: '5px' }}>beta</sup>
           </>
         ),

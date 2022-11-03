@@ -7,7 +7,7 @@
   "env": {
     "launcherHost": "127.0.0.1",
     "launcherPort": 3333,
-    "updateSnapshots": false
+    "updateSnapshots": true
   },
   "projectId": "icijqq"
 }
