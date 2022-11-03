@@ -253,7 +253,12 @@ const FailoverModalFormForm = ({
         ),
       },
       {
-        label: 'Raft',
+        label: (
+          <>
+            <span>Raft</span>
+            <sup style={{ marginLeft: '5px' }}>beta</sup>
+          </>
+        ),
         content: (
           <Text variant="p" className={styles.failoverInfo}>
             {FAILOVER_MODES_INFO['raft']}
