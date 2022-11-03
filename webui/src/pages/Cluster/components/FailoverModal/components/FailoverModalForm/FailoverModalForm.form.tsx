@@ -410,10 +410,10 @@ const FailoverModalFormForm = ({
                     className={styles.inputField}
                     label="Password"
                     inputClassName="meta-test__etcd2Password"
-                    inputComponent={InputPassword}
                     error={Boolean(errors.etcd2_params?.password)}
                     message={errors.etcd2_params?.password}
                     value={values.etcd2_params.password}
+                    type="password"
                     onChange={handleChange}
                   />
                 </div>

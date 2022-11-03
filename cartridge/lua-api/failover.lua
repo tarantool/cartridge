@@ -66,12 +66,9 @@ local function get_params()
     --   (added in v2.3.0-57)
     --   The period (in seconds) of performing the check
     --   (default: 2)
-    local failover_params = topology.get_failover_params(
+    return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
-    failover_params.tarantool_params.password = "******"
-    failover_params.etcd2_params.password = "******"
-    return failover_params
 end
 
 --- Configure automatic failover.
@@ -137,11 +134,21 @@ local function set_params(opts)
     if opts.failover_timeout ~= nil then
         topology_cfg.failover.failover_timeout = opts.failover_timeout
     end
+
+    local masked_pwd = '******'
     if opts.tarantool_params ~= nil then
+        local tnt_password = topology_cfg.failover.tarantool_params and topology_cfg.failover.tarantool_params.password
         topology_cfg.failover.tarantool_params = opts.tarantool_params
+        if opts.tarantool_params.password == masked_pwd then
+            topology_cfg.failover.tarantool_params.password = tnt_password
+        end
     end
     if opts.etcd2_params ~= nil then
+        local etcd2_password = topology_cfg.failover.etcd2_params and topology_cfg.failover.etcd2_params.password
         topology_cfg.failover.etcd2_params = opts.etcd2_params
+        if opts.etcd2_params.password == masked_pwd then
+            topology_cfg.failover.etcd2_params.password = etcd2_password
+        end
     end
 
     if opts.fencing_enabled ~= nil then

@@ -829,7 +829,7 @@ local function get_failover_params(topology_cfg)
             mode = topology_cfg.failover.mode,
             state_provider = topology_cfg.failover.state_provider,
             failover_timeout = topology_cfg.failover.failover_timeout,
-            tarantool_params = topology_cfg.failover.tarantool_params,
+            tarantool_params = table.deepcopy(topology_cfg.failover.tarantool_params),
             etcd2_params = table.deepcopy(topology_cfg.failover.etcd2_params),
             fencing_enabled = topology_cfg.failover.fencing_enabled,
             fencing_timeout = topology_cfg.failover.fencing_timeout,
