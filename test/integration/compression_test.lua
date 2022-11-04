@@ -46,8 +46,9 @@ g.after_all(function()
 end)
 
 function g.test_compression()
-    local tarantool_version = _G._TARANTOOL
-    t.skip_if(tarantool_version < '2.10', 'Tarantool version '..tarantool_version..' should be 2.10 or greater')
+    --local tarantool_version = _G._TARANTOOL
+    --t.skip_if(tarantool_version < '2.10', 'Tarantool version '..tarantool_version..' should be 2.10 or greater')
+    t.skip_if(not helpers.tarantool_version_ge('2.10.0'), 'Tarantool version  should be 2.10 EE or greater')
 
     for _, srv in pairs(g.cluster.servers) do
         local ok, v = pcall(function()
