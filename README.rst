@@ -111,7 +111,7 @@ you need to install several packages:
 Create your first application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Long story short, copy-paste this into the console:
+Long story short, enter these commands into the console one-by-one:
 
 .. code-block:: bash
 
@@ -120,12 +120,13 @@ Long story short, copy-paste this into the console:
     cartridge build
     cartridge start -d
     cartridge replicasets setup --bootstrap-vshard
+    cartridge failover set stateful --state-provider stateboard --provider-params '{"uri": "localhost:4401", "password": "passwd"}'
 
 
 That's all! Now you can visit http://localhost:8081 and see your application's
 Admin Web UI:
 
-.. image:: https://user-images.githubusercontent.com/32142520/109290877-3d30a800-7839-11eb-8fcf-8b3de1237a3b.png
+.. image:: rst/images/full-cluster.png
    :align: center
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
