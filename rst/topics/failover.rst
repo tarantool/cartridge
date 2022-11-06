@@ -162,7 +162,7 @@ algorithm is slightly different from that in case of eventual failover:
 Case: external provider outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In this case instances do nothing: the leader remains a leader,
+In this case, instances do nothing: the leader remains a leader,
 read-only instances remain read-only. If any instance restarts during an
 external state provider outage, it composes an empty leadership map:
 it doesn't know who actually is a leader and thinks there is none.

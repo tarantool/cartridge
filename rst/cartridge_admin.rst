@@ -698,7 +698,7 @@ Raft parameters can be configured by environment variables.
 
 To enable the Raft failover:
 
-#.  Make sure that your Tarantool version higher than 2.10.0
+#.  Make sure that your Tarantool version is higher than 2.10.0
 
 #.  Click **Failover**:
 
@@ -719,7 +719,7 @@ To enable the Raft failover:
 #.  Check the necessary parameters.
 
 
-In this mode, you can choose the leader with the**Promote a leader** button in the WebUI (or a
+In this mode, you can choose the leader with the **Promote a leader** button in the WebUI (or a
 GraphQL request or manual call ``box.ctl.promote``).
 
 ..  image:: images/failover-promote.png
@@ -852,19 +852,19 @@ YAML format.
 To connect to a Tarantool instance via the console, you can choose
 one of the commands:
 
-#.  Old-fashioned way:
+*   Old-fashioned way:
 
     ..  code-block:: bash
 
         $ tarantoolctl connect <instance_hostname>:<port>
 
-#.  If you have cartridge-cli installed:
+*   If you have cartridge-cli installed:
 
     ..  code-block:: bash
 
         $ cartridge connect <instance_hostname>:<port>
 
-#.  If you ran Cartridge locally:
+*   If you ran Cartridge locally:
 
     ..  code-block:: bash
 
