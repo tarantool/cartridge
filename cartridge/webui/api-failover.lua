@@ -71,7 +71,11 @@ local gql_type_userapi = gql_types.object({
 })
 
 local function get_failover_params(_, _)
-    return lua_api_failover.get_params()
+    local failover_params = lua_api_failover.get_params()
+    local masked_pwd = '******'
+    failover_params.tarantool_params.password = masked_pwd
+    failover_params.etcd2_params.password = masked_pwd
+    return failover_params
 end
 
 local function set_failover_params(_, args)

@@ -358,7 +358,7 @@ g.test_api_failover = function()
 
     local tarantool_defaults = {
         uri = 'tcp://localhost:4401',
-        password = '',
+        password = '******',
     }
 
     local etcd2_params = {
@@ -366,8 +366,17 @@ g.test_api_failover = function()
         lock_delay = 10,
         endpoints = {'goo.gl:9'},
         username = '',
-        password = '',
+        password = ''
     }
+
+    local etcd2_params_masked = {
+        prefix = '/',
+        lock_delay = 10,
+        endpoints = {'goo.gl:9'},
+        username = '',
+        password = '******',
+    }
+
     t.assert_equals(
         set_failover_params({
             etcd2_params = {lock_delay = 36.6, prefix = 'kv'},
@@ -379,7 +388,7 @@ g.test_api_failover = function()
                 prefix = 'kv',
                 lock_delay = 36.6,
                 username = '',
-                password = '',
+                password = '******',
                 endpoints = {
                     'http://127.0.0.1:4001',
                     'http://127.0.0.1:2379',
@@ -397,13 +406,7 @@ g.test_api_failover = function()
             mode = 'eventual',
             failover_timeout = 0,
             tarantool_params = tarantool_defaults,
-            etcd2_params = {
-                prefix = '/',
-                lock_delay = 10,
-                endpoints = {'goo.gl:9'},
-                username = '',
-                password = '',
-            },
+            etcd2_params = etcd2_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
@@ -416,7 +419,7 @@ g.test_api_failover = function()
             mode = 'eventual',
             failover_timeout = 0,
             tarantool_params = tarantool_defaults,
-            etcd2_params = etcd2_params,
+            etcd2_params = etcd2_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
@@ -424,13 +427,14 @@ g.test_api_failover = function()
     )
 
     local tarantool_params = {uri = 'stateboard.com:8', password = 'xxx'}
+    local tarantool_params_masked = {uri = 'stateboard.com:8', password = '******'}
     t.assert_equals(
         set_failover_params({tarantool_params = tarantool_params}),
         {
             mode = 'eventual',
             failover_timeout = 0,
-            etcd2_params = etcd2_params,
-            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_params_masked,
+            tarantool_params = tarantool_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
@@ -442,8 +446,8 @@ g.test_api_failover = function()
             mode = 'stateful',
             state_provider = 'tarantool',
             failover_timeout = 0,
-            etcd2_params = etcd2_params,
-            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_params_masked,
+            tarantool_params = tarantool_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
@@ -456,8 +460,8 @@ g.test_api_failover = function()
             mode = 'stateful',
             state_provider = 'tarantool',
             failover_timeout = 0,
-            etcd2_params = etcd2_params,
-            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_params_masked,
+            tarantool_params = tarantool_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
@@ -496,14 +500,25 @@ g.test_api_failover = function()
         },
     }
 
+    local etcd2_defaults_masked = {
+        prefix = '/',
+        lock_delay = 10,
+        username = '',
+        password = '******',
+        endpoints = {
+            'http://127.0.0.1:4001',
+            'http://127.0.0.1:2379',
+        },
+    }
+
     t.assert_equals(
         get_failover_params(),
         {
             mode = 'disabled',
             state_provider = 'tarantool',
             failover_timeout = 3,
-            etcd2_params = etcd2_defaults,
-            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_defaults_masked,
+            tarantool_params = tarantool_params_masked,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,
