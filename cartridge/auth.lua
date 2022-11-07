@@ -343,6 +343,9 @@ local function login(req)
         }
     elseif err ~= nil then
         log.error('%s', err)
+        if type(err) == 'table' then
+            err.stack = nil
+        end
         return {
             status = 500,
             body = tostring(err),

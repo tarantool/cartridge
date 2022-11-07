@@ -314,7 +314,8 @@ local function _execute_graphql(req)
 
         local extensions = err.graphql_extensions or {}
         extensions['io.tarantool.errors.class_name'] = err.class_name
-        extensions['io.tarantool.errors.stack'] = err.stack
+        extensions['io.tarantool.errors.stack'] = 'not available'
+        -- extensions['io.tarantool.errors.stack'] = err.stack
 
         -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
@@ -335,6 +336,9 @@ local function execute_graphql(req)
     local resp, err = e_graphql_internal:pcall(_execute_graphql, req)
     if resp == nil then
         log.error('%s', err)
+        if type(err) == 'table' then
+            err.stack = nil
+        end
         return {
             status = 500,
             body = tostring(err),
