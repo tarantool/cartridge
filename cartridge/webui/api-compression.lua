@@ -103,26 +103,3 @@ return {
     init = init,
     get_cluster_compression_info = get_cluster_compression_info,
 }
-
-
-
---[[
-
-query  {
-  cluster {
-    cluster_compression {
-      compression_info {
-        instance_id
-        instance_compression_info {
-          space_name
-          fields_be_compressed {
-            field_name
-            compression_percentage
-          }
-        }
-      } 
-    }
-  }
-}
-
-]]--

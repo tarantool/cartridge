@@ -16,10 +16,10 @@ local function get_cluster_compression_info()
     for _, rpl in pairs(replicasets or {}) do
         for _, role in pairs(rpl.roles or {}) do
             if role == 'vshard-storage' then
-                local master = rpl["master"]
+                local master = rpl.master
 
                 local storage_compression_info, err = errors.netbox_call(
-                    pool.connect(master['uri'], {wait_connected = true}),
+                    pool.connect(master.uri, {wait_connected = true}),
                     '_G.getStorageCompressionInfo', {master}, {timeout = 1}
                 )
                 if storage_compression_info == nil then
@@ -40,7 +40,7 @@ local function get_cluster_compression_info()
 end
 
 local function create_test_space(space_name, orig_space, field_format)
-    if box.space[space_name] ~=nil then
+    if box.space[space_name] ~= nil then
         box.space[space_name]:drop()
     end
 
@@ -71,9 +71,9 @@ local function create_test_space(space_name, orig_space, field_format)
         if_not_exists = true,
     })
 
-    space:create_index(orig_index["name"], {
-        unique = orig_index["unique"],
-        type = orig_index["type"],
+    space:create_index(orig_index.name, {
+        unique = orig_index.unique,
+        type = orig_index.type,
         parts = index_parts,
     })
 
@@ -93,7 +93,7 @@ function _G.getStorageCompressionInfo(_)
             local space_format = space:format()
             local index = space.index[0]
 
-            if (index ~= nil) and index["unique"] and (next(space_format) ~= nil) then
+            if (index ~= nil) and (index.unique == true) and (next(space_format) ~= nil) then
                 for field_format_key, field_format in pairs(space_format) do
 
                     local field_in_index = false
@@ -167,30 +167,3 @@ end
 return {
     get_cluster_compression_info = get_cluster_compression_info,
 }
-
-
---[[
-    компрессия только с ентерпрайсом
-    cd ~/sdk
-    . tarantool-enterprise/env.sh
-    cd ~/cartridge
-    cartridge start
-
-
-    pip install -r rst/requirements.txt
-    tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
-    tarantoolctl rocks make
-
-    cartridge start
-    cartridge replicasets setup --bootstrap-vshard
-
-
-    tarantoolctl connect admin:@127.0.0.1:3302
-
-    box.schema.space.create('test')
-    box.space.test:format({{'idx',type='number'},{'str',type='string'}})
-    box.space.test:create_index('pk', {unique = true, parts = {{field = 1, type = 'number'},}})
-    box.space.test:insert{123, "qwe"}
-
-    https://habr.com/ru/company/vk/blog/672760/
-]]--
