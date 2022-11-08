@@ -40,7 +40,7 @@ Then :ref:`start the instances <cartridge-run>`, for example using
 
 ..  code-block:: bash
 
-    $ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
+    $ cartridge start my_app --cfg demo.yml --run-dir ./tmp/run
 
 And bootstrap the cluster.
 You can do this via the Web interface which is available at
@@ -48,7 +48,7 @@ You can do this via the Web interface which is available at
 (in this example, ``http://localhost:8080``).
 
 -------------------------------------------------------------------------------
-Bootstraping from an existing cluster (optional)
+Bootstrapping from an existing cluster (optional)
 -------------------------------------------------------------------------------
 
 You can bootstrap a cluster from an existing cluster (*original* cluster in the example

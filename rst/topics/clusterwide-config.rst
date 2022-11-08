@@ -70,8 +70,7 @@ in ``cartridge`` CLI configuration (in ``./.cartridge.yml`` or ``~/.cartridge.ym
 .. code-block:: kconfig
 
     cfg: cartridge.yml
-    run_dir: tmp/run
-    apps_path: /usr/local/share/tarantool
+    run-dir: tmp/run
 
 With ``systemctl``, save the YAML file to ``/etc/tarantool/conf.d/``
 (the default ``systemd`` path) or to a location set in the ``TARANTOOL_CFG``
