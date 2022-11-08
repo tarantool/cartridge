@@ -1330,7 +1330,9 @@ With ``cartridge`` CLI, you can start one or multiple instances:
 
     $ cartridge start [APP_NAME[.INSTANCE_NAME]] [options]
 
-The options are:
+The options are listed in the :doc:`cartridge start reference </book/cartridge/cartridge_cli/commands/start>`.
+
+Here are some commonly used options:
 
 ``--script FILE``
         Application's entry point.
@@ -1338,13 +1340,9 @@ The options are:
 
         *  ``TARANTOOL_SCRIPT``, or
         * ``./init.lua`` when running from the app's directory, or
-        * ``:apps_path/:app_name/init.lua`` in a multi-app environment.
+        * ``app_name/init.lua`` in a multi-app environment.
 
-``--apps_path PATH``
-        Path to apps directory when running in a multi-app environment.
-        Defaults to ``/usr/share/tarantool``.
-
-``--run_dir DIR``
+``--run-dir DIR``
         Directory with pid and sock files.
         Defaults to ``TARANTOOL_RUN_DIR`` or ``/var/run/tarantool``.
 
@@ -1355,14 +1353,11 @@ The options are:
         parameters described in the :ref:`configuration section <cartridge-config-basic>`
         of this guide.
 
-``--foreground``
-        Do not daemonize.
-
 For example:
 
 ..  code-block:: bash
 
-    $ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
+    $ cartridge start my_app --cfg demo.yml --run-dir ./tmp/run
 
 It starts all ``tarantool`` instances specified in ``cfg`` file, in foreground,
 with enforced :ref:`environment variables <cartridge-config>`.
@@ -1391,7 +1386,7 @@ To stop the instances, run:
 
 These options from the ``cartridge start`` command are supported:
 
-* ``--run_dir DIR``
+* ``--run-dir DIR``
 * ``--cfg FILE``
 
 .. _cartridge-run-systemctl:

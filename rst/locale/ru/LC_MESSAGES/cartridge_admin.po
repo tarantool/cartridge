@@ -61,9 +61,9 @@ msgstr ""
 "в ``cartridge``:"
 
 msgid ""
-"$ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground"
+"$ cartridge start my_app --cfg demo.yml --run-dir ./tmp/run"
 msgstr ""
-"$ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground"
+"$ cartridge start my_app --cfg demo.yml --run-dir ./tmp/run"
 
 msgid ""
 "And bootstrap the cluster. You can do this via the Web interface which is "
