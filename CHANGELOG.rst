@@ -10,8 +10,6 @@ and this project adheres to
 
 -------------------------------------------------------------------------------
 [Unreleased]
-
-- Added tag 'beta' for tabs Raft
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,10 +28,11 @@ Changed
 
 - Mask failover password in WebUI and GraphQL API.
 
+- Added tag 'beta' for tabs Raft
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
   GraphQL and Lua API.
