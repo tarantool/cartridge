@@ -10,8 +10,6 @@ and this project adheres to
 
 -------------------------------------------------------------------------------
 [Unreleased]
-
-- Added tag 'beta' for tabs Raft
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,7 +32,6 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
   GraphQL and Lua API.
 
@@ -53,6 +50,8 @@ Added
   ``rpc.get_candidates('role', { labels = { ['msk'] = 'dc', ['meta'] = 'runner' } })``
   ``rpc.get_connection('role', { labels = { ['msk'] = 'dc' } })``
 
+- "Beta" tag for failover selector in WebUI.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,9 +62,9 @@ Fixed
 
 - Incorrect calculation of Raft leader.
 
-- Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node
+- Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node.
 
-- ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication``
+- ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication``.
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
