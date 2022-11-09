@@ -16,33 +16,35 @@ and this project adheres to
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``graphql`` dependency to 0.2.0.
+- Update ``graphql`` dependency to `0.2.0 <https://github.com/tarantool/graphql/releases/tag/0.2.0>`_.
 
-- Disable Raft failover on replicasets where number of instances less than 3.
+- Disable Raft failover on replicasets where number of instances less than 3
+  (`#1914 <https://github.com/tarantool/cartridge/issues/1914>`_).
 
-- Check Raft failover availability on validate_config.
+- Check Raft failover availability on validate_config (`#1916 <https://github.com/tarantool/cartridge/issues/1916>`_).
 
-- Forbid to enable Raft failover with ``ALL_RW`` replicasets.
+- Forbid to enable Raft failover with ``ALL_RW`` replicasets (`#1927 <https://github.com/tarantool/cartridge/issues/1927>`_).
 
-- Disabled instances won't appear as leaders.
+- Disabled instances won't appear as leaders (`#1930 <https://github.com/tarantool/cartridge/issues/1930>`_).
 
-- Mask failover password in WebUI and GraphQL API.
+- Mask failover password in WebUI and GraphQL API (`#1960 <https://github.com/tarantool/cartridge/issues/1960>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
-  GraphQL and Lua API.
+  GraphQL and Lua API (`#1843 <https://github.com/tarantool/cartridge/issues/1843>`_).
 
 - Allow to bootstrap cartridge from existing cluster via argparse option
-  ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``.
+  ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from`` (`#1842 <https://github.com/tarantool/cartridge/issues/1842>`_).
 
-- ``election_state``, ``election_mode`` and ``synchro_queue_owner`` to GraphQL.
+- ``election_state``, ``election_mode`` and ``synchro_queue_owner`` to GraphQL
+  (`#1925 <https://github.com/tarantool/cartridge/issues/1925>`_).
 
-- ``O_SYNC`` flag for ClusterwideConfig.save.
+- ``O_SYNC`` flag for ClusterwideConfig.save (`#1939 <https://github.com/tarantool/cartridge/issues/1939>`_).
 
-- Introduced way to filter instances by labels in rpc calls.
+- Introduced way to filter instances by labels in rpc calls (`#1957 <https://github.com/tarantool/cartridge/issues/1957>`_).
   You can mark certain instances with the same role with different labels,
   and then make an rpc call with label. Adding labels is possible via the
   edit_topology method or via graphql.
@@ -50,21 +52,21 @@ Added
   ``rpc.get_candidates('role', { labels = { ['msk'] = 'dc', ['meta'] = 'runner' } })``
   ``rpc.get_connection('role', { labels = { ['msk'] = 'dc' } })``
 
-- "Beta" tag for failover selector in WebUI.
+- "Beta" tag for failover selector in WebUI (`#1961 <https://github.com/tarantool/cartridge/issues/1961>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fix tarantool binds to 0.0.0.0 despite advertise_uri settings.
+- Fix tarantool binds to 0.0.0.0 despite advertise_uri settings (`#1890 <https://github.com/tarantool/cartridge/issues/1890>`_).
 
-- Reduce count of ``box.info`` calls.
+- Reduce count of ``box.info`` calls (`#1924 <https://github.com/tarantool/cartridge/issues/1924>`_).
 
-- Incorrect calculation of Raft leader.
+- Incorrect calculation of Raft leader (`#1943 <https://github.com/tarantool/cartridge/issues/1943>`_).
 
-- Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node.
+- Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node (`#1949 <https://github.com/tarantool/cartridge/issues/1949>`_).
 
-- ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication``.
+- ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication`` (`#1950 <https://github.com/tarantool/cartridge/issues/1950>`_).
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
@@ -74,11 +76,12 @@ Fixed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add "Promote a leader" action in WebUI in Raft failover mode (#1853).
+- Add "Promote a leader" action in WebUI in Raft failover mode (`#1853 <https://github.com/tarantool/cartridge/issues/1853>`_).
 
-- Introduced SSL support for Tarantool Enterprise from 2.10.2.
+- Introduced SSL support for Tarantool Enterprise from 2.10.2 (`#1838 <https://github.com/tarantool/cartridge/issues/1838>`_).
 
-- Introduced Remote Control Suspend/Resume methods to pause producing requests.
+- Introduced Remote Control Suspend/Resume methods to pause producing requests
+  (`#1878 <https://github.com/tarantool/cartridge/issues/1878>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -86,50 +89,53 @@ Fixed
 
 - Fix multitype argparse params.
 
-- Remove expelled instances from state provider.
+- Remove expelled instances from state provider (`#1875 <https://github.com/tarantool/cartridge/issues/1875>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``http`` dependency to 1.3.0.
+- Update ``http`` dependency to `1.3.0 <https://github.com/tarantool/http/releases/tag/1.3.0>`_.
 
-- Update ``ddl`` dependency to 1.6.2.
+- Update ``ddl`` dependency to `1.6.2 <https://github.com/tarantool/ddl/releases/tag/1.6.2>`_.
 
-- Update ``vshard`` dependency to 0.1.21.
+- Update ``vshard`` dependency to `0.1.21 <https://github.com/tarantool/vshard/releases/tag/0.1.21>`_.
 
 - Update frontend dependencies.
 
 -------------------------------------------------------------------------------
-[2.7.5] - 2021-06-28
+[2.7.5] - 2022-06-28
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Introduced new failover mode: Raft-based failover. The replicaset leader is chosen by
+- Introduced new failover mode: Raft-based failover (`#1233 <https://github.com/tarantool/cartridge/issues/1233>`_).
+  The replicaset leader is chosen by
   built-in Raft, then the other replicasets get information about leader change
   from membership. It's needed to use Cartridge RPC calls. The user can control
   the election mode of an instance by the argparse option ``TARANTOOL_ELECTION_MODE``
   or ``--election-mode``.
 
-- Promotion API for Raft failover:
+- Promotion API for Raft failover (`#1233 <https://github.com/tarantool/cartridge/issues/1233>`_):
   :ref:`cartridge.failover_promote <cartridge.failover_promote>` in Lua or
   ``mutation {cluster{failover_promote()}}`` in GraphQL,
   which calls ``box.ctl.promote`` on the specified instances.
   Note that ``box.ctl.promote`` starts fair elections, so some other instance
   may become the leader in the replicaset.
 
-- Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse.
+- Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse
+  (`#1826 <https://github.com/tarantool/cartridge/issues/1826>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``vshard`` to 0.1.20.
+- Update ``vshard`` dependency to `0.1.20 <https://github.com/tarantool/vshard/releases/tag/0.1.20>`_.
 
-- Failover suppressing. If enabled (by ``enable_failover_suppressing`` parameter
+- Failover suppressing (`#1758 <https://github.com/tarantool/cartridge/issues/1758>`_).
+  If enabled (by ``enable_failover_suppressing`` parameter
   in ``cartridge.cfg``) then allows to automatically pause failover in runtime.
   It configures with ``failover_suppress_threshold`` and
   ``failover_suppress_timeout`` options of argparse.
@@ -137,83 +143,97 @@ Changed
 - Revert argparse throws an error when it encouters ``instance_name`` missing in
    instances.yml.
 
-- Update ``ddl`` dependency to 1.6.1.
-  (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.1>`__).
+- Update ``ddl`` to `1.6.1 <https://github.com/tarantool/ddl/releases/tag/1.6.1>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Disable ``vshard.storage`` in case of ``OperationError``.
+- Disable ``vshard.storage`` in case of ``OperationError`` (`#1411 <https://github.com/tarantool/cartridge/issues/1411>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Deprecated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``vshard`` config option ``collect_lua_garbage``.
+- ``vshard`` config option ``collect_lua_garbage`` (`#1814 <https://github.com/tarantool/cartridge/issues/1814>`_).
 
 -------------------------------------------------------------------------------
-[2.7.4] - 2021-04-11
+[2.7.4] - 2022-04-11
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``swim_period`` argument to the test-helpers (#1592).
+- ``swim_period`` argument to the test-helpers (`#1592 <https://github.com/tarantool/cartridge/issues/1592>`_).
 
-- ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui (#622, #1527).
+- ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui
+  (`#622 <https://github.com/tarantool/cartridge/issues/622>`_,
+  `#1527 <https://github.com/tarantool/cartridge/issues/1527>`_).
 
 - Unit tests for the Failover modal.
 
-- Add ``get_servers``, ``get_replicasets`` and ``get_enabled_roles_without_deps`` API (#1624, #1722).
+- Add ``get_servers``, ``get_replicasets`` and ``get_enabled_roles_without_deps`` API
+  (`#1624 <https://github.com/tarantool/cartridge/issues/1624>`_,
+  `#1722 <https://github.com/tarantool/cartridge/issues/1722>`_).
 
-- Logging of configuration options on start and boot instance (#1557).
+- Logging of configuration options on start and boot instance
+  (`#1557 <https://github.com/tarantool/cartridge/issues/1557>`_).
 
 - ``app_version`` field to graphql and webui. It filled from ``VERSION.lua``
-  file in the root of cartridge app (#1367).
+  file in the root of cartridge app (`#1367 <https://github.com/tarantool/cartridge/issues/1367>`_).
 
 - Param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it
-  to ``http_request`` (#1321).
+  to ``http_request`` (`#1321 <https://github.com/tarantool/cartridge/issues/1321>`_).
 
-- Setters ans getters for timeout options in ``twophase.lua`` (#1440):
+- Setters ans getters for timeout options in ``twophase.lua``
+  (`#1440 <https://github.com/tarantool/cartridge/issues/1440>`_):
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
 
-- New tests cases (#892, #944, #1473, #1726).
+- New tests cases (`#892 <https://github.com/tarantool/cartridge/issues/892>`_,
+  `#944 <https://github.com/tarantool/cartridge/issues/944>`_,
+  `#1473 <https://github.com/tarantool/cartridge/issues/1473>`_,
+  `#1726 <https://github.com/tarantool/cartridge/issues/1726>`_).
 
-- ``test-helpers.Cluster:server_by_role`` method (#1615).
+- ``test-helpers.Cluster:server_by_role`` method (`#1615 <https://github.com/tarantool/cartridge/issues/1615>`_).
 
-- Allow to extract filename from http request body (#1613).
+- Allow to extract filename from http request body (`#1613 <https://github.com/tarantool/cartridge/issues/1613>`_).
 
 - Testing on Tarantool pre-release version.
 
-- ``box.info.ro_reason`` and ``box.info.replication.X.downstream.lag`` to boxinfo API (#1721).
+- ``box.info.ro_reason`` and ``box.info.replication.X.downstream.lag``
+  to boxinfo API (`#1721 <https://github.com/tarantool/cartridge/issues/1721>`_).
 
 - Ability to set multiple types for Cartridge arguments.
-  Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
+  Types are split by separator ``|``,  e.g. ``string|number``
+  (`#1651 <https://github.com/tarantool/cartridge/issues/1651>`_).
 
-- Downgrade test (#1397).
+- Downgrade test (`#1397 <https://github.com/tarantool/cartridge/issues/1397>`_).
 
-- Vshard weight parameter to ``test-helpers.Cluster.replicasets`` (#1743).
+- Vshard weight parameter to ``test-helpers.Cluster.replicasets``
+  (`#1743 <https://github.com/tarantool/cartridge/issues/1743>`_).
 
-- Add logging for role machinery (#1745).
+- Add logging for role machinery (`#1745 <https://github.com/tarantool/cartridge/issues/1745>`_).
 
-- Export vshard config in Lua API (#1761).
+- Export vshard config in Lua API (`#1761 <https://github.com/tarantool/cartridge/issues/1761>`_).
 
 - New ``failover_promote`` option ``skip_error_on_change`` to skip etcd error
-  when vclockkeeper was changed between ``set_vclokkeeper`` calls (#1399).
+  when vclockkeeper was changed between ``set_vclokkeeper`` calls
+  (`#1399 <https://github.com/tarantool/cartridge/issues/1399>`_).
 
-- Allow to pause failover at runtime, with Lua API and GraphQL (#1763).
+- Allow to pause failover at runtime, with Lua API and GraphQL
+  (`#1763 <https://github.com/tarantool/cartridge/issues/1763>`_).
 
-- Allow to block roles reload at runtime, with Lua API (#1219).
+- Allow to block roles reload at runtime, with Lua API
+  (`#1219 <https://github.com/tarantool/cartridge/issues/1219>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``http`` dependency to 1.2.0.
+- Update ``http`` dependency to `1.2.0 <https://github.com/tarantool/http/releases/tag/1.2.0>`_.
 
-- Allow to bootstrap vshard groups partially (#1148).
+- Allow to bootstrap vshard groups partially (`#1148 <https://github.com/tarantool/cartridge/issues/1148>`_).
 
 - Use effector for business logic and storing Cluster page data (models folder).
 
@@ -223,48 +243,68 @@ Changed
 
 - Use core as a node module instead of a window scope object.
 
-- Update ``frontend-core`` to 8.1.0.
+- Update ``frontend-core`` dependency to 8.1.0.
 
-- Update ``graphql`` to 0.1.4.
+- Update ``graphql`` dependency to `0.1.4 <https://github.com/tarantool/graphql/releases/tag/0.1.4>`_ .
 
-- Bind remote control socket to ``advertise_uri`` (#1495).
+- Bind remote control socket to ``advertise_uri`` (`#1495 <https://github.com/tarantool/cartridge/issues/1495>`_).
 
 - The new compact design of the Cluster page.
 
-- Update ``vshard`` to 0.1.19.
+- Update ``vshard`` dependency to `0.1.19 <https://github.com/tarantool/graphql/vshard/tag/0.1.19>`_.
 
 - Change type of ``replication_synchro_quorum`` in argparse to ``string|number``.
 
-- Update ``ddl`` dependency to 1.6.0.
-  (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.0>`__).
+- Update ``ddl`` dependency to `1.6.0 <https://github.com/tarantool/ddl/releases/tag/1.6.0>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fix joining an instance when leader is not the first instance from leaders_order (#1204).
+- Fix joining an instance when leader is not the first instance from leaders_order
+  (`#1204 <https://github.com/tarantool/cartridge/issues/1204>`_).
 
-- Fix the incorrect number of total buckets on the replication server in webui (#1176).
+- Fix the incorrect number of total buckets on the replication server in webui
+  (`#1176 <https://github.com/tarantool/cartridge/issues/1176>`_).
 
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
 
-- Flaky tests (#1538, #1569, #1590, #1594, #1599, #1602, #1656, #1657, #1658,
-  #1664, #1671, #1681, #1682, #1683, #1703, #1709, #1751, #1756).
+- Flaky tests (`#1538 <https://github.com/tarantool/cartridge/issues/1538>`_,
+  `#1569 <https://github.com/tarantool/cartridge/issues/1569>`_,
+  `#1590 <https://github.com/tarantool/cartridge/issues/1590>`_,
+  `#1594 <https://github.com/tarantool/cartridge/issues/1594>`_,
+  `#1599 <https://github.com/tarantool/cartridge/issues/1599>`_,
+  `#1602 <https://github.com/tarantool/cartridge/issues/1602>`_,
+  `#1656 <https://github.com/tarantool/cartridge/issues/1656>`_,
+  `#1657 <https://github.com/tarantool/cartridge/issues/1657>`_,
+  `#1658 <https://github.com/tarantool/cartridge/issues/1658>`_,
+  `#1664 <https://github.com/tarantool/cartridge/issues/1664>`_,
+  `#1671 <https://github.com/tarantool/cartridge/issues/1671>`_,
+  `#1681 <https://github.com/tarantool/cartridge/issues/1681>`_,
+  `#1682 <https://github.com/tarantool/cartridge/issues/1682>`_,
+  `#1683 <https://github.com/tarantool/cartridge/issues/1683>`_,
+  `#1703 <https://github.com/tarantool/cartridge/issues/1703>`_,
+  `#1709 <https://github.com/tarantool/cartridge/issues/1709>`_,
+  `#1751 <https://github.com/tarantool/cartridge/issues/1751>`_,
+  `#1756 <https://github.com/tarantool/cartridge/issues/1756>`_).
 
-- Tests compatibility with tarantool/master (#1619).
+- Tests compatibility with tarantool/master (`#1619 <https://github.com/tarantool/cartridge/issues/1619>`_).
 
-- Tests improvements on macOS (#1638).
+- Tests improvements on macOS (`#1638 <https://github.com/tarantool/cartridge/issues/1638>`_).
 
-- ``fetch-schema`` script on macOS (#1628).
+- ``fetch-schema`` script on macOS (`#1628 <https://github.com/tarantool/cartridge/issues/1628>`_).
 
-- Stateful failover triggers when instance is in OperationError state (#1139).
+- Stateful failover triggers when instance is in OperationError state
+  (`#1139 <https://github.com/tarantool/cartridge/issues/1139>`_).
 
-- Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance (#1575).
+- Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance
+  (`#1575 <https://github.com/tarantool/cartridge/issues/1575>`_).
 
 - Fixed the visibility of the configuration management page if the cluster
-  is not bootstrapped yet (#1707).
+  is not bootstrapped yet (`#1707 <https://github.com/tarantool/cartridge/issues/1707>`_).
 
-- Error when vclockkeeper in stateboard was changed between ``failover_promote`` calls (#1399).
+- Error when vclockkeeper in stateboard was changed between ``failover_promote`` calls
+  (`#1399 <https://github.com/tarantool/cartridge/issues/1399>`_).
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
