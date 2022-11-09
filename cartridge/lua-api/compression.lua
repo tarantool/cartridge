@@ -4,6 +4,7 @@ local log = require('log')
 local pool = require('cartridge.pool')
 local errors = require('errors')
 
+-- Surf by replicates to find master storages and call on them getStorageCompressionInfo()
 local function get_cluster_compression_info()
     local replicasets, err = lua_api_get_topology.get_replicasets()
     if replicasets == nil then
@@ -80,6 +81,8 @@ local function create_test_space(space_name, orig_space, field_format)
     return space
 end
 
+-- Find all user spaces with correct schema and index.
+-- Calculate compression for their fields.
 function _G.getStorageCompressionInfo(_)
     local storage_compression_info = {}
 
@@ -107,7 +110,6 @@ function _G.getStorageCompressionInfo(_)
                         local uncompressed_space =
                             create_test_space(space_name..'_test_uncompressed', space, field_format)
                         field_format.compression = 'zstd' -- zstd lz4
-                        --field_format.compression = 'lz4' -- zstd lz4
                         local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
                         local index_space = create_test_space(space_name..'_test_index', space, nil)
 
@@ -118,6 +120,7 @@ function _G.getStorageCompressionInfo(_)
                             temp_space_len = 10000
                         end
 
+                        -- fill temporary spaces with limited count of items
                         while added <= temp_space_len do
                             random_seed = random_seed + 1
                             local tuple = index:random(random_seed)
