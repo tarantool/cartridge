@@ -47,10 +47,11 @@ local function get_appointments(topology_cfg)
             local member = membership.get_member(server.uri)
 
             if member ~= nil
-            and member.payload.leader_uuid ~= nil
+            and member.payload.raft_leader ~= nil
+            and member.payload.raft_leader ~= 0
             and member.payload.raft_term or 0 >= latest_term
             then
-                latest_leader = member.payload.leader_uuid
+                latest_leader = member.payload.raft_leader
                 latest_term = member.payload.raft_term or 0
             end
         end
@@ -74,6 +75,7 @@ local function on_election_trigger()
         membership.set_payload('leader_uuid', vars.leader_uuid)
     end
     membership.set_payload('raft_term', election.term)
+    membership.set_payload('raft_leader', leader.uuid)
 end
 
 _G.__cartridge_on_election_trigger = on_election_trigger
@@ -129,6 +131,7 @@ local function cfg()
     end
 
     membership.set_payload('raft_term', box.info.election.term)
+    membership.set_payload('raft_leader', box.info.election.leader)
 
     return true
 end
