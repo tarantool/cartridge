@@ -1,6 +1,8 @@
 local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
+local tarantool = require('tarantool')
+local semver = require('vshard.version')
 
 local helpers = require('test.helper')
 
