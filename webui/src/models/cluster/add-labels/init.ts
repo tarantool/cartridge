@@ -22,7 +22,7 @@ sample({
   clock: $selectedServerUuid,
   source: $serverList,
   fn: (source, clock) => {
-    return selectors.serverLabelsGetByUuid(source, clock) ?? [];
+    return selectors.serverLabelsGetByUuid(source, clock as string);
   },
   target: updateLabelEvent,
 });
