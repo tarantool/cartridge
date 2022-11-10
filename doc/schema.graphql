@@ -101,6 +101,7 @@ input EditReplicasetInput {
   alias: String
   all_rw: Boolean
   failover_priority: [String!]
+  labels: [LabelInput]
 }
 
 """Parameters for editing existing server"""

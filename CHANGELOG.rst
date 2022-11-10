@@ -33,6 +33,8 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Add instance labels to web UI (`https://github.com/tarantool/cartridge/issues/1962`)
+
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
   GraphQL and Lua API (`#1843 <https://github.com/tarantool/cartridge/issues/1843>`_).
 

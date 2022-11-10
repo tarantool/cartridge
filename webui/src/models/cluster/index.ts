@@ -1,3 +1,4 @@
+import * as addLabels from './add-labels';
 import * as failover from './failover';
 import * as page from './page';
 import * as replicasetConfigure from './replicaset-configure';
@@ -20,4 +21,5 @@ export {
   failover,
   zones,
   suggestions,
+  addLabels,
 };

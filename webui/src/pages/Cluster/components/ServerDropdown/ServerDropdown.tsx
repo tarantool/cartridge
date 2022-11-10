@@ -15,6 +15,7 @@ const { $serverList, promoteServerToLeaderEvent, disableOrEnableServerEvent, set
   cluster.serverList;
 const { serverDetailsModalOpenedEvent } = cluster.serverDetails;
 const { serverExpelModalOpenEvent } = cluster.serverExpel;
+const { serverAddLabelModalOpenEvent } = cluster.addLabels;
 
 export interface ServerDropdownProps {
   className?: string;
@@ -47,6 +48,12 @@ const ServerDropdown = ({
   const handleServerDetails = useCallback(() => {
     if (server?.uuid) {
       serverDetailsModalOpenedEvent({ uuid: server.uuid });
+    }
+  }, [server?.uuid]);
+
+  const handleAddLabelForServer = useCallback(() => {
+    if (server?.uuid) {
+      serverAddLabelModalOpenEvent({ uuid: server.uuid });
     }
   }, [server?.uuid]);
 
@@ -105,6 +112,9 @@ const ServerDropdown = ({
         <DropdownItem key="handleEnableDisableServer" onClick={handleEnableOrDisableServer}>
           {server?.disabled ? 'Enable server' : 'Disable server'}
         </DropdownItem>,
+        <DropdownItem key="handleAddLabelsServer" onClick={handleAddLabelForServer}>
+          Add labels server
+        </DropdownItem>,
         <DropdownItem
           key="handleShowExpelModal"
           className={styles.showExpelModalDropdown}
@@ -114,16 +124,17 @@ const ServerDropdown = ({
         </DropdownItem>,
       ]),
     [
+      showServerDetails,
+      server,
       handleServerDetails,
+      showFailoverPromote,
+      replicaset,
       handlePromoteLeader,
+      isActiveMaster,
       handleSetElectableServer,
       handleEnableOrDisableServer,
+      handleAddLabelForServer,
       handleShowExpelModal,
-      server,
-      replicaset,
-      showServerDetails,
-      showFailoverPromote,
-      isActiveMaster,
     ]
   );
 

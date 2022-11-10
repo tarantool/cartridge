@@ -1,5 +1,7 @@
 import React from 'react';
 
+import AddLabelForServerModal from 'src/pages/Cluster/components/ClusterAddLabelModal/AddLabelForServerModal';
+
 import ExpelServerModal from './components/ExpelServerModal';
 import FailoverModal from './components/FailoverModal';
 import ProbeServerModal from './components/ProbeServerModal';
@@ -17,5 +19,6 @@ export const ClusterModals = () => (
     <ExpelServerModal />
     <ProbeServerModal />
     <FailoverModal />
+    <AddLabelForServerModal />
   </>
 );
