@@ -129,7 +129,7 @@ export const replicasetList = (data: ServerList): ServerListReplicaset[] => comp
 export const serverGetByUuid = (data: ServerList, uuid: Maybe<string>): ServerListServer | undefined =>
   uuid ? serverList(data).find((server) => server.uuid === uuid) : undefined;
 
-export const serverLabelsGetByUuid = (data: ServerList, uuid: Maybe<string>): LabelInput[] | undefined =>
+export const serverLabelsGetByUuid = (data: ServerList, uuid: Maybe<string>): LabelInput[] | undefined | null =>
   uuid ? serverList(data).find((server) => server.uuid === uuid)?.labels : undefined;
 
 export const serverGetByUri = (data: ServerList, uri: Maybe<string>): ServerListServer | undefined =>
