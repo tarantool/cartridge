@@ -27,7 +27,6 @@ local function get_cluster_compression_info()
                     error(err)
                 end
 
-                log.info(storage_compression_info)
                 table.insert(compression_info, {
                     instance_id = master.uuid,
                     instance_compression_info = storage_compression_info[1]})
