@@ -1,6 +1,6 @@
 import { combine } from 'effector';
 
-import { EditServerInput, EditTopologyMutation, LabelInput } from 'src/generated/graphql-typing-ts';
+import { EditServerInput, EditTopologyMutation, InputMaybe, LabelInput } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
 //events
@@ -11,12 +11,12 @@ export const serverAddLabelModalCloseEvent = app.domain.createEvent('add label s
 export const editServerEvent = app.domain.createEvent('edit server event');
 export const addLabelEvent = app.domain.createEvent<LabelInput>('add labels event');
 export const removeLabelEvent = app.domain.createEvent<string>('remove server event');
-export const updateLabelEvent = app.domain.createEvent<LabelInput[]>('remove server event');
+export const updateLabelEvent = app.domain.createEvent<Array<InputMaybe<LabelInput>>>('remove server event');
 
 //stores
 export const $serverAddLabelModalVisible = app.domain.createStore(false);
 export const $selectedServerUuid = app.domain.createStore<string | null>(null);
-export const $labelsServer = app.domain.createStore<LabelInput[]>([]);
+export const $labelsServer = app.domain.createStore<Array<InputMaybe<LabelInput>>>([]);
 export const $requestAddedLabels = combine({
   uuid: $selectedServerUuid,
   labels: $labelsServer,

@@ -49,7 +49,7 @@ $selectedServerUuid.on(serverAddLabelModalOpenEvent, (_, { uuid }) => uuid).rese
 $labelsServer
   .on(addLabelEvent, (store, payload) => [...store, payload])
   .on(updateLabelEvent, (_, payload) => payload)
-  .on(removeLabelEvent, (state, payload) => state.filter((label) => label.name !== payload))
+  .on(removeLabelEvent, (state, payload) => state.filter((label) => label?.name !== payload))
   .reset(serverAddLabelModalCloseEvent);
 
 $serverAddLabelModalVisible.on(serverAddLabelModalOpenEvent, () => true).on(serverAddLabelModalCloseEvent, () => false);

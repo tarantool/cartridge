@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -67,6 +67,10 @@ const AddLabelsForServerModal = () => {
     }
   }, [error]);
 
+  const tagLabels = useMemo(() => {
+    return labels?.map((label) => <Tag onClick={handelTag} key={label?.value} text={label?.value} />);
+  }, [handelTag, labels]);
+
   return (
     <Modal
       visible={visible}
@@ -84,11 +88,7 @@ const AddLabelsForServerModal = () => {
           </div>
           <Button key="Add" intent="primary" size="s" text="Add Label" onClick={writeLabel} />
         </div>
-        <div>
-          {labels?.map((label) => (
-            <Tag onClick={handelTag} key={label.value} text={label.value} />
-          ))}
-        </div>
+        <div>{tagLabels}</div>
       </div>
     </Modal>
   );

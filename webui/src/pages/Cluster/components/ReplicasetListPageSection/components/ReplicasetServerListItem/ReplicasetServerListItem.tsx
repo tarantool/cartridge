@@ -6,7 +6,7 @@ import isEqual from 'lodash/isEqual';
 // @ts-ignore
 import { LeaderFlag, Text, Tooltip, UriLabel } from '@tarantool.io/ui-kit';
 
-import { InputMaybe, LabelInput } from 'src/generated/graphql-typing-ts';
+import { LabelInput } from 'src/generated/graphql-typing-ts';
 import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 import ReplicasetListTag from 'src/pages/Cluster/components/ReplicasetListPageSection/components/ReplicasetListTag/ReplicasetListTag';
@@ -36,7 +36,7 @@ export interface ReplicasetServerListItemServer {
   alias?: Maybe<string>;
   disabled?: Maybe<boolean>;
   electable?: Maybe<boolean>;
-  labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  labels?: LabelInput[];
 }
 
 export interface ReplicasetServerListItemServerAdditional {
