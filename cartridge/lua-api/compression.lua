@@ -1,14 +1,17 @@
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 
-local log = require('log')
 local pool = require('cartridge.pool')
 local errors = require('errors')
 
--- Surf by replicates to find master storages and call on them getStorageCompressionInfo()
+--- This function gets compression info on cluster aggregated by instances.
+-- Function surfs by replicates to find master storages and calls on them getStorageCompressionInfo() func.
+-- @function get_cluster_compression_info
+-- @treturn[1] table {{instance_id, instance_compression_info},...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_cluster_compression_info()
     local replicasets, err = lua_api_get_topology.get_replicasets()
     if replicasets == nil then
-        log.error(err)
         return nil, err
     end
 
@@ -23,8 +26,8 @@ local function get_cluster_compression_info()
                     pool.connect(master.uri, {wait_connected = true}),
                     '_G.getStorageCompressionInfo', {master}, {timeout = 1}
                 )
-                if storage_compression_info == nil then
-                    error(err)
+                if storage_compression_info == nil or err ~= nil then
+                    return nil, err
                 end
 
                 table.insert(compression_info, {
@@ -36,16 +39,26 @@ local function get_cluster_compression_info()
 
     return {
         compression_info = compression_info,
-    }
+    }, nil
 end
 
-local function create_test_space(space_name, orig_space, field_format)
-    if box.space[space_name] ~= nil then
-        box.space[space_name]:drop()
+--- This function creates temporary space.
+-- @function create_test_space
+-- @local
+-- @tparam string space_name
+-- @tparam string space_type
+-- @tparam table orig_index
+-- @tparam string orig_format
+-- @tparam string field_format
+-- @treturn table
+local function create_test_space(space_name, space_type, orig_index, orig_format, field_format)
+    if space_type == '' then
+        error('need suffix for space name')
     end
-
-    local orig_index = orig_space.index[0]
-    local orig_format = orig_space:format()
+    local tmp_space = space_name..space_type
+    if box.space[tmp_space] ~= nil then
+        box.space[tmp_space]:drop()
+    end
 
     local index_format = {}
     local index_parts = {}
@@ -65,7 +78,7 @@ local function create_test_space(space_name, orig_space, field_format)
         table.insert(space_format, field_format)
     end
 
-    local space = box.schema.create_space(space_name, {
+    local space = box.schema.create_space(tmp_space, {
         temporary = true,
         format = space_format,
         if_not_exists = true,
@@ -80,8 +93,11 @@ local function create_test_space(space_name, orig_space, field_format)
     return space
 end
 
--- Find all user spaces with correct schema and index.
--- Calculate compression for their fields.
+--- This finds all user spaces with correct schema and index and calculates compression for their fields.
+-- @function getStorageCompressionInfo
+-- @treturn[1] table {{space_name, fields_be_compressed},...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 function _G.getStorageCompressionInfo(_)
     local storage_compression_info = {}
 
@@ -107,10 +123,15 @@ function _G.getStorageCompressionInfo(_)
 
                     if (not field_in_index) and (field_format.type == "string" or field_format.type == "array") then
                         local uncompressed_space =
-                            create_test_space(space_name..'_test_uncompressed', space, field_format)
+                            create_test_space(space_name, '_test_uncompressed',
+                                space.index[0], space:format(), field_format)
                         field_format.compression = 'zstd' -- zstd lz4
-                        local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
-                        local index_space = create_test_space(space_name..'_test_index', space, nil)
+                        local compressed_space =
+                            create_test_space(space_name, '_test_compressed',
+                                space.index[0], space:format(), field_format)
+                        local index_space =
+                            create_test_space(space_name, '_test_index',
+                                space.index[0], space:format(), nil)
 
                         local random_seed = 0
                         local added = 1
@@ -163,7 +184,7 @@ function _G.getStorageCompressionInfo(_)
 
     return {
         storage_compression_info,
-    }
+    }, nil
 end
 
 return {

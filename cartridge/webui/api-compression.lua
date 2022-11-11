@@ -3,12 +3,6 @@ local module_name = 'cartridge.webui.api-compression'
 local gql_types = require('graphql.types')
 local lua_api_compression = require('cartridge.lua-api.compression')
 
-
---type FieldCompressionInfo {
---  field_name: String!
---  compression_percentage: Int!
---}
-
 local gql_field_compression_info = gql_types.object({
     name = 'FieldCompressionInfo',
     description = 'Information about single field compression rate possibility',
@@ -23,12 +17,6 @@ local gql_field_compression_info = gql_types.object({
         },
     }
 })
-
-
---type SpaceCompressionInfo {
---  space_name: String!
---  fields_be_compressed: [FieldCompressionInfo!]!
---}
 
 local gql_space_compression_info = gql_types.object({
     name = 'SpaceCompressionInfo',
@@ -45,12 +33,6 @@ local gql_space_compression_info = gql_types.object({
     }
 })
 
-
---type InstanceCompressionInfo {
---  instance_id: String!
---  compression_info: [SpaceCompressionInfo!]!
---}
-
 local gql_instance_compression_info = gql_types.object({
     name = 'InstanceCompressionInfo',
     description = 'Combined info of all user spaces in the instance',
@@ -66,11 +48,6 @@ local gql_instance_compression_info = gql_types.object({
     }
 })
 
-
---type ClusterCompressionInfo {
---  compression_info: [InstanceCompressionInfo!]!
---}
-
 local gql_cluster_compression_info = gql_types.object({
     name = 'ClusterCompressionInfo',
     description = 'Compression info of all cluster instances',
@@ -84,7 +61,10 @@ local gql_cluster_compression_info = gql_types.object({
 
 
 local function get_cluster_compression_info(_, _, _)
-    local compression = lua_api_compression.get_cluster_compression_info()
+    local compression, err = lua_api_compression.get_cluster_compression_info()
+    if compression == nil then
+        return nil, err
+    end
     return compression
 end
 
