@@ -74,6 +74,7 @@ const AddLabelsForServerModal = () => {
   return (
     <Modal
       visible={visible}
+      className="LabelsAddModal"
       footerControls={[
         <Button key="Apply" intent="primary" size="l" text="Change labels" onClick={handelChangeLabels} />,
       ]}

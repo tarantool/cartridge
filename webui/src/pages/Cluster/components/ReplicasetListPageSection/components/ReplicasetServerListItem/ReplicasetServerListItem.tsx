@@ -9,13 +9,13 @@ import { LeaderFlag, Text, Tooltip, UriLabel } from '@tarantool.io/ui-kit';
 import { LabelInput } from 'src/generated/graphql-typing-ts';
 import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
-import ReplicasetListTag from 'src/pages/Cluster/components/ReplicasetListPageSection/components/ReplicasetListTag/ReplicasetListTag';
 
 import ServerDropdown from '../../../ServerDropdown';
 import { NonElectableFlag } from '../NonElectableFlag';
 import ReplicasetListBuckets from '../ReplicasetListBuckets';
 import ReplicasetListMemStat from '../ReplicasetListMemStat';
 import ReplicasetListStatus from '../ReplicasetListStatus';
+import ReplicasetListTag from '../ReplicasetListTag';
 
 import { styles } from './ReplicasetServerListItem.styles';
 

@@ -113,7 +113,7 @@ const ServerDropdown = ({
           {server?.disabled ? 'Enable server' : 'Disable server'}
         </DropdownItem>,
         <DropdownItem key="handleAddLabelsServer" onClick={handleAddLabelForServer}>
-          Add labels server
+          Server labels
         </DropdownItem>,
         <DropdownItem
           key="handleShowExpelModal"
