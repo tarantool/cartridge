@@ -66,6 +66,15 @@ local function get_params()
     --   (added in v2.3.0-57)
     --   The period (in seconds) of performing the check
     --   (default: 2)
+    -- @tfield boolean master_autoreturn
+    --   (added in v2.7.7)
+    --   If enabled, then switched master will return after ``autoreturn_delay``
+    --   (default: false)
+    -- @tfield number autoreturn_delay
+    --   (added in v2.3.0-57)
+    --   Time (in seconds) until failover try to return master to the first node
+    --   in ``failover_priority``
+    --   (default: 300)
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -89,6 +98,10 @@ end
 --   (added in v2.3.0-57)
 -- @tparam ?number opts.fencing_pause
 --   (added in v2.3.0-57)
+-- @tparam ?number opts.master_autoreturn
+--   (added in v2.7.7)
+-- @tparam ?number opts.autoreturn_delay
+--   (added in v2.7.7)
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -102,6 +115,8 @@ local function set_params(opts)
         fencing_enabled = '?boolean',
         fencing_timeout = '?number',
         fencing_pause = '?number',
+        master_autoreturn = '?boolean',
+        autoreturn_delay = '?number',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -159,6 +174,13 @@ local function set_params(opts)
     end
     if opts.fencing_pause ~= nil then
         topology_cfg.failover.fencing_pause = opts.fencing_pause
+    end
+
+    if opts.master_autoreturn ~= nil then
+        topology_cfg.failover.master_autoreturn = opts.master_autoreturn
+    end
+    if opts.autoreturn_delay ~= nil then
+        topology_cfg.failover.autoreturn_delay = opts.autoreturn_delay
     end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})

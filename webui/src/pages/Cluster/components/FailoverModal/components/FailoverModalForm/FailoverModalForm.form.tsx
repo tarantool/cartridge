@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { cx } from '@emotion/css';
 import { useStore } from 'effector-react';
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { FormikProps, withFormik } from 'formik';
+import { FormikProps, withFormik, yupToFormErrors } from 'formik';
 // @ts-ignore
 // prettier-ignore
 import { Alert, Button, Checkbox, FormField, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
@@ -42,6 +42,8 @@ const INFOS = {
   fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
+  masterAutoreturn: 'Return master to first instance in priority list',
+  autoreturnDelay: 'Delay before master is returned',
 };
 
 const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [
@@ -58,6 +60,8 @@ export interface FailoverFormValues {
   fencing_enabled: boolean;
   fencing_timeout?: number;
   fencing_pause?: number;
+  master_autoreturn?: boolean;
+  autoreturn_delay?: number;
   state_provider?: FailoverStateProvider;
   tarantool_params: {
     uri: string;
@@ -95,6 +99,8 @@ const validationSchema = yup
     fencing_enabled: yup.boolean(),
     fencing_timeout: yup.number().when(['mode', 'fencing_enabled'], reqNumber),
     fencing_pause: yup.number().when(['mode', 'fencing_enabled'], reqNumber),
+    master_autoreturn: yup.boolean(),
+    autoreturn_delay: yup.number().when(['mode', 'master_autoreturn'], reqNumber),
     state_provider: yup.string().oneOf(['tarantool', 'etcd2']).when(['mode', 'fencing_enabled'], reqString),
     tarantool_params: yup
       .object({
@@ -142,6 +148,8 @@ export const withFailoverForm = withFormik<FailoverFormProps, FailoverFormValues
       fencing_enabled: failover_params?.fencing_enabled ?? false,
       fencing_timeout: failover_params?.fencing_timeout,
       fencing_pause: failover_params?.fencing_pause,
+      master_autoreturn: failover_params?.master_autoreturn,
+      autoreturn_delay: failover_params?.autoreturn_delay,
       state_provider: toFailoverStateProvider(failover_params?.state_provider),
       tarantool_params: {
         uri: tarantool_params?.uri ?? '',
@@ -324,6 +332,29 @@ const FailoverModalFormForm = ({
                 message={errors.fencing_pause}
                 info={INFOS.fencingPause}
                 value={`${values.fencing_pause ?? ''}`}
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.inputs}>
+              <FormField label="Master autoreturn" info={INFOS.masterAutoreturn}>
+                <Checkbox
+                  name="master_autoreturn"
+                  className="meta-test__masterAutoreturnCheckbox"
+                  checked={values.master_autoreturn}
+                  onChange={handleChange}
+                >
+                  Enabled
+                </Checkbox>
+              </FormField>
+              <LabeledInput
+                name="autoreturn_delay"
+                label="Autoreturn Delay"
+                className={cx(styles.inputField, 'meta-test__autoreturnDelay')}
+                disabled={!values.fencing_enabled}
+                error={Boolean(errors.autoreturn_delay)}
+                message={errors.autoreturn_delay}
+                info={INFOS.autoreturnDelay}
+                value={`${values.autoreturn_delay ?? ''}`}
                 onChange={handleChange}
               />
             </div>

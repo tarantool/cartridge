@@ -149,6 +149,8 @@ type FailoverAPI {
   state_provider: String
   tarantool_params: FailoverStateProviderCfgTarantool
   fencing_pause: Float!
+  master_autoreturn: Boolean!
+  autoreturn_delay: Float!
   etcd2_params: FailoverStateProviderCfgEtcd2
 }
 
@@ -395,6 +397,10 @@ type MutationApicluster {
     The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
     """
     fencing_pause: Float
+
+    master_autoreturn: Boolean
+
+    autoreturn_delay: Float
 
     """State provider configuration (etcd-v2)"""
     etcd2_params: FailoverStateProviderCfgInputEtcd2

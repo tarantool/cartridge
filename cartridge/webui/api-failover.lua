@@ -67,6 +67,8 @@ local gql_type_userapi = gql_types.object({
         fencing_enabled = gql_types.boolean.nonNull,
         fencing_timeout = gql_types.float.nonNull,
         fencing_pause = gql_types.float.nonNull,
+        master_autoreturn = gql_types.boolean.nonNull,
+        autoreturn_delay = gql_types.float.nonNull,
     }
 })
 
@@ -160,6 +162,8 @@ local function init(graphql)
             fencing_enabled = gql_types.boolean,
             fencing_timeout = gql_types.float,
             fencing_pause = gql_types.float,
+            master_autoreturn = gql_types.boolean,
+            autoreturn_delay = gql_types.float,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',

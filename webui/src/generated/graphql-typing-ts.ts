@@ -138,11 +138,13 @@ export type Error = {
 /** Failover parameters managent */
 export type FailoverApi = {
   __typename?: 'FailoverAPI';
+  autoreturn_delay: Scalars['Float'];
   etcd2_params?: Maybe<FailoverStateProviderCfgEtcd2>;
   failover_timeout: Scalars['Float'];
   fencing_enabled: Scalars['Boolean'];
   fencing_pause: Scalars['Float'];
   fencing_timeout: Scalars['Float'];
+  master_autoreturn: Scalars['Boolean'];
   /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
   mode: Scalars['String'];
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
@@ -385,11 +387,13 @@ export type MutationApiclusterFailoverArgs = {
 
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {
+  autoreturn_delay?: InputMaybe<Scalars['Float']>;
   etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
   failover_timeout?: InputMaybe<Scalars['Float']>;
   fencing_enabled?: InputMaybe<Scalars['Boolean']>;
   fencing_pause?: InputMaybe<Scalars['Float']>;
   fencing_timeout?: InputMaybe<Scalars['Float']>;
+  master_autoreturn?: InputMaybe<Scalars['Boolean']>;
   mode?: InputMaybe<Scalars['String']>;
   state_provider?: InputMaybe<Scalars['String']>;
   tarantool_params?: InputMaybe<FailoverStateProviderCfgInputTarantool>;
@@ -509,6 +513,7 @@ export type Server = {
    */
   clock_delta?: Maybe<Scalars['Float']>;
   disabled?: Maybe<Scalars['Boolean']>;
+  /** Is allowed to elect this instance as leader */
   electable?: Maybe<Scalars['Boolean']>;
   labels?: Maybe<Array<Maybe<Label>>>;
   message: Scalars['String'];
@@ -550,6 +555,10 @@ export type ServerInfoGeneral = {
   __typename?: 'ServerInfoGeneral';
   /** The Application version */
   app_version?: Maybe<Scalars['String']>;
+  /** Instance election mode */
+  election_mode: Scalars['String'];
+  /** State after Raft leader election */
+  election_state?: Maybe<Scalars['String']>;
   /** HTTP host */
   http_host?: Maybe<Scalars['String']>;
   /** HTTP port */
@@ -568,6 +577,8 @@ export type ServerInfoGeneral = {
   ro: Scalars['Boolean'];
   /** Current read-only state reason */
   ro_reason?: Maybe<Scalars['String']>;
+  /** Id of current queue owner */
+  synchro_queue_owner: Scalars['Int'];
   /** The number of seconds since the instance started */
   uptime: Scalars['Float'];
   /** The Tarantool version */
@@ -799,8 +810,11 @@ export type VshardGroup = {
    * @deprecated Has no effect anymore
    */
   collect_bucket_garbage_interval?: Maybe<Scalars['Float']>;
-  /** If set to true, the Lua collectgarbage() function is called periodically */
-  collect_lua_garbage: Scalars['Boolean'];
+  /**
+   * If set to true, the Lua collectgarbage() function is called periodically
+   * @deprecated Has no effect anymore
+   */
+  collect_lua_garbage?: Maybe<Scalars['Boolean']>;
   /** Group name */
   name: Scalars['String'];
   /** A maximum bucket disbalance threshold, in percent */
@@ -994,6 +1008,8 @@ export type GetClusterQuery = {
       fencing_enabled: boolean;
       fencing_timeout: number;
       fencing_pause: number;
+      master_autoreturn: boolean;
+      autoreturn_delay: number;
       mode: string;
       state_provider?: string | null;
       etcd2_params?: {
@@ -1087,6 +1103,17 @@ export type ServerDetailsFieldsFragment = {
       http_host?: string | null;
       webui_prefix?: string | null;
       app_version?: string | null;
+      pid: number;
+      replicaset_uuid: string;
+      work_dir?: string | null;
+      memtx_dir?: string | null;
+      vinyl_dir?: string | null;
+      wal_dir?: string | null;
+      worker_pool_threads?: number | null;
+      listen?: string | null;
+      election_state?: string | null;
+      election_mode: string;
+      synchro_queue_owner: number;
     };
     replication: {
       __typename?: 'ServerInfoReplication';
@@ -1202,6 +1229,17 @@ export type InstanceDataQuery = {
         http_host?: string | null;
         webui_prefix?: string | null;
         app_version?: string | null;
+        pid: number;
+        replicaset_uuid: string;
+        work_dir?: string | null;
+        memtx_dir?: string | null;
+        vinyl_dir?: string | null;
+        wal_dir?: string | null;
+        worker_pool_threads?: number | null;
+        listen?: string | null;
+        election_state?: string | null;
+        election_mode: string;
+        synchro_queue_owner: number;
       };
       replication: {
         __typename?: 'ServerInfoReplication';
@@ -1350,6 +1388,17 @@ export type BoxInfoQuery = {
         http_host?: string | null;
         webui_prefix?: string | null;
         app_version?: string | null;
+        pid: number;
+        replicaset_uuid: string;
+        work_dir?: string | null;
+        memtx_dir?: string | null;
+        vinyl_dir?: string | null;
+        wal_dir?: string | null;
+        worker_pool_threads?: number | null;
+        listen?: string | null;
+        election_state?: string | null;
+        election_mode: string;
+        synchro_queue_owner: number;
       };
       replication: {
         __typename?: 'ServerInfoReplication';
@@ -1543,6 +1592,8 @@ export type ChangeFailoverMutationVariables = Exact<{
   fencing_enabled?: InputMaybe<Scalars['Boolean']>;
   fencing_timeout?: InputMaybe<Scalars['Float']>;
   fencing_pause?: InputMaybe<Scalars['Float']>;
+  master_autoreturn?: InputMaybe<Scalars['Boolean']>;
+  autoreturn_delay?: InputMaybe<Scalars['Float']>;
   mode: Scalars['String'];
   state_provider?: InputMaybe<Scalars['String']>;
   etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
@@ -1681,6 +1732,8 @@ export type GetFailoverParamsQuery = {
       fencing_enabled: boolean;
       fencing_timeout: number;
       fencing_pause: number;
+      master_autoreturn: boolean;
+      autoreturn_delay: number;
       mode: string;
       state_provider?: string | null;
       etcd2_params?: {

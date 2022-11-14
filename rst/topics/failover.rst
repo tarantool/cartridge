@@ -339,6 +339,9 @@ These are clusterwide parameters:
 * ``fencing_enabled``: ``true`` / ``false`` (default: false).
 * ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
 * ``fencing_pause`` -- the period of performing the check (default: 2).
+* ``master_autoreturn``: ``true`` / ``false`` (default: false).
+* ``autoreturn_delay`` -- time before failover will try to return master
+  in replicaset to the first instance in ``failover_priority`` list (default: 300).
 
 It's required that ``failover_timeout > fencing_timeout >= fencing_pause``.
 
