@@ -57,7 +57,7 @@ Added
 - Compression suggestion, see
   `#1911 <https://github.com/tarantool/tarantool/issues/1911>`_.
 
-- Leader autoreturn feature for stateful failover (`#1949 <https://github.com/tarantool/cartridge/issues/1949>`_).
+- Leader autoreturn feature for stateful failover (`#1942 <https://github.com/tarantool/cartridge/issues/1942>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
