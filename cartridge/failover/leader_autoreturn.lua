@@ -53,11 +53,11 @@ local function enable(topology_cfg)
     end
 end
 
---- Cansel autoreturn loop.
+--- cancel autoreturn loop.
 --
 -- Used in 'stateful' failover mode.
--- @function cansel
-local function cansel()
+-- @function cancel
+local function cancel()
     if vars.autoreturn_fiber == nil then
         return
     end
@@ -87,6 +87,6 @@ local function cfg(failover_cfg, topology_cfg)
 end
 
 return {
-    cansel = cansel,
+    cancel = cancel,
     cfg = cfg,
 }

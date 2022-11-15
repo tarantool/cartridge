@@ -98,7 +98,7 @@ end
 --   (added in v2.3.0-57)
 -- @tparam ?number opts.fencing_pause
 --   (added in v2.3.0-57)
--- @tparam ?number opts.leader_autoreturn
+-- @tparam ?boolean opts.leader_autoreturn
 --   (added in v2.7.7)
 -- @tparam ?number opts.autoreturn_delay
 --   (added in v2.7.7)

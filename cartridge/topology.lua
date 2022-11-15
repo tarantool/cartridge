@@ -36,7 +36,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         -- fencing_timeout = nil | number,
         -- fencing_pause = nil | number,
         -- leader_autoreturn = nil | boolean,
-        -- autoreturn_delay = nil | boolean,
+        -- autoreturn_delay = nil | number,
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',

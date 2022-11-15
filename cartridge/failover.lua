@@ -719,7 +719,7 @@ local function cfg(clusterwide_config, opts)
     end
 
     fencing_cancel()
-    leader_autoreturn.cansel()
+    leader_autoreturn.cancel()
     schedule_clear()
     assert(next(vars.schedule) == nil)
 
