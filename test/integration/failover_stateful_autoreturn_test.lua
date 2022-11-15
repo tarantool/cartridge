@@ -5,8 +5,8 @@ local helpers = require('test.helper')
 local etcd2_client = require('cartridge.etcd2-client')
 local stateboard_client = require('cartridge.stateboard-client')
 
-local g_etcd2 = t.group('integration.failover_stateful.etcd2_expel_instance')
-local g_stateboard = t.group('integration.failover_stateful.stateboard_expel_instance')
+local g_etcd2 = t.group('integration.failover_stateful.etcd2_autoreturn')
+local g_stateboard = t.group('integration.failover_stateful.stateboard_autoreturn')
 
 local core_1_uuid = helpers.uuid('c')
 local core_1_1_uuid = helpers.uuid('c', 'c', 1)
