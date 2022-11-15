@@ -6,6 +6,11 @@ local vars = require('cartridge.vars').new('cartridge.failover')
 vars:new('autoreturn_fiber', nil)
 vars:new('autoreturn_delay', math.huge)
 
+--- Loop to check is there any leaders that not on its place.
+--
+-- Used in 'stateful' failover mode.
+-- @function enable
+-- @local
 local function enable(topology_cfg)
     while true do
         fiber.sleep(vars.autoreturn_delay or math.huge)
@@ -48,7 +53,10 @@ local function enable(topology_cfg)
     end
 end
 
-
+--- Cansel autoreturn loop.
+--
+-- Used in 'stateful' failover mode.
+-- @function cansel
 local function cansel()
     if vars.autoreturn_fiber == nil then
         return
@@ -59,6 +67,10 @@ local function cansel()
     vars.autoreturn_fiber = nil
 end
 
+--- Configure and start autoreturn loop.
+--
+-- Used in 'stateful' failover mode.
+-- @function cfg
 local function cfg(failover_cfg, topology_cfg)
     local leaders = topology.get_leaders_order(
         topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
