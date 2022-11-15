@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Tue Oct 25 2022 18:37:36 GMT+0300 (Москва, стандартное время)
+# timestamp: Tue Nov 15 2022 15:37:11 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -137,20 +137,20 @@ type Error {
 """Failover parameters managent"""
 type FailoverAPI {
   fencing_enabled: Boolean!
-  fencing_timeout: Float!
   failover_timeout: Float!
+  autoreturn_delay: Float!
 
   """Supported modes are "disabled", "eventual", "stateful" or "raft"."""
   mode: String!
+  leader_autoreturn: Boolean!
+  tarantool_params: FailoverStateProviderCfgTarantool
+  fencing_pause: Float!
+  fencing_timeout: Float!
 
   """
   Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2".
   """
   state_provider: String
-  tarantool_params: FailoverStateProviderCfgTarantool
-  fencing_pause: Float!
-  leader_autoreturn: Boolean!
-  autoreturn_delay: Float!
   etcd2_params: FailoverStateProviderCfgEtcd2
 }
 
@@ -369,12 +369,12 @@ type MutationApicluster {
     """
     The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
     """
-    fencing_timeout: Float
+    failover_timeout: Float
 
     """
     The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
     """
-    failover_timeout: Float
+    autoreturn_delay: Float
 
     """
     The `String` scalar type represents textual data, represented as UTF-8
@@ -383,12 +383,8 @@ type MutationApicluster {
     """
     mode: String
 
-    """
-    The `String` scalar type represents textual data, represented as UTF-8
-    character sequences. The String type is most often used by GraphQL to
-    represent free-form human-readable text.
-    """
-    state_provider: String
+    """The `Boolean` scalar type represents `true` or `false`."""
+    leader_autoreturn: Boolean
 
     """State provider configuration (Tarantool)"""
     tarantool_params: FailoverStateProviderCfgInputTarantool
@@ -398,9 +394,17 @@ type MutationApicluster {
     """
     fencing_pause: Float
 
-    leader_autoreturn: Boolean
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
+    fencing_timeout: Float
 
-    autoreturn_delay: Float
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    state_provider: String
 
     """State provider configuration (etcd-v2)"""
     etcd2_params: FailoverStateProviderCfgInputEtcd2
