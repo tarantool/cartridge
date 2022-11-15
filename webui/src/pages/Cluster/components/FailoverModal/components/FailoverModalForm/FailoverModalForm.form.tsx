@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { cx } from '@emotion/css';
 import { useStore } from 'effector-react';
+import { FormikProps, withFormik } from 'formik';
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { FormikProps, withFormik, yupToFormErrors } from 'formik';
 // @ts-ignore
 // prettier-ignore
 import { Alert, Button, Checkbox, FormField, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
@@ -42,7 +42,7 @@ const INFOS = {
   fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
-  LeaderAutoreturn: 'Return master to first instance in priority list',
+  leaderAutoreturn: 'Return master to first instance in priority list',
   autoreturnDelay: 'Delay before master is returned',
 };
 
@@ -336,7 +336,7 @@ const FailoverModalFormForm = ({
               />
             </div>
             <div className={styles.inputs}>
-              <FormField label="Leader Autoreturn" info={INFOS.LeaderAutoreturn}>
+              <FormField className={styles.inputField} label="Leader Autoreturn" info={INFOS.leaderAutoreturn}>
                 <Checkbox
                   name="leader_autoreturn"
                   className="meta-test__LeaderAutoreturnCheckbox"
@@ -350,7 +350,7 @@ const FailoverModalFormForm = ({
                 name="autoreturn_delay"
                 label="Autoreturn Delay"
                 className={cx(styles.inputField, 'meta-test__autoreturnDelay')}
-                disabled={!values.fencing_enabled}
+                disabled={!values.leader_autoreturn}
                 error={Boolean(errors.autoreturn_delay)}
                 message={errors.autoreturn_delay}
                 info={INFOS.autoreturnDelay}

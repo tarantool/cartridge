@@ -74,7 +74,7 @@ const messages = {
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...',
-  LeaderAutoreturn: 'Return master to first instance in priority list',
+  leaderAutoreturn: 'Return master to first instance in priority list',
   autoreturnDelay: 'Delay before master is returned',
 };
 /* eslint-enable max-len */
@@ -380,7 +380,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
                 />
               </div>
               <div className={styles.inputs}>
-                <FormField label="Leader Autoreturn" info={messages.LeaderAutoreturn}>
+                <FormField className={styles.inputField} label="Leader Autoreturn" info={messages.leaderAutoreturn}>
                   <Checkbox
                     className="meta-test__LeaderAutoreturnCheckbox"
                     checked={leader_autoreturn}
