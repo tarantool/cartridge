@@ -149,7 +149,7 @@ type FailoverAPI {
   state_provider: String
   tarantool_params: FailoverStateProviderCfgTarantool
   fencing_pause: Float!
-  master_autoreturn: Boolean!
+  leader_autoreturn: Boolean!
   autoreturn_delay: Float!
   etcd2_params: FailoverStateProviderCfgEtcd2
 }
@@ -398,7 +398,7 @@ type MutationApicluster {
     """
     fencing_pause: Float
 
-    master_autoreturn: Boolean
+    leader_autoreturn: Boolean
 
     autoreturn_delay: Float
 
