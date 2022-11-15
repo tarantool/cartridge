@@ -42,7 +42,7 @@ const INFOS = {
   fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
-  masterAutoreturn: 'Return master to first instance in priority list',
+  LeaderAutoreturn: 'Return master to first instance in priority list',
   autoreturnDelay: 'Delay before master is returned',
 };
 
@@ -60,7 +60,7 @@ export interface FailoverFormValues {
   fencing_enabled: boolean;
   fencing_timeout?: number;
   fencing_pause?: number;
-  master_autoreturn?: boolean;
+  leader_autoreturn?: boolean;
   autoreturn_delay?: number;
   state_provider?: FailoverStateProvider;
   tarantool_params: {
@@ -99,8 +99,8 @@ const validationSchema = yup
     fencing_enabled: yup.boolean(),
     fencing_timeout: yup.number().when(['mode', 'fencing_enabled'], reqNumber),
     fencing_pause: yup.number().when(['mode', 'fencing_enabled'], reqNumber),
-    master_autoreturn: yup.boolean(),
-    autoreturn_delay: yup.number().when(['mode', 'master_autoreturn'], reqNumber),
+    leader_autoreturn: yup.boolean(),
+    autoreturn_delay: yup.number().when(['mode', 'leader_autoreturn'], reqNumber),
     state_provider: yup.string().oneOf(['tarantool', 'etcd2']).when(['mode', 'fencing_enabled'], reqString),
     tarantool_params: yup
       .object({
@@ -148,7 +148,7 @@ export const withFailoverForm = withFormik<FailoverFormProps, FailoverFormValues
       fencing_enabled: failover_params?.fencing_enabled ?? false,
       fencing_timeout: failover_params?.fencing_timeout,
       fencing_pause: failover_params?.fencing_pause,
-      master_autoreturn: failover_params?.master_autoreturn,
+      leader_autoreturn: failover_params?.leader_autoreturn,
       autoreturn_delay: failover_params?.autoreturn_delay,
       state_provider: toFailoverStateProvider(failover_params?.state_provider),
       tarantool_params: {
@@ -336,11 +336,11 @@ const FailoverModalFormForm = ({
               />
             </div>
             <div className={styles.inputs}>
-              <FormField label="Master autoreturn" info={INFOS.masterAutoreturn}>
+              <FormField label="Leader Autoreturn" info={INFOS.LeaderAutoreturn}>
                 <Checkbox
-                  name="master_autoreturn"
-                  className="meta-test__masterAutoreturnCheckbox"
-                  checked={values.master_autoreturn}
+                  name="leader_autoreturn"
+                  className="meta-test__LeaderAutoreturnCheckbox"
+                  checked={values.leader_autoreturn}
                   onChange={handleChange}
                 >
                   Enabled

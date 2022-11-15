@@ -187,7 +187,7 @@ $cluster
           fencing_enabled,
           fencing_timeout,
           fencing_pause,
-          master_autoreturn,
+          leader_autoreturn,
           autoreturn_delay,
           mode,
           state_provider,
@@ -199,7 +199,7 @@ $cluster
         exists(fencing_enabled) && (failover_params.fencing_enabled = fencing_enabled);
         exists(fencing_timeout) && (failover_params.fencing_timeout = fencing_timeout);
         exists(fencing_pause) && (failover_params.fencing_pause = fencing_pause);
-        exists(master_autoreturn) && (failover_params.master_autoreturn = master_autoreturn);
+        exists(leader_autoreturn) && (failover_params.leader_autoreturn = leader_autoreturn);
         exists(autoreturn_delay) && (failover_params.autoreturn_delay = autoreturn_delay);
         exists(mode) && (failover_params.mode = mode);
         exists(state_provider) && (failover_params.state_provider = state_provider);

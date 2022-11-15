@@ -158,6 +158,12 @@ algorithm is slightly different from that in case of eventual failover:
 * Every appointment (self-made or fetched) is immune for a while
   (controlled by the ``IMMUNITY_TIMEOUT`` option).
 
+You can also enable ``leader_autoreturn`` to return leadership to the
+first leader in ``failover_priority`` list after failover was triggered.
+It might be useful when you have active and passive data center.
+Time before failover will try to return leader is configured by
+``autoreturn_delay`` option in failover configuration.
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -339,7 +345,7 @@ These are clusterwide parameters:
 * ``fencing_enabled``: ``true`` / ``false`` (default: false).
 * ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
 * ``fencing_pause`` -- the period of performing the check (default: 2).
-* ``master_autoreturn``: ``true`` / ``false`` (default: false).
+* ``leader_autoreturn``: ``true`` / ``false`` (default: false).
 * ``autoreturn_delay`` -- time before failover will try to return master
   in replicaset to the first instance in ``failover_priority`` list (default: 300).
 

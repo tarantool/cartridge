@@ -144,7 +144,7 @@ export type FailoverApi = {|
   fencing_enabled: $ElementType<Scalars, 'Boolean'>,
   fencing_pause: $ElementType<Scalars, 'Float'>,
   fencing_timeout: $ElementType<Scalars, 'Float'>,
-  master_autoreturn: $ElementType<Scalars, 'Boolean'>,
+  leader_autoreturn: $ElementType<Scalars, 'Boolean'>,
   /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
   mode: $ElementType<Scalars, 'String'>,
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
@@ -410,7 +410,7 @@ export type MutationApiclusterFailover_ParamsArgs = {|
   fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
   fencing_pause?: ?$ElementType<Scalars, 'Float'>,
   fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
-  master_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
+  leader_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
   mode?: ?$ElementType<Scalars, 'String'>,
   state_provider?: ?$ElementType<Scalars, 'String'>,
   tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
@@ -919,7 +919,7 @@ export type GetClusterQuery = ({
       ...{| uri: $ElementType<ServerShortInfo, 'uri'>, uuid?: $ElementType<ServerShortInfo, 'uuid'> |}
     }), failover_params: ({
         ...{ __typename?: 'FailoverAPI' },
-      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, master_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, leader_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
       ...{| etcd2_params?: ?({
           ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
         ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>
@@ -1297,7 +1297,7 @@ export type ChangeFailoverMutationVariables = {
   fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
   fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
   fencing_pause?: ?$ElementType<Scalars, 'Float'>,
-  master_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
+  leader_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
   autoreturn_delay?: ?$ElementType<Scalars, 'Float'>,
   mode: $ElementType<Scalars, 'String'>,
   state_provider?: ?$ElementType<Scalars, 'String'>,
@@ -1482,7 +1482,7 @@ export type GetFailoverParamsQuery = ({
       ...{ __typename?: 'Apicluster' },
     ...{| failover_params: ({
         ...{ __typename?: 'FailoverAPI' },
-      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, master_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, leader_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
       ...{| etcd2_params?: ?({
           ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
         ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>

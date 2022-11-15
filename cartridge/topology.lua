@@ -35,7 +35,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         -- fencing_enabled = nil | boolean,
         -- fencing_timeout = nil | number,
         -- fencing_pause = nil | number,
-        -- master_autoreturn = nil | boolean,
+        -- leader_autoreturn = nil | boolean,
         -- autoreturn_delay = nil | boolean,
     },
     servers = {
@@ -459,11 +459,11 @@ local function validate_failover_schema(field, topology)
             )
         end
 
-        if topology.failover.master_autoreturn ~= nil then
+        if topology.failover.leader_autoreturn ~= nil then
             e_config:assert(
-                type(topology.failover.master_autoreturn) == 'boolean',
-                '%s.failover.master_autoreturn must be a boolean, got %s',
-                field, type(topology.failover.master_autoreturn)
+                type(topology.failover.leader_autoreturn) == 'boolean',
+                '%s.failover.leader_autoreturn must be a boolean, got %s',
+                field, type(topology.failover.leader_autoreturn)
             )
         end
 
@@ -665,7 +665,7 @@ local function validate_failover_schema(field, topology)
             ['fencing_enabled'] = true,
             ['fencing_timeout'] = true,
             ['fencing_pause'] = true,
-            ['master_autoreturn'] = true,
+            ['leader_autoreturn'] = true,
             ['autoreturn_delay'] = true,
             -- For the sake of backward compatibility with v2.0.1-78
             -- See bug https://github.com/tarantool/cartridge/issues/754
@@ -860,7 +860,7 @@ local function get_failover_params(topology_cfg)
             fencing_enabled = topology_cfg.failover.fencing_enabled,
             fencing_timeout = topology_cfg.failover.fencing_timeout,
             fencing_pause = topology_cfg.failover.fencing_pause,
-            master_autoreturn = topology_cfg.failover.master_autoreturn,
+            leader_autoreturn = topology_cfg.failover.leader_autoreturn,
             autoreturn_delay = topology_cfg.failover.autoreturn_delay,
         }
 
@@ -952,8 +952,8 @@ local function get_failover_params(topology_cfg)
         ret.fencing_pause = 2
     end
 
-    if ret.mode ~= 'stateful' or ret.master_autoreturn == nil then
-        ret.master_autoreturn = false
+    if ret.mode ~= 'stateful' or ret.leader_autoreturn == nil then
+        ret.leader_autoreturn = false
     end
 
     if ret.autoreturn_delay == nil then

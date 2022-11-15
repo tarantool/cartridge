@@ -144,7 +144,7 @@ export type FailoverApi = {
   fencing_enabled: Scalars['Boolean'];
   fencing_pause: Scalars['Float'];
   fencing_timeout: Scalars['Float'];
-  master_autoreturn: Scalars['Boolean'];
+  leader_autoreturn: Scalars['Boolean'];
   /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
   mode: Scalars['String'];
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
@@ -393,7 +393,7 @@ export type MutationApiclusterFailover_ParamsArgs = {
   fencing_enabled?: InputMaybe<Scalars['Boolean']>;
   fencing_pause?: InputMaybe<Scalars['Float']>;
   fencing_timeout?: InputMaybe<Scalars['Float']>;
-  master_autoreturn?: InputMaybe<Scalars['Boolean']>;
+  leader_autoreturn?: InputMaybe<Scalars['Boolean']>;
   mode?: InputMaybe<Scalars['String']>;
   state_provider?: InputMaybe<Scalars['String']>;
   tarantool_params?: InputMaybe<FailoverStateProviderCfgInputTarantool>;
@@ -1008,7 +1008,7 @@ export type GetClusterQuery = {
       fencing_enabled: boolean;
       fencing_timeout: number;
       fencing_pause: number;
-      master_autoreturn: boolean;
+      leader_autoreturn: boolean;
       autoreturn_delay: number;
       mode: string;
       state_provider?: string | null;
@@ -1592,7 +1592,7 @@ export type ChangeFailoverMutationVariables = Exact<{
   fencing_enabled?: InputMaybe<Scalars['Boolean']>;
   fencing_timeout?: InputMaybe<Scalars['Float']>;
   fencing_pause?: InputMaybe<Scalars['Float']>;
-  master_autoreturn?: InputMaybe<Scalars['Boolean']>;
+  leader_autoreturn?: InputMaybe<Scalars['Boolean']>;
   autoreturn_delay?: InputMaybe<Scalars['Float']>;
   mode: Scalars['String'];
   state_provider?: InputMaybe<Scalars['String']>;
@@ -1732,7 +1732,7 @@ export type GetFailoverParamsQuery = {
       fencing_enabled: boolean;
       fencing_timeout: number;
       fencing_pause: number;
-      master_autoreturn: boolean;
+      leader_autoreturn: boolean;
       autoreturn_delay: number;
       mode: string;
       state_provider?: string | null;

@@ -74,7 +74,7 @@ const messages = {
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...',
-  masterAutoreturn: 'Return master to first instance in priority list',
+  LeaderAutoreturn: 'Return master to first instance in priority list',
   autoreturnDelay: 'Delay before master is returned',
 };
 /* eslint-enable max-len */
@@ -93,7 +93,7 @@ type FailoverModalState = {
   fencing_enabled: boolean,
   fencing_timeout: string,
   fencing_pause: string,
-  master_autoreturn: boolean,
+  leader_autoreturn: boolean,
   autoreturn_delay: number,
   mode: string,
   state_provider?: string,
@@ -119,7 +119,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled: false,
       fencing_timeout: '',
       fencing_pause: '',
-      master_autoreturn: false,
+      leader_autoreturn: false,
       autoreturn_delay: '',
       mode: 'disabled',
       tarantool_params: {
@@ -152,7 +152,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_enabled,
         fencing_timeout,
         fencing_pause,
-        master_autoreturn,
+        leader_autoreturn,
         autoreturn_delay,
         mode,
         tarantool_params,
@@ -165,7 +165,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_enabled,
         fencing_timeout: fencing_timeout.toString(),
         fencing_pause: fencing_pause.toString(),
-        master_autoreturn,
+        leader_autoreturn,
         autoreturn_delay: autoreturn_delay.toString(),
         mode,
         tarantool_params: {
@@ -190,7 +190,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
   handleFencingToggle = () => this.setState(({ fencing_enabled }) => ({ fencing_enabled: !fencing_enabled }));
 
-  handleAutoreturnToggle = () => this.setState(({ master_autoreturn }) => ({ master_autoreturn: !master_autoreturn }));
+  handleAutoreturnToggle = () => this.setState(({ leader_autoreturn }) => ({ leader_autoreturn: !leader_autoreturn }));
 
   handleInputChange =
     (fieldPath: string[]) =>
@@ -215,7 +215,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled,
       fencing_timeout,
       fencing_pause,
-      master_autoreturn,
+      leader_autoreturn,
       autoreturn_delay,
       mode,
       etcd2_params,
@@ -230,7 +230,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled,
       fencing_timeout: parseFloat(fencing_timeout),
       fencing_pause: parseFloat(fencing_pause),
-      master_autoreturn,
+      leader_autoreturn,
       autoreturn_delay: parseFloat(autoreturn_delay),
       mode,
       tarantool_params: mode === 'stateful' && state_provider === 'tarantool' ? tarantool_params : null,
@@ -256,7 +256,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       failover_timeout,
       fencing_enabled,
       fencing_pause,
-      master_autoreturn,
+      leader_autoreturn,
       autoreturn_delay,
       fencing_timeout,
       state_provider,
@@ -265,7 +265,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
     } = this.state;
 
     const disableFencingParams = mode !== 'stateful' || !fencing_enabled;
-    const disableAutoreturn = mode !== 'stateful' || !master_autoreturn;
+    const disableAutoreturn = mode !== 'stateful' || !leader_autoreturn;
 
     const errors = {
       failover_timeout: failover_timeout && !failover_timeout.match(/^\d+(\.\d*)*$/),
@@ -380,10 +380,10 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
                 />
               </div>
               <div className={styles.inputs}>
-                <FormField label="Master autoreturn" info={messages.masterAutoreturn}>
+                <FormField label="Leader Autoreturn" info={messages.LeaderAutoreturn}>
                   <Checkbox
-                    className="meta-test__masterAutoreturnCheckbox"
-                    checked={master_autoreturn}
+                    className="meta-test__LeaderAutoreturnCheckbox"
+                    checked={leader_autoreturn}
                     onChange={() => this.handleAutoreturnToggle()}
                   >
                     Enabled

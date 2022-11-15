@@ -66,7 +66,7 @@ local function get_params()
     --   (added in v2.3.0-57)
     --   The period (in seconds) of performing the check
     --   (default: 2)
-    -- @tfield boolean master_autoreturn
+    -- @tfield boolean leader_autoreturn
     --   (added in v2.7.7)
     --   If enabled, then switched master will return after ``autoreturn_delay``
     --   (default: false)
@@ -98,7 +98,7 @@ end
 --   (added in v2.3.0-57)
 -- @tparam ?number opts.fencing_pause
 --   (added in v2.3.0-57)
--- @tparam ?number opts.master_autoreturn
+-- @tparam ?number opts.leader_autoreturn
 --   (added in v2.7.7)
 -- @tparam ?number opts.autoreturn_delay
 --   (added in v2.7.7)
@@ -115,7 +115,7 @@ local function set_params(opts)
         fencing_enabled = '?boolean',
         fencing_timeout = '?number',
         fencing_pause = '?number',
-        master_autoreturn = '?boolean',
+        leader_autoreturn = '?boolean',
         autoreturn_delay = '?number',
     })
 
@@ -176,8 +176,8 @@ local function set_params(opts)
         topology_cfg.failover.fencing_pause = opts.fencing_pause
     end
 
-    if opts.master_autoreturn ~= nil then
-        topology_cfg.failover.master_autoreturn = opts.master_autoreturn
+    if opts.leader_autoreturn ~= nil then
+        topology_cfg.failover.leader_autoreturn = opts.leader_autoreturn
     end
     if opts.autoreturn_delay ~= nil then
         topology_cfg.failover.autoreturn_delay = opts.autoreturn_delay
