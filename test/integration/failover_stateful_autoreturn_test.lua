@@ -14,8 +14,8 @@ local core_1_1_uuid = helpers.uuid('c', 'c', 1)
 local storage1_uuid = helpers.uuid('b', 1)
 local storage1_1_uuid = helpers.uuid('b', 'b', 1)
 local storage1_2_uuid = helpers.uuid('b', 'b', 2)
-local storage1_3_uuid = helpers.uuid('b', 'b', 3)
 
+local --[[ const ]] AUTORETURN_DELAY = 3
 
 local function setup_cluster(g)
     g.cluster = helpers.Cluster:new({
@@ -24,11 +24,11 @@ local function setup_cluster(g)
         cookie = helpers.random_cookie(),
         replicasets = {
             {
-                alias = 'core-1',
+                alias = 'coordinator',
                 uuid = core_1_uuid,
                 roles = {'failover-coordinator'},
                 servers = {
-                    {alias = 'core-1', instance_uuid = core_1_1_uuid},
+                    {alias = 'coordinator', instance_uuid = core_1_1_uuid},
                 },
             },
             {
@@ -36,9 +36,8 @@ local function setup_cluster(g)
                 uuid = storage1_uuid,
                 roles = {},
                 servers = {
-                    {alias = 'storage-1-leader', instance_uuid = storage1_1_uuid},
-                    {alias = 'storage-1-replica', instance_uuid = storage1_2_uuid},
-                    {alias = 'storage-1-replica-2', instance_uuid = storage1_3_uuid},
+                    {alias = 'leader', instance_uuid = storage1_1_uuid},
+                    {alias = 'replica', instance_uuid = storage1_2_uuid},
                 },
             },
         },
@@ -80,7 +79,7 @@ g_stateboard.before_all(function()
         {{
             mode = 'stateful',
             leader_autoreturn = true,
-            autoreturn_delay = 3,
+            autoreturn_delay = AUTORETURN_DELAY,
             state_provider = 'tarantool',
             tarantool_params = {
                 uri = g.state_provider.net_box_uri,
@@ -121,7 +120,7 @@ g_etcd2.before_all(function()
         {{
             mode = 'stateful',
             leader_autoreturn = true,
-            autoreturn_delay = 3,
+            autoreturn_delay = AUTORETURN_DELAY,
             state_provider = 'etcd2',
             etcd2_params = {
                 prefix = 'failover_stateful_test',
@@ -156,14 +155,32 @@ local q_leadership = string.format([[
     return failover.get_active_leaders()[%q]
 ]], storage1_uuid)
 
-add('test_stateful_failover_autoreturn', function(g)
-    g.cluster.main_server:exec(function()
-        local vars = require('cartridge.vars').new('cartridge.failover')
-        assert(vars.autoreturn_fiber == nil)
-    end)
+local function check_fiber(g, server_name, present)
+    g.cluster:server(server_name):exec(function(present)
+        local fun = require('fun')
+        local fiber = require('fiber')
 
-    local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
-    t.assert(ok, err)
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        assert((vars.autoreturn_fiber ~= nil) == present)
+        local num_of_fibers = present and 1 or 0
+        assert(fun.iter(fiber.info()):filter(
+            function(_, x) return x.name == 'cartridge.leader_autoreturn' end):length() == num_of_fibers)
+    end, {present})
+end
+
+add('test_stateful_failover_autoreturn_fiber_present', function(g)
+    check_fiber(g, 'coordinator', false)
+    for _, v in ipairs{'leader', 'replica'} do
+        check_fiber(g, v, true)
+    end
+end)
+
+
+add('test_stateful_failover_autoreturn', function(g)
+    helpers.retrying({}, function()
+        local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
+        t.assert(ok, err)
+    end)
 
     helpers.retrying({}, function()
         t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
@@ -173,3 +190,55 @@ add('test_stateful_failover_autoreturn', function(g)
         t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_1_uuid)
     end)
 end)
+
+for _, server in ipairs{'coordinator', 'leader'} do
+    add('test_stateful_failover_autoreturn_fails_no_' .. server, function(g)
+        helpers.retrying({}, function()
+            local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
+            t.assert(ok, err)
+        end)
+        g.cluster:server(server):stop()
+
+        helpers.retrying({}, function()
+            t.assert_equals(g.cluster:server('replica'):eval(q_leadership), storage1_2_uuid)
+        end)
+        g.cluster:server(server):start()
+        g.cluster:wait_until_healthy()
+
+        helpers.retrying({timeout = 2*AUTORETURN_DELAY}, function()
+            t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_1_uuid)
+        end)
+    end)
+end
+
+local function set_autoreturn(g, leader_autoreturn)
+    local response = g.cluster.main_server:graphql({
+        query = [[
+            mutation(
+                $leader_autoreturn: Boolean
+            ) {
+                cluster {
+                    failover_params(
+                        leader_autoreturn: $leader_autoreturn
+                    ) {
+                        leader_autoreturn
+                    }
+                }
+            }
+        ]],
+        variables = {leader_autoreturn = leader_autoreturn},
+        raise = false,
+    })
+    if response.errors then
+        error(response.errors[1].message, 2)
+    end
+end
+
+add('test_stateful_failover_autoreturn_disable_no_fibers', function(g)
+    set_autoreturn(g, false)
+    for _, v in ipairs{'coordinator', 'leader', 'replica'} do
+        check_fiber(g, v, false)
+    end
+    set_autoreturn(g, true)
+end)
+
