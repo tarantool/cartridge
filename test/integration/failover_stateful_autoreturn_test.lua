@@ -165,7 +165,9 @@ add('test_stateful_failover_autoreturn', function(g)
     local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
     t.assert(ok, err)
 
-    t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
+    helpers.retrying({}, function()
+        t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
+    end)
 
     helpers.retrying({timeout = 5}, function()
         t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_1_uuid)
