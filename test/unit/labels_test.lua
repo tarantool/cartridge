@@ -22,6 +22,11 @@ function g.test_labels_ok()
     )
 
     t.assert_equals(
+        label_utils.validate_labels("field", {labels = box.NULL}),
+        true, "labels of type nil valid"
+    )
+
+    t.assert_equals(
         label_utils.validate_labels("field", {labels = {}}),
         true, "labels of type table valid"
     )
