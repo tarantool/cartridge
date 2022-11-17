@@ -129,4 +129,12 @@ export const styles = {
     align-items: center;
     justify-content: center;
   `,
+  serverLabel: css`
+    margin: 0 5px;
+  `,
+  wrapSL: css`
+    margin-left: 10px;
+    display: flex;
+    flex-wrap: wrap;
+  `,
 };

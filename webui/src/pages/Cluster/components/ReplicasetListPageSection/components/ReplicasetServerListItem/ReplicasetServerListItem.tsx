@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { cx } from '@emotion/css';
 import isEqual from 'lodash/isEqual';
 // @ts-ignore
 import { LeaderFlag, Text, Tooltip, UriLabel } from '@tarantool.io/ui-kit';
 
+import { LabelInput } from 'src/generated/graphql-typing-ts';
 import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 
@@ -14,6 +15,7 @@ import { NonElectableFlag } from '../NonElectableFlag';
 import ReplicasetListBuckets from '../ReplicasetListBuckets';
 import ReplicasetListMemStat from '../ReplicasetListMemStat';
 import ReplicasetListStatus from '../ReplicasetListStatus';
+import ReplicasetListTag from '../ReplicasetListTag';
 
 import { styles } from './ReplicasetServerListItem.styles';
 
@@ -34,6 +36,7 @@ export interface ReplicasetServerListItemServer {
   alias?: Maybe<string>;
   disabled?: Maybe<boolean>;
   electable?: Maybe<boolean>;
+  labels?: LabelInput[];
 }
 
 export interface ReplicasetServerListItemServerAdditional {
@@ -55,10 +58,23 @@ export interface ReplicasetServerListItemProps {
 
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   const {
-    server: { uuid, uri, alias, status, disabled = false, electable = true, message },
+    server: { uuid, uri, alias, status, disabled = false, electable = true, message, labels },
     additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics, filterMatching },
     showFailoverPromote,
   } = props;
+
+  const labelsParse = useMemo(() => {
+    return labels?.map((label, index) => {
+      if (label?.name && label?.value) {
+        return (
+          <ReplicasetListTag className={styles.serverLabel} key={`${index}/${label.name}`} title={label.name}>
+            {label.value}
+          </ReplicasetListTag>
+        );
+      }
+      return null;
+    });
+  }, [labels]);
 
   return (
     <div
@@ -107,6 +123,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
           <div className={styles.labelWrp}>
             <UriLabel uri={uri} className={styles.label} />
           </div>
+          {labels?.length ? <div className={styles.wrapSL}>{labelsParse}</div> : null}
         </div>
         <div className={cx(styles.div, styles.grow)} />
         <div className={styles.status}>

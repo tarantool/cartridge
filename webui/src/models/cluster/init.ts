@@ -8,3 +8,4 @@ import './server-probe/init';
 import './failover/init';
 import './zones/init';
 import './suggestions/init';
+import './add-labels/init';

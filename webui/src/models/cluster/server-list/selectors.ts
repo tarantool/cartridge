@@ -1,3 +1,4 @@
+import { InputMaybe, LabelInput } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 import type { Maybe } from 'src/models';
 
@@ -127,6 +128,9 @@ export const replicasetList = (data: ServerList): ServerListReplicaset[] => comp
 
 export const serverGetByUuid = (data: ServerList, uuid: Maybe<string>): ServerListServer | undefined =>
   uuid ? serverList(data).find((server) => server.uuid === uuid) : undefined;
+
+export const serverLabelsGetByUuid = (data: ServerList, uuid: string): Array<InputMaybe<LabelInput>> =>
+  data?.serverList ? serverList(data).find((server) => server.uuid === uuid)?.labels ?? [] : [];
 
 export const serverGetByUri = (data: ServerList, uri: Maybe<string>): ServerListServer | undefined =>
   uri ? serverList(data).find((server) => server.uri === uri) : undefined;

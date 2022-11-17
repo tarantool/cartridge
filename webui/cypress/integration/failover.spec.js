@@ -167,7 +167,7 @@ describe('Failover', () => {
     checkFailoverTabMode('Disabled', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
     //X button
-    cy.get('.meta-test__FailoverModal svg').click();
+    cy.get('.meta-test__FailoverModal svg').click({ multiple: true });
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Failover Eventual from UI');
