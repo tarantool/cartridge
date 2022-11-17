@@ -74,6 +74,8 @@ const messages = {
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...',
+  leaderAutoreturn: 'Return leader to the first instance in priority list',
+  autoreturnDelay: 'Delay before the leader is returned',
 };
 /* eslint-enable max-len */
 
@@ -91,6 +93,8 @@ type FailoverModalState = {
   fencing_enabled: boolean,
   fencing_timeout: string,
   fencing_pause: string,
+  leader_autoreturn: boolean,
+  autoreturn_delay: number,
   mode: string,
   state_provider?: string,
   tarantool_params: {|
@@ -115,6 +119,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled: false,
       fencing_timeout: '',
       fencing_pause: '',
+      leader_autoreturn: false,
+      autoreturn_delay: '',
       mode: 'disabled',
       tarantool_params: {
         uri: '',
@@ -146,6 +152,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_enabled,
         fencing_timeout,
         fencing_pause,
+        leader_autoreturn,
+        autoreturn_delay,
         mode,
         tarantool_params,
         etcd2_params,
@@ -157,6 +165,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_enabled,
         fencing_timeout: fencing_timeout.toString(),
         fencing_pause: fencing_pause.toString(),
+        leader_autoreturn,
+        autoreturn_delay: autoreturn_delay.toString(),
         mode,
         tarantool_params: {
           uri: (tarantool_params && tarantool_params.uri) || '',
@@ -179,6 +189,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   handleStateProviderChange = (state_provider: string) => this.setState({ state_provider });
 
   handleFencingToggle = () => this.setState(({ fencing_enabled }) => ({ fencing_enabled: !fencing_enabled }));
+
+  handleAutoreturnToggle = () => this.setState(({ leader_autoreturn }) => ({ leader_autoreturn: !leader_autoreturn }));
 
   handleInputChange =
     (fieldPath: string[]) =>
@@ -203,6 +215,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled,
       fencing_timeout,
       fencing_pause,
+      leader_autoreturn,
+      autoreturn_delay,
       mode,
       etcd2_params,
       tarantool_params,
@@ -216,6 +230,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_enabled,
       fencing_timeout: parseFloat(fencing_timeout),
       fencing_pause: parseFloat(fencing_pause),
+      leader_autoreturn,
+      autoreturn_delay: parseFloat(autoreturn_delay),
       mode,
       tarantool_params: mode === 'stateful' && state_provider === 'tarantool' ? tarantool_params : null,
       etcd2_params:
@@ -240,6 +256,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       failover_timeout,
       fencing_enabled,
       fencing_pause,
+      leader_autoreturn,
+      autoreturn_delay,
       fencing_timeout,
       state_provider,
       tarantool_params,
@@ -247,12 +265,14 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
     } = this.state;
 
     const disableFencingParams = mode !== 'stateful' || !fencing_enabled;
+    const disableAutoreturn = mode !== 'stateful' || !leader_autoreturn;
 
     const errors = {
       failover_timeout: failover_timeout && !failover_timeout.match(/^\d+(\.\d*)*$/),
       etcd2_lock_delay: etcd2_params.lock_delay && !etcd2_params.lock_delay.match(/^\d+(\.\d*)*$/),
       fencing_timeout: fencing_timeout && !fencing_timeout.match(/^\d+(\.\d*)*$/),
       fencing_pause: fencing_pause && !fencing_pause.match(/^\d+(\.\d*)*$/),
+      autoreturn_delay: autoreturn_delay && !autoreturn_delay.match(/^\d+(\.\d*)*$/),
     };
 
     return (
@@ -357,6 +377,27 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
                   info={messages.fencingPause}
                   value={fencing_pause}
                   onChange={this.handleInputChange(['fencing_pause'])}
+                />
+              </div>
+              <div className={styles.inputs}>
+                <FormField className={styles.inputField} label="Leader Autoreturn" info={messages.leaderAutoreturn}>
+                  <Checkbox
+                    className="meta-test__LeaderAutoreturnCheckbox"
+                    checked={leader_autoreturn}
+                    onChange={() => this.handleAutoreturnToggle()}
+                  >
+                    Enabled
+                  </Checkbox>
+                </FormField>
+                <LabeledInput
+                  label="Autoreturn delay"
+                  className={cx(styles.inputField, 'meta-test__autoreturnDelay')}
+                  disabled={disableAutoreturn}
+                  error={!disableAutoreturn && errors.autoreturn_delay}
+                  message={!disableAutoreturn && errors.autoreturn_delay && messages.invalidFloat}
+                  info={messages.autoreturnDelay}
+                  value={autoreturn_delay}
+                  onChange={this.handleInputChange(['autoreturn_delay'])}
                 />
               </div>
               <LabeledInput

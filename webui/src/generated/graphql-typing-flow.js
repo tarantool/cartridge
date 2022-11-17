@@ -138,11 +138,13 @@ export type Error = {|
 /** Failover parameters managent */
 export type FailoverApi = {|
   __typename?: 'FailoverAPI',
+  autoreturn_delay: $ElementType<Scalars, 'Float'>,
   etcd2_params?: ?FailoverStateProviderCfgEtcd2,
   failover_timeout: $ElementType<Scalars, 'Float'>,
   fencing_enabled: $ElementType<Scalars, 'Boolean'>,
   fencing_pause: $ElementType<Scalars, 'Float'>,
   fencing_timeout: $ElementType<Scalars, 'Float'>,
+  leader_autoreturn: $ElementType<Scalars, 'Boolean'>,
   /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
   mode: $ElementType<Scalars, 'String'>,
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
@@ -402,11 +404,13 @@ export type MutationApiclusterFailoverArgs = {|
 
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {|
+  autoreturn_delay?: ?$ElementType<Scalars, 'Float'>,
   etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,
   failover_timeout?: ?$ElementType<Scalars, 'Float'>,
   fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
   fencing_pause?: ?$ElementType<Scalars, 'Float'>,
   fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
+  leader_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
   mode?: ?$ElementType<Scalars, 'String'>,
   state_provider?: ?$ElementType<Scalars, 'String'>,
   tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
@@ -532,6 +536,7 @@ export type Server = {|
    */
   clock_delta?: ?$ElementType<Scalars, 'Float'>,
   disabled?: ?$ElementType<Scalars, 'Boolean'>,
+  /** Is allowed to elect this instance as leader */
   electable?: ?$ElementType<Scalars, 'Boolean'>,
   labels?: ?Array<?Label>,
   message: $ElementType<Scalars, 'String'>,
@@ -573,6 +578,10 @@ export type ServerInfoGeneral = {|
   __typename?: 'ServerInfoGeneral',
   /** The Application version */
   app_version?: ?$ElementType<Scalars, 'String'>,
+  /** Instance election mode */
+  election_mode: $ElementType<Scalars, 'String'>,
+  /** State after Raft leader election */
+  election_state?: ?$ElementType<Scalars, 'String'>,
   /** HTTP host */
   http_host?: ?$ElementType<Scalars, 'String'>,
   /** HTTP port */
@@ -591,6 +600,8 @@ export type ServerInfoGeneral = {|
   ro: $ElementType<Scalars, 'Boolean'>,
   /** Current read-only state reason */
   ro_reason?: ?$ElementType<Scalars, 'String'>,
+  /** Id of current queue owner */
+  synchro_queue_owner: $ElementType<Scalars, 'Int'>,
   /** The number of seconds since the instance started */
   uptime: $ElementType<Scalars, 'Float'>,
   /** The Tarantool version */
@@ -820,7 +831,7 @@ export type VshardGroup = {|
   /** The interval between garbage collector actions, in seconds */
   collect_bucket_garbage_interval?: ?$ElementType<Scalars, 'Float'>,
   /** If set to true, the Lua collectgarbage() function is called periodically */
-  collect_lua_garbage: $ElementType<Scalars, 'Boolean'>,
+  collect_lua_garbage?: ?$ElementType<Scalars, 'Boolean'>,
   /** Group name */
   name: $ElementType<Scalars, 'String'>,
   /** A maximum bucket disbalance threshold, in percent */
@@ -908,7 +919,7 @@ export type GetClusterQuery = ({
       ...{| uri: $ElementType<ServerShortInfo, 'uri'>, uuid?: $ElementType<ServerShortInfo, 'uuid'> |}
     }), failover_params: ({
         ...{ __typename?: 'FailoverAPI' },
-      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, mode: *, state_provider?: * |}>,
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, leader_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
       ...{| etcd2_params?: ?({
           ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
         ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>
@@ -964,7 +975,7 @@ export type ServerDetailsFieldsFragment = ({
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
     }), general: ({
         ...{ __typename?: 'ServerInfoGeneral' },
-      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
+      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
     }), replication: ({
         ...{ __typename?: 'ServerInfoReplication' },
       ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1021,7 +1032,7 @@ export type InstanceDataQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1127,7 +1138,7 @@ export type BoxInfoQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1286,6 +1297,8 @@ export type ChangeFailoverMutationVariables = {
   fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
   fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
   fencing_pause?: ?$ElementType<Scalars, 'Float'>,
+  leader_autoreturn?: ?$ElementType<Scalars, 'Boolean'>,
+  autoreturn_delay?: ?$ElementType<Scalars, 'Float'>,
   mode: $ElementType<Scalars, 'String'>,
   state_provider?: ?$ElementType<Scalars, 'String'>,
   etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,
@@ -1469,7 +1482,7 @@ export type GetFailoverParamsQuery = ({
       ...{ __typename?: 'Apicluster' },
     ...{| failover_params: ({
         ...{ __typename?: 'FailoverAPI' },
-      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, mode: *, state_provider?: * |}>,
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, leader_autoreturn: *, autoreturn_delay: *, mode: *, state_provider?: * |}>,
       ...{| etcd2_params?: ?({
           ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
         ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>

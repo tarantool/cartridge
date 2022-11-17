@@ -54,6 +54,8 @@ export const getClusterQuery = gql`
         fencing_enabled
         fencing_timeout
         fencing_pause
+        leader_autoreturn
+        autoreturn_delay
         etcd2_params {
           password
           lock_delay
@@ -428,6 +430,8 @@ export const changeFailoverMutation = gql`
     $fencing_enabled: Boolean
     $fencing_timeout: Float
     $fencing_pause: Float
+    $leader_autoreturn: Boolean
+    $autoreturn_delay: Float
     $mode: String!
     $state_provider: String
     $etcd2_params: FailoverStateProviderCfgInputEtcd2
@@ -439,6 +443,8 @@ export const changeFailoverMutation = gql`
         fencing_enabled: $fencing_enabled
         fencing_timeout: $fencing_timeout
         fencing_pause: $fencing_pause
+        leader_autoreturn: $leader_autoreturn
+        autoreturn_delay: $autoreturn_delay
         mode: $mode
         state_provider: $state_provider
         etcd2_params: $etcd2_params
@@ -567,6 +573,8 @@ export const getFailoverParams = gql`
         fencing_enabled
         fencing_timeout
         fencing_pause
+        leader_autoreturn
+        autoreturn_delay
         etcd2_params {
           password
           lock_delay

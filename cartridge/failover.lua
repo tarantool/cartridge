@@ -41,6 +41,7 @@ local service_registry = require('cartridge.service-registry')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
+local leader_autoreturn = require('cartridge.failover.leader_autoreturn')
 local argparse = require('cartridge.argparse')
 
 local FailoverError = errors.new_class('FailoverError')
@@ -718,6 +719,7 @@ local function cfg(clusterwide_config, opts)
     end
 
     fencing_cancel()
+    leader_autoreturn.cancel()
     schedule_clear()
     assert(next(vars.schedule) == nil)
 
@@ -837,6 +839,9 @@ local function cfg(clusterwide_config, opts)
             end,
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
+
+        leader_autoreturn.cfg(failover_cfg, topology_cfg)
+
     elseif failover_cfg.mode == 'raft' then
         local ok, err = ApplyConfigError:pcall(raft_failover.check_version)
         if not ok then

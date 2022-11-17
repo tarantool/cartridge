@@ -30,6 +30,8 @@ const getFailoverFxMock = () =>
         fencing_timeout: 10,
         fencing_pause: 10,
         mode: 'disabled',
+        leader_autoreturn: false,
+        autoreturn_delay: 300,
       },
     },
   });
