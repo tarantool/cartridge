@@ -1417,6 +1417,7 @@ export type ServerListQuery = {
     zone?: string | null;
     status: string;
     message: string;
+    labels: LabelInput[]
     boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
     replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
   } | null> | null;

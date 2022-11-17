@@ -298,6 +298,10 @@ export const listQuery = gql`
       zone
       status
       message
+      labels {
+        name
+        value
+      }
       boxinfo {
         general {
           ro
@@ -329,6 +333,10 @@ export const listQuery = gql`
         uri
         priority
         status
+        labels {
+          name
+          value
+        }
         boxinfo {
           general {
             ro
