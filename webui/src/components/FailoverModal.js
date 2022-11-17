@@ -74,8 +74,8 @@ const messages = {
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...',
-  leaderAutoreturn: 'Return master to first instance in priority list',
-  autoreturnDelay: 'Delay before master is returned',
+  leaderAutoreturn: 'Return leader to the first instance in priority list',
+  autoreturnDelay: 'Delay before the leader is returned',
 };
 /* eslint-enable max-len */
 

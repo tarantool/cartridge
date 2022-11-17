@@ -20,7 +20,7 @@ local function enable(topology_cfg)
             )
             local desired_leader_uuid = leaders[1]
             if desired_leader_uuid ~= vars.instance_uuid then
-                log.info("Autoreturn: try to return master %s in replicaset %s",
+                log.info("Autoreturn: try to return leader %s in replicaset %s",
                     desired_leader_uuid, vars.replicaset_uuid)
                 local client = vars.client
                 if client == nil

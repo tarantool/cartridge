@@ -42,8 +42,8 @@ const INFOS = {
   fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
-  leaderAutoreturn: 'Return master to first instance in priority list',
-  autoreturnDelay: 'Delay before master is returned',
+  leaderAutoreturn: 'Return leader to the first instance in priority list',
+  autoreturnDelay: 'Delay before the leader is returned',
 };
 
 const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [

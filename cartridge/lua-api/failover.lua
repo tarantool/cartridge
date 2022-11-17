@@ -72,7 +72,7 @@ local function get_params()
     --   (default: false)
     -- @tfield number autoreturn_delay
     --   (added in v2.3.0-57)
-    --   Time (in seconds) until failover try to return master to the first node
+    --   Time (in seconds) until failover try to return leader to the first node
     --   in ``failover_priority``
     --   (default: 300)
     return topology.get_failover_params(

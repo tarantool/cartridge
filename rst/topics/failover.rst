@@ -160,9 +160,9 @@ algorithm is slightly different from that in case of eventual failover:
 
 You can also enable ``leader_autoreturn`` to return leadership to the
 first leader in ``failover_priority`` list after failover was triggered.
-It might be useful when you have active and passive data center.
-Time before failover will try to return leader is configured by
-``autoreturn_delay`` option in failover configuration.
+It might be useful when you have active and passive data centers.
+The time before failover will try to return the leader is configured by
+``autoreturn_delay`` option in a failover configuration.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage
@@ -346,7 +346,7 @@ These are clusterwide parameters:
 * ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
 * ``fencing_pause`` -- the period of performing the check (default: 2).
 * ``leader_autoreturn``: ``true`` / ``false`` (default: false).
-* ``autoreturn_delay`` -- time before failover will try to return master
+* ``autoreturn_delay`` -- the time before failover will try to return leader
   in replicaset to the first instance in ``failover_priority`` list (default: 300).
 
 It's required that ``failover_timeout > fencing_timeout >= fencing_pause``.
