@@ -68,7 +68,7 @@ local function get_params()
     --   (default: 2)
     -- @tfield boolean leader_autoreturn
     --   (added in v2.7.7)
-    --   If enabled, then switched master will return after ``autoreturn_delay``
+    --   If enabled, then switched leader will return after ``autoreturn_delay``
     --   (default: false)
     -- @tfield number autoreturn_delay
     --   (added in v2.3.0-57)

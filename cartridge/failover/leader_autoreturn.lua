@@ -53,7 +53,7 @@ local function enable(topology_cfg)
     end
 end
 
---- cancel autoreturn loop.
+--- Сancel autoreturn loop.
 --
 -- Used in 'stateful' failover mode.
 -- @function cancel
