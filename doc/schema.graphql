@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Sep 29 2022 17:24:12 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Nov 17 2022 12:26:32 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -101,7 +101,6 @@ input EditReplicasetInput {
   alias: String
   all_rw: Boolean
   failover_priority: [String!]
-  labels: [LabelInput]
 }
 
 """Parameters for editing existing server"""
