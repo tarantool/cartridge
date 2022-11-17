@@ -56,6 +56,9 @@ Added
 
 - "Beta" tag for failover selector in WebUI (`#1961 <https://github.com/tarantool/cartridge/issues/1961>`_).
 
+- Compression suggestion, see
+  `#1911 <https://github.com/tarantool/tarantool/issues/1911>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
