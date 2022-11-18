@@ -257,7 +257,8 @@ local function validate_schema(field, topology)
 
             local ok, err = label_utils.validate_labels(field, server)
             if not ok then
-                log.error(("Invalid labels: %s. Usage of invalid labels will be forbidden in next releases"):format(err.err))
+                log.error(("Invalid labels: %s. Usage of invalid labels will be forbidden in next releases")
+                    :format(err.err))
             end
 
             local known_keys = {
