@@ -75,6 +75,14 @@ Fixed
 
 - ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication`` (`#1950 <https://github.com/tarantool/cartridge/issues/1950>`_).
 
+- Allow to use ``box.NULL`` as label value.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deprecated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Usage of invalid labels (`#1980 <https://github.com/tarantool/cartridge/issues/1980>`_).
+
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
 -------------------------------------------------------------------------------

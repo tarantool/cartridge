@@ -9,7 +9,7 @@ local function validate_schema_labels(field, object)
         type(object.labels)
     )
 
-    if not object.labels then
+    if object.labels == nil then
         return true
     end
 

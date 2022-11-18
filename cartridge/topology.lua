@@ -8,6 +8,7 @@ local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
+local log = require('log')
 
 local pool = require('cartridge.pool')
 local roles = require('cartridge.roles')
@@ -256,7 +257,11 @@ local function validate_schema(field, topology)
                 '%s.zone must be a string, got %s', field, type(server.zone)
             )
 
-            label_utils.validate_labels(field, server)
+            local ok, err = label_utils.validate_labels(field, server)
+            if not ok then
+                log.error(("Invalid labels: %s. Usage of invalid labels will be forbidden in next releases")
+                    :format(err.err))
+            end
 
             local known_keys = {
                 ['uri'] = true,
