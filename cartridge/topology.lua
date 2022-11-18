@@ -8,6 +8,7 @@ local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
+local log = require('log')
 
 local pool = require('cartridge.pool')
 local roles = require('cartridge.roles')
