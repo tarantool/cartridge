@@ -885,6 +885,11 @@ local function cfg(opts, box_opts)
             end
         end
     end
+
+    errors.deprecate("In the next releases validation of instances labels will be more strict. " ..
+        "Make sure you don't use invalid labels. For details, see " ..
+        "https://github.com/tarantool/cartridge/pull/1980"
+    )
     return true
 end
 

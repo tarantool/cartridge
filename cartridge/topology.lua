@@ -254,7 +254,10 @@ local function validate_schema(field, topology)
                 '%s.zone must be a string, got %s', field, type(server.zone)
             )
 
-            label_utils.validate_labels(field, server)
+            local ok, err = label_utils.validate_labels(field, server)
+            if not ok then
+                log.error(("Invalid labels: %s. Usage of invalid labels will be forbidden in next releases"):format(err.err))
+            end
 
             local known_keys = {
                 ['uri'] = true,

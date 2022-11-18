@@ -23,7 +23,7 @@ function g.test_labels_ok()
 
     t.assert_equals(
         label_utils.validate_labels("field", {labels = box.NULL}),
-        true, "labels of type nil valid"
+        true, "labels of type box.NULL valid"
     )
 
     t.assert_equals(
@@ -57,6 +57,12 @@ function g.test_labels_error()
         labels = function()
         end
     })
+    check_error({labels = {["label"] = 1}})
+    check_error({labels = {["label"] = box.NULL}})
+    check_error({labels = {["label"] = function() end}})
+    check_error({labels = {["label"] = true}})
+    check_error({labels = {["label"] = {}}})
+
     check_error({labels = "asdfsd"})
     check_error({labels = {[""] = ""}})
     check_error({labels = {[""] = "1234"}})
