@@ -155,14 +155,14 @@ local function set_params(opts)
         local tnt_password = topology_cfg.failover.tarantool_params and topology_cfg.failover.tarantool_params.password
         topology_cfg.failover.tarantool_params = opts.tarantool_params
         if opts.tarantool_params.password == masked_pwd then
-            topology_cfg.failover.tarantool_params.password = tnt_password
+            topology_cfg.failover.tarantool_params.password = tnt_password or ''
         end
     end
     if opts.etcd2_params ~= nil then
         local etcd2_password = topology_cfg.failover.etcd2_params and topology_cfg.failover.etcd2_params.password
         topology_cfg.failover.etcd2_params = opts.etcd2_params
         if opts.etcd2_params.password == masked_pwd then
-            topology_cfg.failover.etcd2_params.password = etcd2_password
+            topology_cfg.failover.etcd2_params.password = etcd2_password or ''
         end
     end
 
