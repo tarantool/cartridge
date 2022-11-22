@@ -104,6 +104,8 @@ local cluster_opts = {
     ssl_client_ca_file = 'string', -- **string**
     ssl_client_cert_file = 'string', -- **string**
     ssl_client_key_file = 'string', -- **string**
+
+    disable_errstack = 'boolean', -- **boolean**
 }
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
