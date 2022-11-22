@@ -217,10 +217,25 @@ function g.test_error_extensions()
     request.raise = false
     local response = cluster.main_server:graphql(request)
     local extensions = response.errors[1].extensions
-    --t.assert_str_matches(
-    --    extensions['io.tarantool.errors.stack'],
-    --    '^stack traceback:\n.+'
-    --)
+    t.assert_str_matches(
+        extensions['io.tarantool.errors.stack'],
+        '^stack traceback:\n.+'
+    )
+    t.assert_equals(
+        extensions['io.tarantool.errors.class_name'],
+        'Invalid cluster topology config'
+    )
+
+    cluster.main_server:eval([[
+        require('cartridge.vars').new('cartridge.graphql').disable_errstack = true
+    ]])
+
+    local response = cluster.main_server:graphql(request)
+    local extensions = response.errors[1].extensions
+    t.assert_str_matches(
+        extensions['io.tarantool.errors.stack'],
+        '^not available'
+    )
     t.assert_equals(
         extensions['io.tarantool.errors.class_name'],
         'Invalid cluster topology config'

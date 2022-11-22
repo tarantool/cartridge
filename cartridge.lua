@@ -310,6 +310,8 @@ local function cfg(opts, box_opts)
         ssl_client_ca_file = '?string',
         ssl_client_cert_file = '?string',
         ssl_client_key_file = '?string',
+
+        disable_errstack = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -711,13 +713,16 @@ local function cfg(opts, box_opts)
         end
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {
-            prefix = opts.webui_prefix
+            prefix = opts.webui_prefix,
+            disable_errstack = opts.disable_errstack,
         })
         if not ok then
             return nil, err
         end
 
-        graphql.init(httpd, {prefix = opts.webui_prefix})
+        graphql.init(httpd, {prefix = opts.webui_prefix,
+            disable_errstack = opts.disable_errstack,
+        })
         lua_api_boxinfo.set_webui_prefix(opts.webui_prefix)
 
         if opts.webui_enabled then
