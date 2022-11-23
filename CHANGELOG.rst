@@ -61,6 +61,8 @@ Added
 
 - Leader autoreturn feature for stateful failover (`#1942 <https://github.com/tarantool/cartridge/issues/1942>`_).
 
+- Add password decryption for ssl private key (`#1983 <https://github.com/tarantool/cartridge/issues/1983>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
