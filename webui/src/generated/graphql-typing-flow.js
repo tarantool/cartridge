@@ -20,6 +20,8 @@ export type Apicluster = {|
   auth_params: UserManagementApi,
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: $ElementType<Scalars, 'Boolean'>,
+  /** compression info about cluster */
+  cluster_compression: ClusterCompressionInfo,
   /** Get cluster config sections */
   config: Array<?ConfigSection>,
   /** Get current failover state. (Deprecated since v2.0.2-2) */
@@ -65,6 +67,13 @@ export type ApiclusterUsersArgs = {|
 /** Cluster management */
 export type ApiclusterValidate_ConfigArgs = {|
   sections?: ?Array<?ConfigSectionInput>,
+|};
+
+/** Compression info of all cluster instances */
+export type ClusterCompressionInfo = {|
+  __typename?: 'ClusterCompressionInfo',
+  /** cluster compression info */
+  compression_info: Array<InstanceCompressionInfo>,
 |};
 
 /** A section of clusterwide configuration */
@@ -184,6 +193,15 @@ export type FailoverStateProviderCfgTarantool = {|
   uri: $ElementType<Scalars, 'String'>,
 |};
 
+/** Information about single field compression rate possibility */
+export type FieldCompressionInfo = {|
+  __typename?: 'FieldCompressionInfo',
+  /** compression percentage */
+  compression_percentage: $ElementType<Scalars, 'Int'>,
+  /** field name */
+  field_name: $ElementType<Scalars, 'String'>,
+|};
+
 /**
  * A suggestion to reapply configuration forcefully. There may be several reasons
  * to do that: configuration checksum mismatch (config_mismatch); the locking of
@@ -196,6 +214,15 @@ export type ForceApplySuggestion = {|
   config_mismatch: $ElementType<Scalars, 'Boolean'>,
   operation_error: $ElementType<Scalars, 'Boolean'>,
   uuid: $ElementType<Scalars, 'String'>,
+|};
+
+/** Combined info of all user spaces in the instance */
+export type InstanceCompressionInfo = {|
+  __typename?: 'InstanceCompressionInfo',
+  /** instance compression info */
+  instance_compression_info: Array<SpaceCompressionInfo>,
+  /** instance id */
+  instance_id: $ElementType<Scalars, 'String'>,
 |};
 
 export type Issue = {|
@@ -779,6 +806,15 @@ export type ServerStat = {|
   vshard_buckets_count?: ?$ElementType<Scalars, 'Int'>,
 |};
 
+/** List of fields compression info */
+export type SpaceCompressionInfo = {|
+  __typename?: 'SpaceCompressionInfo',
+  /** list of fields be compressed */
+  fields_be_compressed: Array<FieldCompressionInfo>,
+  /** space name */
+  space_name: $ElementType<Scalars, 'String'>,
+|};
+
 export type Suggestions = {|
   __typename?: 'Suggestions',
   disable_servers?: ?Array<DisableServerSuggestion>,
@@ -930,7 +966,21 @@ export type GetClusterQuery = ({
     }), knownRoles: Array<({
         ...{ __typename?: 'Role' },
       ...$Pick<Role, {| name: *, dependencies?: *, implies_storage: *, implies_router: * |}>
-    })>, vshard_groups: Array<({
+    })>, cluster_compression: ({
+        ...{ __typename?: 'ClusterCompressionInfo' },
+      ...{| compression_info: Array<({
+          ...{ __typename?: 'InstanceCompressionInfo' },
+        ...$Pick<InstanceCompressionInfo, {| instance_id: * |}>,
+        ...{| instance_compression_info: Array<({
+            ...{ __typename?: 'SpaceCompressionInfo' },
+          ...$Pick<SpaceCompressionInfo, {| space_name: * |}>,
+          ...{| fields_be_compressed: Array<({
+              ...{ __typename?: 'FieldCompressionInfo' },
+            ...$Pick<FieldCompressionInfo, {| field_name: *, compression_percentage: * |}>
+          })> |}
+        })> |}
+      })> |}
+    }), vshard_groups: Array<({
         ...{ __typename?: 'VshardGroup' },
       ...$Pick<VshardGroup, {| name: *, bucket_count: *, bootstrapped: * |}>
     })>, authParams: ({
@@ -1170,7 +1220,10 @@ export type ServerListQuery = ({
   }), serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
     ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, zone?: *, status: *, message: * |}>,
-    ...{| boxinfo?: ?({
+    ...{| labels?: ?Array<?({
+        ...{ __typename?: 'Label' },
+      ...$Pick<Label, {| name: *, value: * |}>
+    })>, boxinfo?: ?({
         ...{ __typename?: 'ServerInfo' },
       ...{| general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
@@ -1192,7 +1245,10 @@ export type ServerListQuery = ({
     }), servers: Array<({
         ...{ __typename?: 'Server' },
       ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, priority?: *, status: *, message: * |}>,
-      ...{| boxinfo?: ?({
+      ...{| labels?: ?Array<?({
+          ...{ __typename?: 'Label' },
+        ...$Pick<Label, {| name: *, value: * |}>
+      })>, boxinfo?: ?({
           ...{ __typename?: 'ServerInfo' },
         ...{| general: ({
             ...{ __typename?: 'ServerInfoGeneral' },

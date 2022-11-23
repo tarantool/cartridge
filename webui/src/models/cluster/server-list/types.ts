@@ -34,6 +34,7 @@ export type GetClusterFailoverParams = NonNullable<GetClusterCluster['failover_p
 export type GetClusterClusterSelf = NonNullable<GetClusterCluster['clusterSelf']>;
 export type GetClusterRole = NonNullable<NonNullable<GetClusterCluster['knownRoles']>[number]>;
 export type GetClusterVshardGroup = NonNullable<NonNullable<GetClusterCluster['vshard_groups']>[number]>;
+export type GetClusterCompressionInfo = NonNullable<GetClusterCluster>['cluster_compression']['compression_info'];
 
 export interface PromoteServerToLeaderEventPayload {
   replicasetUuid: string;
@@ -55,3 +56,14 @@ export interface KnownRolesNamesResult {
   router: string[];
   storage: string[];
 }
+
+export interface CompressionSuggestion {
+  type: 'compression';
+  meta: {
+    instanceId: string;
+    spaceName: string;
+    fields: Array<{ name: string; compressionPercentage: number }>;
+  };
+}
+
+export type Suggestion = CompressionSuggestion;

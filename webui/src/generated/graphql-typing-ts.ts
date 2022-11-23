@@ -23,6 +23,8 @@ export type Apicluster = {
   auth_params: UserManagementApi;
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: Scalars['Boolean'];
+  /** compression info about cluster */
+  cluster_compression: ClusterCompressionInfo;
   /** Get cluster config sections */
   config: Array<Maybe<ConfigSection>>;
   /** Get current failover state. (Deprecated since v2.0.2-2) */
@@ -65,6 +67,13 @@ export type ApiclusterUsersArgs = {
 /** Cluster management */
 export type ApiclusterValidate_ConfigArgs = {
   sections?: InputMaybe<Array<InputMaybe<ConfigSectionInput>>>;
+};
+
+/** Compression info of all cluster instances */
+export type ClusterCompressionInfo = {
+  __typename?: 'ClusterCompressionInfo';
+  /** cluster compression info */
+  compression_info: Array<InstanceCompressionInfo>;
 };
 
 /** A section of clusterwide configuration */
@@ -184,6 +193,15 @@ export type FailoverStateProviderCfgTarantool = {
   uri: Scalars['String'];
 };
 
+/** Information about single field compression rate possibility */
+export type FieldCompressionInfo = {
+  __typename?: 'FieldCompressionInfo';
+  /** compression percentage */
+  compression_percentage: Scalars['Int'];
+  /** field name */
+  field_name: Scalars['String'];
+};
+
 /**
  * A suggestion to reapply configuration forcefully. There may be several reasons
  * to do that: configuration checksum mismatch (config_mismatch); the locking of
@@ -196,6 +214,15 @@ export type ForceApplySuggestion = {
   config_mismatch: Scalars['Boolean'];
   operation_error: Scalars['Boolean'];
   uuid: Scalars['String'];
+};
+
+/** Combined info of all user spaces in the instance */
+export type InstanceCompressionInfo = {
+  __typename?: 'InstanceCompressionInfo';
+  /** instance compression info */
+  instance_compression_info: Array<SpaceCompressionInfo>;
+  /** instance id */
+  instance_id: Scalars['String'];
 };
 
 export type Issue = {
@@ -756,6 +783,15 @@ export type ServerStat = {
   vshard_buckets_count?: Maybe<Scalars['Int']>;
 };
 
+/** List of fields compression info */
+export type SpaceCompressionInfo = {
+  __typename?: 'SpaceCompressionInfo';
+  /** list of fields be compressed */
+  fields_be_compressed: Array<FieldCompressionInfo>;
+  /** space name */
+  space_name: Scalars['String'];
+};
+
 export type Suggestions = {
   __typename?: 'Suggestions';
   disable_servers?: Maybe<Array<DisableServerSuggestion>>;
@@ -1029,6 +1065,22 @@ export type GetClusterQuery = {
       implies_storage: boolean;
       implies_router: boolean;
     }>;
+    cluster_compression: {
+      __typename?: 'ClusterCompressionInfo';
+      compression_info: Array<{
+        __typename?: 'InstanceCompressionInfo';
+        instance_id: string;
+        instance_compression_info: Array<{
+          __typename?: 'SpaceCompressionInfo';
+          space_name: string;
+          fields_be_compressed: Array<{
+            __typename?: 'FieldCompressionInfo';
+            field_name: string;
+            compression_percentage: number;
+          }>;
+        }>;
+      }>;
+    };
     vshard_groups: Array<{ __typename?: 'VshardGroup'; name: string; bucket_count: number; bootstrapped: boolean }>;
     authParams: {
       __typename?: 'UserManagementAPI';
@@ -1466,7 +1518,7 @@ export type ServerListQuery = {
     zone?: string | null;
     status: string;
     message: string;
-    labels: LabelInput[]
+    labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
     boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
     replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
   } | null> | null;
@@ -1491,6 +1543,7 @@ export type ServerListQuery = {
       priority?: number | null;
       status: string;
       message: string;
+      labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
       boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
       replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
     }>;

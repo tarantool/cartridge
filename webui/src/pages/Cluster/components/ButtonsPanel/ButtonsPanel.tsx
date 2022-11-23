@@ -11,6 +11,7 @@ import BootstrapButton from '../BootstrapButton';
 import FailoverButton from '../FailoverButton';
 import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
+import SuggestionsButton from '../SuggestionsButton';
 
 const { compact } = app.utils;
 const { isConfigured, isVshardAvailable, isVshardBootstrapped } = cluster.serverList.selectors;
@@ -18,6 +19,7 @@ const { isConfigured, isVshardAvailable, isVshardBootstrapped } = cluster.server
 const ButtonsPanel = () => {
   const serverListStore = useStore(cluster.serverList.$serverList);
   const clusterStore = useStore(cluster.serverList.$cluster);
+  const suggestions = useStore(cluster.serverList.$suggestions);
 
   const authParams = useMemo(() => cluster.serverList.selectors.authParams(clusterStore), [clusterStore]);
   const issues = useMemo(() => cluster.serverList.selectors.issues(serverListStore), [serverListStore]);
@@ -40,6 +42,7 @@ const ButtonsPanel = () => {
       params
         ? compact([
             <IssuesButton key="IssuesButton" issues={issues} />,
+            <SuggestionsButton key="SuggestionsButton" suggestions={suggestions} />,
             <ProbeServerButton key="ProbeServerButton" />,
             params.showToggleAuth && (
               <AuthToggleButton
@@ -51,7 +54,7 @@ const ButtonsPanel = () => {
             params.showBootstrap && <BootstrapButton key="BootstrapButton" />,
           ])
         : undefined,
-    [issues, params, authParams]
+    [issues, suggestions, params, authParams]
   );
 
   if ((controls?.length ?? 0) === 0) {

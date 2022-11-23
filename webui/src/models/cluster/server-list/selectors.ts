@@ -7,6 +7,7 @@ import type {
   GetClusterAuthParams,
   GetClusterCluster,
   GetClusterClusterSelf,
+  GetClusterCompressionInfo,
   GetClusterFailoverParams,
   GetClusterRole,
   GetClusterVshardGroup,
@@ -67,6 +68,10 @@ export const knownRolesNames = (data: GetCluster): KnownRolesNamesResult => {
     },
     { router: [], storage: [] } as KnownRolesNamesResult
   );
+};
+
+export const clusterCompressionInfo = (data: GetCluster): GetClusterCompressionInfo => {
+  return data?.cluster?.cluster_compression.compression_info ?? [];
 };
 
 const isRoleAvailableSelectorCreator =

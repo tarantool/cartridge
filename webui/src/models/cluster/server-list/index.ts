@@ -11,6 +11,7 @@ import type {
   PromoteServerToLeaderEventPayload,
   ServerList,
   SetElectableServerEventPayload,
+  Suggestion,
 } from './types';
 
 // exports
@@ -71,6 +72,30 @@ export const requestBootstrapFx = app.domain.createEffect('request bootstrap');
 // computed
 export const $failoverParamsMode = $cluster.map((state) => selectors.failoverParamsMode(state) ?? null);
 export const $knownRolesNames = $cluster.map(selectors.knownRolesNames);
+
+export const $clusterCompressionInfo = $cluster.map(selectors.clusterCompressionInfo);
+
+export const $suggestions = combine($clusterCompressionInfo, (info) => {
+  return info.reduce((acc: Suggestion[], item) => {
+    item.instance_compression_info.forEach((info) => {
+      if (info.fields_be_compressed.length > 0) {
+        acc.push({
+          type: 'compression',
+          meta: {
+            instanceId: item.instance_id,
+            spaceName: info.space_name,
+            fields: info.fields_be_compressed.map(({ field_name, compression_percentage }) => ({
+              name: field_name,
+              compressionPercentage: compression_percentage,
+            })),
+          },
+        });
+      }
+    });
+
+    return acc;
+  }, []);
+});
 
 export const $bootstrapPanel = combine({
   visible: $bootstrapPanelVisible,

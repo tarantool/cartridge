@@ -36,7 +36,7 @@ export interface ReplicasetServerListItemServer {
   alias?: Maybe<string>;
   disabled?: Maybe<boolean>;
   electable?: Maybe<boolean>;
-  labels?: LabelInput[];
+  labels?: Maybe<(LabelInput | null)[]>;
 }
 
 export interface ReplicasetServerListItemServerAdditional {
