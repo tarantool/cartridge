@@ -14,9 +14,6 @@ local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
 local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
 
-local CLIENT_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'client.enc.key')
-local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
-
 g.before_all = function()
     if type(cartridge_utils.feature) ~= 'table' then
         t.skip("No SSL support")

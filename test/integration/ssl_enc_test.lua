@@ -10,9 +10,7 @@ local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
                               'test/integration/ssl_cert')
 local CA_FILE = fio.pathjoin(CERT_DIR, 'ca.crt')
 local SERVER_CERT_FILE = fio.pathjoin(CERT_DIR, 'server.crt')
-local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
-local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
 
 local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
 local CLIENT_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'client.enc.key')

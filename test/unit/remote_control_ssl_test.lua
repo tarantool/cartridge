@@ -1332,7 +1332,7 @@ function g.test_fd_cloexec()
 end
 
 function g.test_enc_file()
-    local ok, err = remote_control.bind('127.0.0.1', 13301, {
+    local ok, _ = remote_control.bind('127.0.0.1', 13301, {
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
         ssl_cert_file = SERVER_CERT_FILE,
