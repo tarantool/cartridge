@@ -39,9 +39,9 @@ const INFOS = {
 
 const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [
   'disabled',
-  'eventual',
   'stateful',
   'raft',
+  'eventual',
 ];
 
 export interface FailoverFormValues {
