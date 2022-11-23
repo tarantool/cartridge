@@ -5,6 +5,7 @@ import './server-configure/init';
 import './replicaset-configure/init';
 import './server-expel/init';
 import './server-probe/init';
+import './server-suggestions/init';
 import './failover/init';
 import './zones/init';
 import './suggestions/init';

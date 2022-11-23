@@ -23,6 +23,8 @@ export type Apicluster = {
   auth_params: UserManagementApi;
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: Scalars['Boolean'];
+  /** compression info about cluster */
+  cluster_compression: ClusterCompressionInfo;
   /** Get cluster config sections */
   config: Array<Maybe<ConfigSection>>;
   /** Get current failover state. (Deprecated since v2.0.2-2) */
@@ -65,6 +67,13 @@ export type ApiclusterUsersArgs = {
 /** Cluster management */
 export type ApiclusterValidate_ConfigArgs = {
   sections?: InputMaybe<Array<InputMaybe<ConfigSectionInput>>>;
+};
+
+/** Compression info of all cluster instances */
+export type ClusterCompressionInfo = {
+  __typename?: 'ClusterCompressionInfo';
+  /** cluster compression info */
+  compression_info: Array<InstanceCompressionInfo>;
 };
 
 /** A section of clusterwide configuration */
@@ -184,6 +193,15 @@ export type FailoverStateProviderCfgTarantool = {
   uri: Scalars['String'];
 };
 
+/** Information about single field compression rate possibility */
+export type FieldCompressionInfo = {
+  __typename?: 'FieldCompressionInfo';
+  /** compression percentage */
+  compression_percentage: Scalars['Int'];
+  /** field name */
+  field_name: Scalars['String'];
+};
+
 /**
  * A suggestion to reapply configuration forcefully. There may be several reasons
  * to do that: configuration checksum mismatch (config_mismatch); the locking of
@@ -196,6 +214,15 @@ export type ForceApplySuggestion = {
   config_mismatch: Scalars['Boolean'];
   operation_error: Scalars['Boolean'];
   uuid: Scalars['String'];
+};
+
+/** Combined info of all user spaces in the instance */
+export type InstanceCompressionInfo = {
+  __typename?: 'InstanceCompressionInfo';
+  /** instance compression info */
+  instance_compression_info: Array<SpaceCompressionInfo>;
+  /** instance id */
+  instance_id: Scalars['String'];
 };
 
 export type Issue = {
@@ -670,16 +697,27 @@ export type ServerInfoStorage = {
   rows_per_wal?: Maybe<Scalars['Long']>;
   /** Warning in the WAL log if a transaction waits for quota for more than `too_long_threshold` seconds */
   too_long_threshold?: Maybe<Scalars['Float']>;
+  /** Bloom filter false positive rate */
   vinyl_bloom_fpr?: Maybe<Scalars['Float']>;
+  /** The cache size for the vinyl storage engine */
   vinyl_cache?: Maybe<Scalars['Long']>;
+  /** Size of the largest allocation unit, for the vinyl storage engine */
   vinyl_max_tuple_size?: Maybe<Scalars['Long']>;
+  /** The maximum number of in-memory bytes that vinyl uses */
   vinyl_memory?: Maybe<Scalars['Long']>;
+  /** Page size. Page is a read/write unit for vinyl disk operations */
   vinyl_page_size?: Maybe<Scalars['Long']>;
+  /** The default maximum range size for a vinyl index, in bytes */
   vinyl_range_size?: Maybe<Scalars['Long']>;
+  /** The maximum number of read threads that vinyl can use for some concurrent operations, such as I/O and compression */
   vinyl_read_threads?: Maybe<Scalars['Int']>;
+  /** The maximal number of runs per level in vinyl LSM tree */
   vinyl_run_count_per_level?: Maybe<Scalars['Int']>;
+  /** Ratio between the sizes of different levels in the LSM tree */
   vinyl_run_size_ratio?: Maybe<Scalars['Float']>;
+  /** Timeout between compactions */
   vinyl_timeout?: Maybe<Scalars['Float']>;
+  /** The maximum number of write threads that vinyl can use for some concurrent operations, such as I/O and compression */
   vinyl_write_threads?: Maybe<Scalars['Int']>;
   /** Option to prevent early cleanup of `*.xlog` files which are needed by replicas and lead to `XlogGapError` */
   wal_cleanup_delay?: Maybe<Scalars['Long']>;
@@ -754,6 +792,15 @@ export type ServerStat = {
   quota_used_ratio: Scalars['String'];
   /** Number of buckets active on the storage */
   vshard_buckets_count?: Maybe<Scalars['Int']>;
+};
+
+/** List of fields compression info */
+export type SpaceCompressionInfo = {
+  __typename?: 'SpaceCompressionInfo';
+  /** list of fields be compressed */
+  fields_be_compressed: Array<FieldCompressionInfo>;
+  /** space name */
+  space_name: Scalars['String'];
 };
 
 export type Suggestions = {
@@ -1039,6 +1086,31 @@ export type GetClusterQuery = {
       implements_edit_user: boolean;
       implements_remove_user: boolean;
       username?: string | null;
+    };
+  } | null;
+};
+
+export type GetClusterCompressionQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetClusterCompressionQuery = {
+  __typename?: 'Query';
+  cluster?: {
+    __typename?: 'Apicluster';
+    cluster_compression: {
+      __typename?: 'ClusterCompressionInfo';
+      compression_info: Array<{
+        __typename?: 'InstanceCompressionInfo';
+        instance_id: string;
+        instance_compression_info: Array<{
+          __typename?: 'SpaceCompressionInfo';
+          space_name: string;
+          fields_be_compressed: Array<{
+            __typename?: 'FieldCompressionInfo';
+            field_name: string;
+            compression_percentage: number;
+          }>;
+        }>;
+      }>;
     };
   } | null;
 };
@@ -1466,7 +1538,7 @@ export type ServerListQuery = {
     zone?: string | null;
     status: string;
     message: string;
-    labels: LabelInput[]
+    labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
     boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
     replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
   } | null> | null;
@@ -1491,6 +1563,7 @@ export type ServerListQuery = {
       priority?: number | null;
       status: string;
       message: string;
+      labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
       boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
       replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
     }>;

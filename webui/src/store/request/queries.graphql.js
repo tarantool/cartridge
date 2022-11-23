@@ -97,6 +97,25 @@ export const getClusterQuery = gql`
   }
 `;
 
+export const getClusterCompressionQuery = gql`
+  query getClusterCompression {
+    cluster {
+      cluster_compression {
+        compression_info {
+          instance_id
+          instance_compression_info {
+            space_name
+            fields_be_compressed {
+              field_name
+              compression_percentage
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const serverDetailsFields = gql`
   fragment serverDetailsFields on Server {
     alias
