@@ -55,13 +55,13 @@ end
 
 g.before_all(function()
     if type(cartridge_utils.feature) ~= 'table' then
-        --t.skip("No SSL support")
+        t.skip("No SSL support")
     end
     if not cartridge_utils.feature.ssl then
-        --t.skip("No SSL support")
+        t.skip("No SSL support")
     end
     if sslsocket_available ~= true then
-        --t.skip("No SSL support")
+        t.skip("No SSL support")
     end
 
     helpers.box_cfg()
