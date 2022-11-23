@@ -117,13 +117,23 @@ jobs:
           retention-days: 5
           if-no-files-found: ignore
 
+      - name: Create upload folder for diff outputs
+        uses: actions/upload-artifact@v3
+        if: failure() && startsWith(matrix.script, 'cypress')
+        with:
+          name: ${{ matrix.script }}-snapshots-diff-output-from-server
+          path: webui/cypress/snapshots/**/__diff_output__/**
+          retention-days: 5
+          if-no-files-found: ignore
+
       - name: Create upload folder for snapshots
         uses: actions/upload-artifact@v3
         if: always() && startsWith(matrix.script, 'cypress')
         with:
           name: ${{ matrix.script }}-snapshots-from-server
           path: webui/cypress/snapshots/
-          retention-days: 5
+          retention-days: 1
+          if-no-files-found: ignore
 
       ##################################################################
       # Cleanup cached paths

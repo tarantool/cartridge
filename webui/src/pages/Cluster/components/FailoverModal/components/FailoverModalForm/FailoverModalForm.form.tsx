@@ -27,15 +27,6 @@ export interface FailoverFormProps {
 
 const { $failoverModal, failoverModalCloseEvent } = cluster.failover;
 
-const FAILOVER_MODES_INFO: Record<FailoverMode, string> = {
-  disabled: 'The leader is the first instance according to topology configuration. No automatic decisions are taken.',
-  eventual:
-    'The leader isn’t elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).',
-  stateful:
-    'Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.',
-  raft: 'The replicaset leader is chosen by built-in Raft, then the other replicasets get information about leader change from membership.',
-};
-
 const INFOS = {
   failoverTimeout: 'Timeout in seconds to mark suspect members as dead and trigger failover',
   fencingEnabled: 'A leader will go read-only when both the state provider and one of replicas are unreachable',
@@ -48,9 +39,9 @@ const INFOS = {
 
 const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [
   'disabled',
-  'eventual',
   'stateful',
   'raft',
+  'eventual',
 ];
 
 export interface FailoverFormValues {
@@ -240,23 +231,21 @@ const FailoverModalFormForm = ({
         label: 'Disabled',
         content: (
           <Text variant="p" className={styles.failoverInfo}>
-            {FAILOVER_MODES_INFO['disabled']}
+            The leader is the first instance according to topology configuration. No automatic decisions are taken.
           </Text>
         ),
       },
       {
-        label: 'Eventual',
-        content: (
-          <Text variant="p" className={styles.failoverInfo}>
-            {FAILOVER_MODES_INFO['eventual']}
-          </Text>
+        label: (
+          <>
+            <span>Stateful</span>
+            <sup style={{ marginLeft: '5px' }}>recommended</sup>
+          </>
         ),
-      },
-      {
-        label: 'Stateful',
         content: (
           <Text variant="p" className={styles.failoverInfo}>
-            {FAILOVER_MODES_INFO['stateful']}
+            Leader appointments are polled from the external state provider. Decisions are taken by one of the instances
+            with the failover-coordinator role enabled.
           </Text>
         ),
       },
@@ -269,8 +258,25 @@ const FailoverModalFormForm = ({
         ),
         content: (
           <Text variant="p" className={styles.failoverInfo}>
-            {FAILOVER_MODES_INFO['raft']}
+            The replicaset leader is chosen by built-in Raft, then the other replicasets get information about leader
+            change from membership.
           </Text>
+        ),
+      },
+      {
+        label: (
+          <>
+            <span className={styles.failoverLabelDeprecated}>Eventual</span>
+          </>
+        ),
+        content: (
+          <>
+            <Alert type="error">Eventual Failover not recommended for using and deprecated.</Alert>
+            <Text variant="p" className={styles.failoverInfo}>
+              The leader isn’t elected consistently. Every instance thinks the leader is the first healthy server in the
+              replicaset. The instance health is determined according to the membership status (the SWIM protocol).
+            </Text>
+          </>
         ),
       },
     ],

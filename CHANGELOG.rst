@@ -85,6 +85,8 @@ Deprecated
 
 - Usage of invalid labels (`#1980 <https://github.com/tarantool/cartridge/issues/1980>`_).
 
+- Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
+
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
 -------------------------------------------------------------------------------

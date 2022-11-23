@@ -29,6 +29,9 @@ export const styles = {
     color: ${colors.dark65};
     margin-top: 5px;
   `,
+  failoverLabelDeprecated: css`
+    color: ${colors.dark40};
+  `,
   select: css`
     width: 100%;
   `,

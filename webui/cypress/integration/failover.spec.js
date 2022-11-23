@@ -167,7 +167,7 @@ describe('Failover', () => {
     checkFailoverTabMode('Disabled', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
     //X button
-    cy.get('.meta-test__FailoverModal svg').click({ multiple: true });
+    cy.get('.meta-test__FailoverModal svg').eq(0).click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Failover Eventual from UI');
@@ -308,7 +308,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
     cy.get('.meta-test__etcd2Username input').should('have.value', '');
-    cy.get('.meta-test__etcd2Password input').should('have.value', '');
+    cy.get('.meta-test__etcd2Password input').should('have.value', '******');
     cy.testElementScreenshots('FailoverModalEvantualEtcd', '.meta-test__FailoverModal');
 
     cy.get('.meta-test__SubmitButton').click();
