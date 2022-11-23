@@ -359,6 +359,11 @@ local function cfg(opts, box_opts)
             log.error('No SSL support for this tarantool version in feature list')
             return nil, CartridgeCfgError:new('No SSL support for this tarantool version in feature list')
         end
+        if not cartridge_utils.feature.ssl_password
+            and (opts.ssl_client_password ~= nil or opts.ssl_server_password ~= nil) then
+            log.error('No SSL password support for this tarantool version in feature list')
+            return nil, CartridgeCfgError:new('No SSL password support for this tarantool version in feature list')
+        end
     end
 
     pool.init({

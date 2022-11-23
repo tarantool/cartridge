@@ -23,6 +23,10 @@ g.before_all = function()
         t.skip("No SSL support")
     end
 
+    if not cartridge_utils.feature.ssl_password then
+        t.skip("No SSL password support")
+    end
+
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),

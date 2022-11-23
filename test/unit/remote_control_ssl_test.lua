@@ -63,6 +63,9 @@ g.before_all(function()
     if sslsocket_available ~= true then
         t.skip("No SSL support")
     end
+    if not cartridge_utils.feature.ssl_password then
+        t.skip("No SSL password support")
+    end
 
     helpers.box_cfg()
     box.schema.user.create(
