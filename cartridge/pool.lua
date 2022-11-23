@@ -104,7 +104,9 @@ local function connect(uri, opts)
                 params={
                     transport=vars.sslparams.transport,
                     ssl_cert_file=vars.sslparams.ssl_cert_file,
-                    ssl_key_file=vars.sslparams.ssl_key_file}}
+                    ssl_key_file=vars.sslparams.ssl_key_file,
+                    ssl_password=vars.sslparams.ssl_password,
+                }}
         end
 
         conn, err = NetboxConnectError:pcall(netbox.connect,

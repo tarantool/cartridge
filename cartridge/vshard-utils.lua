@@ -489,6 +489,7 @@ local function get_vshard_config(group_name, conf)
                         ssl_ca_file = vars.sslparams.ssl_server_ca_file,
                         ssl_cert_file = vars.sslparams.ssl_server_cert_file,
                         ssl_key_file = vars.sslparams.ssl_server_key_file,
+                        ssl_password = vars.sslparams.ssl_server_password,
                     }})
             end
 
@@ -502,6 +503,7 @@ local function get_vshard_config(group_name, conf)
                         ssl_ca_file = vars.sslparams.ssl_client_ca_file,
                         ssl_cert_file = vars.sslparams.ssl_client_cert_file,
                         ssl_key_file = vars.sslparams.ssl_client_key_file,
+                        ssl_password = vars.sslparams.ssl_client_password,
                     }}
             end
 

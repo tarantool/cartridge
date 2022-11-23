@@ -48,9 +48,11 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
     ssl_server_ca_file = '?string',
     ssl_server_cert_file = '?string',
     ssl_server_key_file = '?string',
+    ssl_server_password = '?string',
     ssl_client_ca_file = '?string',
     ssl_client_cert_file = '?string',
     ssl_client_key_file = '?string',
+    ssl_client_password = '?string',
 }):tomap()
 
 function Server:initialize()
@@ -86,9 +88,11 @@ function Server:build_env()
         TARANTOOL_SSL_SERVER_CA_FILE = self.ssl_server_ca_file,
         TARANTOOL_SSL_SERVER_CERT_FILE = self.ssl_server_cert_file,
         TARANTOOL_SSL_SERVER_KEY_FILE = self.ssl_server_key_file,
+        TARANTOOL_SSL_SERVER_PASSWORD = self.ssl_server_password,
         TARANTOOL_SSL_CLIENT_CA_FILE = self.ssl_client_ca_file,
         TARANTOOL_SSL_CLIENT_CERT_FILE = self.ssl_client_cert_file,
         TARANTOOL_SSL_CLIENT_KEY_FILE = self.ssl_client_key_file,
+        TARANTOOL_SSL_CLIENT_PASSWORD = self.ssl_client_password,
     }
 end
 
@@ -148,6 +152,7 @@ function Server:connect_net_box()
                     ssl_ciphers = self.ssl_ciphers,
                     ssl_cert_file = self.ssl_client_cert_file,
                     ssl_key_file = self.ssl_client_key_file,
+                    ssl_password = self.ssl_client_password,
                     ssl_ca_file = self.ssl_client_ca_file,
                 }
             }

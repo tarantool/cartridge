@@ -529,6 +529,18 @@ local feature = {
         -- Backported into 2.10 since EE 2.10.0-2-g6b29095.
         return version_is_at_least(2, 10, 0, nil, 0, 2)
     end)(),
+    ssl_password = (function()
+        if not is_enterprise then
+            return false
+        end
+        -- Beforehand there is a bug which can kill replication on SSL reconfig.
+        -- Fixed in EE 2.11.0-entrypoint-2-gffeb093.
+        if version_is_at_least(2, 11, 0, 'entrypoint', 0, 0) then
+            return version_is_at_least(2, 11, 0, 'entrypoint', 0, 7)
+        end
+        -- Backported into 2.10 since EE 2.10.0-2-g6b29095.
+        return false
+    end)(),
 }
 
 return {

@@ -66,10 +66,12 @@ vars:new('ssl_ciphers', nil)
 vars:new('ssl_server_ca_file', nil)
 vars:new('ssl_server_cert_file', nil)
 vars:new('ssl_server_key_file', nil)
+vars:new('ssl_server_password', nil)
 
 vars:new('ssl_client_ca_file', nil)
 vars:new('ssl_client_cert_file', nil)
 vars:new('ssl_client_key_file', nil)
+vars:new('ssl_client_password', nil)
 
 
 local state_transitions = {
@@ -254,6 +256,7 @@ local function restart_replication()
                 ssl_ca_file = vars.ssl_client_ca_file,
                 ssl_cert_file = vars.ssl_client_cert_file,
                 ssl_key_file = vars.ssl_client_key_file,
+                ssl_password = vars.ssl_client_password,
             }
         ),
     })
@@ -292,6 +295,7 @@ local function apply_config(clusterwide_config)
                 ssl_ca_file = vars.ssl_client_ca_file,
                 ssl_cert_file = vars.ssl_client_cert_file,
                 ssl_key_file = vars.ssl_client_key_file,
+                ssl_password = vars.ssl_client_password,
             }
         ),
     })
@@ -455,6 +459,7 @@ local function boot_instance(clusterwide_config)
                 ssl_ca_file = vars.ssl_client_ca_file,
                 ssl_cert_file = vars.ssl_client_cert_file,
                 ssl_key_file = vars.ssl_client_key_file,
+                ssl_password = vars.ssl_client_password,
             }
         )
         if #box_opts.replication == 0 then
@@ -516,6 +521,7 @@ local function boot_instance(clusterwide_config)
                         ssl_ca_file = vars.ssl_client_ca_file,
                         ssl_cert_file = vars.ssl_client_cert_file,
                         ssl_key_file = vars.ssl_client_key_file,
+                        ssl_password = vars.ssl_client_password,
                     }
                 }
                 box_opts.replication = {uri}
@@ -628,6 +634,7 @@ local function boot_instance(clusterwide_config)
                 ssl_ca_file = vars.ssl_server_ca_file,
                 ssl_cert_file = vars.ssl_server_cert_file,
                 ssl_key_file = vars.ssl_server_key_file,
+                ssl_password = vars.ssl_server_password,
             }})
     end
 
@@ -683,6 +690,7 @@ local function boot_instance(clusterwide_config)
                 ssl_ca_file = vars.ssl_client_ca_file,
                 ssl_cert_file = vars.ssl_client_cert_file,
                 ssl_key_file = vars.ssl_client_key_file,
+                ssl_password = vars.ssl_client_password,
             }
         ),
     })
@@ -757,10 +765,12 @@ local function init(opts)
         ssl_server_ca_file = '?string',
         ssl_server_cert_file = '?string',
         ssl_server_key_file = '?string',
+        ssl_server_password = '?string',
 
         ssl_client_ca_file = '?string',
         ssl_client_cert_file = '?string',
         ssl_client_key_file = '?string',
+        ssl_client_password = '?string',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
@@ -775,9 +785,11 @@ local function init(opts)
     vars.ssl_server_ca_file = opts.ssl_server_ca_file
     vars.ssl_server_cert_file = opts.ssl_server_cert_file
     vars.ssl_server_key_file = opts.ssl_server_key_file
+    vars.ssl_server_password = opts.ssl_server_password
     vars.ssl_client_ca_file = opts.ssl_client_ca_file
     vars.ssl_client_cert_file = opts.ssl_client_cert_file
     vars.ssl_client_key_file = opts.ssl_client_key_file
+    vars.ssl_client_password = opts.ssl_client_password
 
     local parts = uri_tools.parse(opts.advertise_uri)
     local addrinfo, err = socket.getaddrinfo(
@@ -795,6 +807,7 @@ local function init(opts)
         ssl_ca_file = vars.ssl_server_ca_file,
         ssl_cert_file = vars.ssl_server_cert_file,
         ssl_key_file = vars.ssl_server_key_file,
+        ssl_password = vars.ssl_server_password,
         timeout = vars.ssl_options.wait_read_timeout,
     })
     if not ok then

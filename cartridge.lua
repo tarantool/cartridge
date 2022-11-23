@@ -306,10 +306,12 @@ local function cfg(opts, box_opts)
         ssl_server_ca_file = '?string',
         ssl_server_cert_file = '?string',
         ssl_server_key_file = '?string',
+        ssl_server_password = '?string',
 
         ssl_client_ca_file = '?string',
         ssl_client_cert_file = '?string',
         ssl_client_key_file = '?string',
+        ssl_client_password = '?string',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -357,6 +359,11 @@ local function cfg(opts, box_opts)
             log.error('No SSL support for this tarantool version in feature list')
             return nil, CartridgeCfgError:new('No SSL support for this tarantool version in feature list')
         end
+        if not cartridge_utils.feature.ssl_password
+            and (opts.ssl_client_password ~= nil or opts.ssl_server_password ~= nil) then
+            log.error('No SSL password support for this tarantool version in feature list')
+            return nil, CartridgeCfgError:new('No SSL password support for this tarantool version in feature list')
+        end
     end
 
     pool.init({
@@ -364,6 +371,7 @@ local function cfg(opts, box_opts)
         ssl_ca_file = opts.ssl_client_ca_file,
         ssl_cert_file = opts.ssl_client_cert_file,
         ssl_key_file = opts.ssl_client_key_file,
+        ssl_password = opts.ssl_client_password,
     })
 
     vshard_utils.init({
@@ -372,10 +380,12 @@ local function cfg(opts, box_opts)
         ssl_server_ca_file = opts.ssl_server_ca_file,
         ssl_server_cert_file = opts.ssl_server_cert_file,
         ssl_server_key_file = opts.ssl_server_key_file,
+        ssl_server_password = opts.ssl_server_password,
 
         ssl_client_ca_file = opts.ssl_client_ca_file,
         ssl_client_cert_file = opts.ssl_client_cert_file,
         ssl_client_key_file = opts.ssl_client_key_file,
+        ssl_client_password = opts.ssl_client_password,
     })
 
     -- Using syslog driver when running under systemd
@@ -854,10 +864,12 @@ local function cfg(opts, box_opts)
         ssl_server_ca_file = opts.ssl_server_ca_file,
         ssl_server_cert_file = opts.ssl_server_cert_file,
         ssl_server_key_file = opts.ssl_server_key_file,
+        ssl_server_password = opts.ssl_server_password,
 
         ssl_client_ca_file = opts.ssl_client_ca_file,
         ssl_client_cert_file = opts.ssl_client_cert_file,
         ssl_client_key_file = opts.ssl_client_key_file,
+        ssl_client_password = opts.ssl_client_password,
     })
     if not ok then
         return nil, err

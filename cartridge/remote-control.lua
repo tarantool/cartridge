@@ -392,11 +392,11 @@ local function bind(host, port, sslparams)
         -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
         -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1)
 
-        local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
+        local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file, sslparams.ssl_password)
         if rc == false then
             local err = RemoteControlError:new(
-                "Can't start server on %s:%s: %s",
-                host, port, 'Private key is invalid'
+                "Can't start server on %s:%s: %s %s",
+                host, port, 'Private key is invalid or password mismatch', sslparams.ssl_key_file
             )
             return nil, err
         end
