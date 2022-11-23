@@ -25,6 +25,11 @@ pcall(
 
             int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
             int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+            void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
+            typedef int (*pem_passwd_cb)(char *buf, int size, int rwflag, void *userdata);
+
+            void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_passwd_cb cb);
+
             int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                             const char *CApath);
             int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
@@ -80,15 +85,31 @@ local function ctx(method)
     return newctx
 end
 
-local function ctx_use_private_key_file(ctx, pem_file)
-    if ffi.C.SSL_CTX_use_PrivateKey_file(ctx, pem_file, X509_FILETYPE_PEM) ~= 1 then
+local function ctx_use_private_key_file(ctx, pem_file, password)
+    ffi.C.SSL_CTX_set_default_passwd_cb(ctx, box.NULL);
+    if password ~= nil then
+        log.info('set private key password')
+        ffi.C.SSL_CTX_set_default_passwd_cb_userdata(ctx,
+            ffi.cast('void*', ffi.cast('char*', password)))
+    end
+
+    local rc = ffi.C.SSL_CTX_use_PrivateKey_file(ctx, pem_file, X509_FILETYPE_PEM)
+
+    if password ~= nil then
+        ffi.C.SSL_CTX_set_default_passwd_cb_userdata(ctx, box.NULL);
+    end
+
+    if rc ~= 1 then
+        ffi.C.ERR_clear_error()
         return false
     end
+
     return true
 end
 
 local function ctx_use_certificate_file(ctx, pem_file)
     if ffi.C.SSL_CTX_use_certificate_file(ctx, pem_file, X509_FILETYPE_PEM) ~= 1 then
+        ffi.C.ERR_clear_error()
         return false
     end
     return true
@@ -96,6 +117,7 @@ end
 
 local function ctx_load_verify_locations(ctx, ca_file)
     if ffi.C.SSL_CTX_load_verify_locations(ctx, ca_file, box.NULL) ~= 1 then
+        ffi.C.ERR_clear_error()
         return false
     end
     return true

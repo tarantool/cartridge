@@ -61,6 +61,8 @@ Added
 
 - Leader autoreturn feature for stateful failover (`#1942 <https://github.com/tarantool/cartridge/issues/1942>`_).
 
+- Add password decryption for ssl private key (`#1983 <https://github.com/tarantool/cartridge/issues/1983>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,6 +84,8 @@ Deprecated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Usage of invalid labels (`#1980 <https://github.com/tarantool/cartridge/issues/1980>`_).
+
+- Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
