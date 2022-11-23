@@ -14,8 +14,8 @@ local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
 local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
 
-local CLIENT_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'client.enc.key')
 local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
+local CLIENT_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'client.enc.key')
 
 g.before_all = function()
     if type(cartridge_utils.feature) ~= 'table' then
@@ -42,11 +42,13 @@ g.before_all = function()
                     transport = 'ssl',
                     ssl_server_ca_file = CA_FILE,
                     ssl_server_cert_file = SERVER_CERT_FILE,
-                    ssl_server_key_file = SERVER_KEY_FILE,
+                    ssl_server_key_file = SERVER_KEY_FILE_ENC,
+                    ssl_server_password = '1234',
 
                     ssl_client_ca_file = CA_FILE,
                     ssl_client_cert_file = CLIENT_CERT_FILE,
-                    ssl_client_key_file = CLIENT_KEY_FILE,
+                    ssl_client_key_file = CLIENT_KEY_FILE_ENC,
+                    ssl_client_password = '1234',
                 }}
             }, {
                 uuid = helpers.uuid('b'),
@@ -61,11 +63,13 @@ g.before_all = function()
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
-                        ssl_server_key_file = SERVER_KEY_FILE,
+                        ssl_server_key_file = SERVER_KEY_FILE_ENC,
+                        ssl_server_password = '1234',
 
                         ssl_client_ca_file = CA_FILE,
                         ssl_client_cert_file = CLIENT_CERT_FILE,
-                        ssl_client_key_file = CLIENT_KEY_FILE,
+                        ssl_client_key_file = CLIENT_KEY_FILE_ENC,
+                        ssl_client_password = '1234',
                     },{
                         alias = 'B2',
                         instance_uuid = helpers.uuid('b', 'b', 2),
@@ -75,11 +79,13 @@ g.before_all = function()
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
-                        ssl_server_key_file = SERVER_KEY_FILE,
+                        ssl_server_key_file = SERVER_KEY_FILE_ENC,
+                        ssl_server_password = '1234',
 
                         ssl_client_ca_file = CA_FILE,
                         ssl_client_cert_file = CLIENT_CERT_FILE,
-                        ssl_client_key_file = CLIENT_KEY_FILE,
+                        ssl_client_key_file = CLIENT_KEY_FILE_ENC,
+                        ssl_client_password = '1234',
                     }
                 }
             }, {
@@ -95,11 +101,13 @@ g.before_all = function()
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
-                        ssl_server_key_file = SERVER_KEY_FILE,
+                        ssl_server_key_file = SERVER_KEY_FILE_ENC,
+                        ssl_server_password = '1234',
 
                         ssl_client_ca_file = CA_FILE,
                         ssl_client_cert_file = CLIENT_CERT_FILE,
-                        ssl_client_key_file = CLIENT_KEY_FILE,
+                        ssl_client_key_file = CLIENT_KEY_FILE_ENC,
+                        ssl_client_password = '1234',
                     },{
                         alias = 'C2',
                         instance_uuid = helpers.uuid('c', 'c', 2),
@@ -109,11 +117,13 @@ g.before_all = function()
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
-                        ssl_server_key_file = SERVER_KEY_FILE,
+                        ssl_server_key_file = SERVER_KEY_FILE_ENC,
+                        ssl_server_password = '1234',
 
                         ssl_client_ca_file = CA_FILE,
                         ssl_client_cert_file = CLIENT_CERT_FILE,
-                        ssl_client_key_file = CLIENT_KEY_FILE,
+                        ssl_client_key_file = CLIENT_KEY_FILE_ENC,
+                        ssl_client_password = '1234',
                     }
                 }
             }
@@ -143,7 +153,7 @@ local function get_box_info_using_vshard(srv, bucket)
     )
 end
 
-function g.test_ssl_rpc_vshard()
+function g.test_ssl_enc_rpc_vshard()
     local A1 = g.cluster:server('A1')
     local B1 = g.cluster:server('B1')
     local C1 = g.cluster:server('C1')

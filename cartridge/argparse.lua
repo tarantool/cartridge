@@ -101,9 +101,11 @@ local cluster_opts = {
     ssl_server_ca_file = 'string', -- **string**
     ssl_server_cert_file = 'string', -- **string**
     ssl_server_key_file = 'string', -- **string**
+    ssl_server_password = 'string', -- **string**
     ssl_client_ca_file = 'string', -- **string**
     ssl_client_cert_file = 'string', -- **string**
     ssl_client_key_file = 'string', -- **string**
+    ssl_client_password = 'string', -- **string**
 }
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.

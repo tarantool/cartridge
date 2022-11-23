@@ -23,6 +23,9 @@ local SERVER_CERT_FILE = fio.pathjoin(CERT_DIR, 'server.crt')
 local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
 local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
+local CLIENT_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'client.enc.key')
+local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
+
 
 local username = 'superuser'
 local password = '3.141592'
@@ -52,13 +55,13 @@ end
 
 g.before_all(function()
     if type(cartridge_utils.feature) ~= 'table' then
-        t.skip("No SSL support")
+        --t.skip("No SSL support")
     end
     if not cartridge_utils.feature.ssl then
-        t.skip("No SSL support")
+        --t.skip("No SSL support")
     end
     if sslsocket_available ~= true then
-        t.skip("No SSL support")
+        --t.skip("No SSL support")
     end
 
     helpers.box_cfg()
@@ -1326,4 +1329,59 @@ function g.test_fd_cloexec()
         class_name = 'FcntlError',
         err = 'fcntl(F_GETFD) failed: Bad file descriptor',
     })
+end
+
+function g.test_enc_file()
+    local ok, err = remote_control.bind('127.0.0.1', 13301, {
+        transport = 'ssl',
+        ssl_ca_file = CA_FILE,
+        ssl_cert_file = SERVER_CERT_FILE,
+        ssl_key_file = SERVER_KEY_FILE_ENC,
+        ssl_password = 'invalid',
+        timeout = 10,
+    })
+    t.assert_equals(ok, nil)
+
+    local ok, err = remote_control.bind('127.0.0.1', 13301, {
+        transport = 'ssl',
+        ssl_ca_file = CA_FILE,
+        ssl_cert_file = SERVER_CERT_FILE,
+        ssl_key_file = SERVER_KEY_FILE_ENC,
+        ssl_password = '1234',
+        timeout = 10,
+    })
+    t.assert_equals(ok, true)
+    t.assert_equals(err, nil)
+
+    remote_control.accept({
+        username = username,
+        password = password,
+    })
+
+    local conn = assert(netbox.connect({uri='127.0.0.1:13301',
+        params={
+            transport='ssl',
+            ssl_cert_file=CLIENT_CERT_FILE,
+            ssl_key_file=CLIENT_KEY_FILE,
+        }}, {
+            user = username,
+            password = password,
+        }))
+
+    local rc = conn:eval('return 1')
+    t.assert_equals(rc, 1)
+
+    local conn = assert(netbox.connect({uri='127.0.0.1:13301',
+        params={
+            transport='ssl',
+            ssl_cert_file=CLIENT_CERT_FILE,
+            ssl_key_file=CLIENT_KEY_FILE_ENC,
+            ssl_password='1234',
+        }}, {
+            user = username,
+            password = password,
+        }))
+
+    local rc = conn:eval('return 1')
+    t.assert_equals(rc, 1)
 end
