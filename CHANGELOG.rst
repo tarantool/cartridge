@@ -29,6 +29,8 @@ Changed
 
 - Mask failover password in WebUI and GraphQL API (`#1960 <https://github.com/tarantool/cartridge/issues/1960>`_).
 
+- Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
