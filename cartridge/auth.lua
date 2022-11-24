@@ -344,7 +344,7 @@ local function login(req)
         }
     elseif err ~= nil then
         log.error('%s', err)
-        if type(err) == 'table' and vars.disable_errstack then
+        if type(err) == 'table' and vars.disable_errstack == true then
             err.stack = nil
         end
         return {
