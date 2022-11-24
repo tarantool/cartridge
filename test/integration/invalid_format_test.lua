@@ -4,6 +4,7 @@ local g = t.group()
 local h = require('test.helper')
 
 g.before_all = function()
+    t.skip_if(h.tarantool_version_ge('2.10.3'))
     g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
         server_command = h.entrypoint('srv_basic'),
