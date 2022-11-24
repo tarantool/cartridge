@@ -29,3 +29,6 @@ luacov.*.out*
 .history
 rst/locale/en/
 sandbox.lua
+*.xlog
+*.snap
+package.json
