@@ -41,9 +41,15 @@ end
 
 return {
     start_check = function()
+        if box.ctl.on_schema_init == nil then
+            return
+        end
         box.ctl.on_schema_init(on_schema_init)
     end,
     end_check = function()
+        if box.ctl.on_schema_init == nil then
+            return
+        end
         box.space._space:before_replace(nil, before_replace)
         box.ctl.on_schema_init(nil, on_schema_init)
 
