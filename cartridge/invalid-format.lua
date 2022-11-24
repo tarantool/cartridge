@@ -18,7 +18,7 @@ local function before_replace(_, tuple)
     local format = tuple[7]
 
     for _, field_def in ipairs(format) do
-        if illegal_types[field_def.type] then
+        if illegal_types[field_def.type] or illegal_types[field_def[2]] then
             _G.__cartridge_invalid_format_spaces[name] = true
         end
     end
