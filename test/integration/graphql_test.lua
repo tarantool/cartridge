@@ -21,7 +21,7 @@ g.before_all = function()
                     {instance_uuid = helpers.uuid('a', 'a', 1)},
                 },
             },
-        }
+        },
     })
     cluster:start()
 end
