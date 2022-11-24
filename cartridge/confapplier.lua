@@ -28,6 +28,7 @@ local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 local logging_whitelist = require('cartridge.logging_whitelist')
+local invalid_format = require('cartridge.invalid-format')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -376,6 +377,8 @@ local function boot_instance(clusterwide_config)
         'Unexpected state ' .. vars.state
     )
 
+    invalid_format.start_check()
+
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     for _, server in pairs(topology_cfg.servers or {}) do
         if server ~= 'expelled' then
@@ -608,6 +611,8 @@ local function boot_instance(clusterwide_config)
             remote_control.resume()
         end
     end
+
+    invalid_format.end_check()
 
     -- Box is ready, start listening full-featured iproto protocol
     remote_control.stop()

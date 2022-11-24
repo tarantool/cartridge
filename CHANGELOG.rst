@@ -87,6 +87,10 @@ Deprecated
 
 - Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
 
+- Usage of invalid types in cartridge (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
+  See `#1985 <https://github.com/tarantool/tarantool/wiki/Fix-illegal-field-type-in-a-space-format-when-upgrading-to-2.10.4>`_
+  for details.
+
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
 -------------------------------------------------------------------------------
