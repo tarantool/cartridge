@@ -63,6 +63,10 @@ Added
 
 - Add password decryption for ssl private key (`#1983 <https://github.com/tarantool/cartridge/issues/1983>`_).
 
+- New issues about invalid space format. Check is performed while recovering from snapshot in Tarantool 2.x.x
+  and can be performed manually with ``require('cartridge.invalid-format').run_check()`` in runtime
+  (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,7 +91,7 @@ Deprecated
 
 - Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
 
-- Usage of invalid types in cartridge (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
+- Usage of invalid space formats in cartridge (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
   See `#1985 <https://github.com/tarantool/tarantool/wiki/Fix-illegal-field-type-in-a-space-format-when-upgrading-to-2.10.4>`_
   for details.
 
