@@ -704,6 +704,8 @@ local function init(httpd, opts)
         disable_errstack = '?boolean',
     })
 
+    vars.disable_errstack = opts.disable_errstack
+
     local function wipe_fiber_storage()
         local fiber_storage = fiber.self().storage
         fiber_storage['http_session_username'] = nil

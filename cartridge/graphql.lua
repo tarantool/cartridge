@@ -354,7 +354,10 @@ end
 local function init(httpd, opts)
     checks('table', {
         prefix = 'string',
+        disable_errstack = '?boolean'
     })
+
+    vars.disable_errstack = opts.disable_errstack
 
     httpd:route(
         {
