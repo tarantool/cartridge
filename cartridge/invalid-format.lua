@@ -1,6 +1,3 @@
--- Convert illegal type names in a space format that were
--- allowed before tarantool 2.10.4.
-
 local log = require('log')
 
 local illegal_types = {

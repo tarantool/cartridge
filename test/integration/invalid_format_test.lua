@@ -21,12 +21,6 @@ g.before_all = function()
     g.cluster:wait_until_healthy()
 end
 
--- g.before_each(function()
---     h.retrying({}, function()
---         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
---     end)
--- end)
-
 g.after_all = function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
