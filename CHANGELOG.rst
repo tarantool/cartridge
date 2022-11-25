@@ -63,6 +63,8 @@ Added
 
 - Add password decryption for ssl private key (`#1983 <https://github.com/tarantool/cartridge/issues/1983>`_).
 
+- Add disable flag to not passing error stack to web (`#1932 <https://github.com/tarantool/cartridge/issues/1932>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

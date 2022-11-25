@@ -18,6 +18,7 @@ vars:new('model', {})
 vars:new('on_resolve_triggers', {})
 vars:new('callbacks', {})
 vars:new('mutations', {})
+vars:new('disable_errstack', false)
 
 local e_graphql_internal = errors.new_class('Graphql internal error')
 local e_graphql_parse = errors.new_class('Graphql parsing failed')
@@ -315,6 +316,9 @@ local function _execute_graphql(req)
         local extensions = err.graphql_extensions or {}
         extensions['io.tarantool.errors.class_name'] = err.class_name
         extensions['io.tarantool.errors.stack'] = err.stack
+        if vars.disable_errstack == true then
+            extensions['io.tarantool.errors.stack'] = 'not available'
+        end
 
         -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
@@ -335,6 +339,9 @@ local function execute_graphql(req)
     local resp, err = e_graphql_internal:pcall(_execute_graphql, req)
     if resp == nil then
         log.error('%s', err)
+        if type(err) == 'table' and vars.disable_errstack == true then
+            err.stack = nil
+        end
         return {
             status = 500,
             body = tostring(err),
@@ -347,7 +354,10 @@ end
 local function init(httpd, opts)
     checks('table', {
         prefix = 'string',
+        disable_errstack = '?boolean'
     })
+
+    vars.disable_errstack = opts.disable_errstack
 
     httpd:route(
         {

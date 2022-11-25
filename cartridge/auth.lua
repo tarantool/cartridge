@@ -25,6 +25,7 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('enabled', false)
 vars:new('callbacks', {})
+vars:new('disable_errstack', false)
 
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
 local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
@@ -343,6 +344,9 @@ local function login(req)
         }
     elseif err ~= nil then
         log.error('%s', err)
+        if type(err) == 'table' and vars.disable_errstack == true then
+            err.stack = nil
+        end
         return {
             status = 500,
             body = tostring(err),
@@ -697,7 +701,10 @@ end
 local function init(httpd, opts)
     checks('table', {
         prefix = 'string',
+        disable_errstack = '?boolean',
     })
+
+    vars.disable_errstack = opts.disable_errstack
 
     local function wipe_fiber_storage()
         local fiber_storage = fiber.self().storage

@@ -171,6 +171,11 @@ if os.getenv('TARANTOOL_SUPPRESS_FAILOVER') then
     enable_failover_suppressing = true
 end
 
+local disable_errstack = nil
+if os.getenv('TARANTOOL_DISABLE_ERRSTACK') then
+    disable_errstack = true
+end
+
 local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     advertise_uri = 'localhost:3301',
     http_port = 8081,
@@ -189,6 +194,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     -- Compatibility tests run on cartridge 1.2.0
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',
+    disable_errstack = disable_errstack,
 })
 if not ok then
     log.error('%s', err)
