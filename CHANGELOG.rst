@@ -65,6 +65,10 @@ Added
 
 - Add disable flag to not passing error stack to web (`#1932 <https://github.com/tarantool/cartridge/issues/1932>`_).
 
+- New issues about invalid space format. Check is performed while recovering from snapshot in Tarantool 2.x.x
+  and can be performed manually with ``require('cartridge.invalid-format').run_check()`` in runtime
+  (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,6 +92,10 @@ Deprecated
 - Usage of invalid labels (`#1980 <https://github.com/tarantool/cartridge/issues/1980>`_).
 
 - Deprecate eventual failover (`#1984 <https://github.com/tarantool/cartridge/issues/1984>`_).
+
+- Usage of invalid space formats in cartridge (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
+  See `#1985 <https://github.com/tarantool/tarantool/wiki/Fix-illegal-field-type-in-a-space-format-when-upgrading-to-2.10.4>`_
+  for details.
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22

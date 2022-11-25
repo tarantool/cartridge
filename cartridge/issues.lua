@@ -50,6 +50,10 @@
 -- * warning: "Instance ... with alien uuid is in the membership" -
 --   when two separate clusters share the same cluster cookie;
 --
+-- Deprecated space format:
+--
+-- * warning: "Instance ... has spaces with deprecated format: space1, ..."
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -86,6 +90,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
+local invalid_format = require('cartridge.invalid-format')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
@@ -413,6 +418,20 @@ local function list_on_instance(opts)
                 ),
             })
         end
+    end
+
+    local invalid_spaces = invalid_format.spaces_list_str()
+    if invalid_spaces ~= '' then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'invalid_format',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Instance %s has spaces with deprecated format: %s',
+                describe(self_uri), invalid_spaces
+            ),
+        })
     end
 
     -- add custom issues from each role
