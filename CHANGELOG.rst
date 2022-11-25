@@ -63,6 +63,8 @@ Added
 
 - Add password decryption for ssl private key (`#1983 <https://github.com/tarantool/cartridge/issues/1983>`_).
 
+- Add disable flag to not passing error stack to web (`#1932 <https://github.com/tarantool/cartridge/issues/1932>`_).
+
 - New issues about invalid space format. Check is performed while recovering from snapshot in Tarantool 2.x.x
   and can be performed manually with ``require('cartridge.invalid-format').run_check()`` in runtime
   (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
