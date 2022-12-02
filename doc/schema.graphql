@@ -1,6 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Nov 17 2022 12:26:32 GMT+0300 (Москва, стандартное время)
-
+# timestamp: Fri Dec 02 2022 13:42:36 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -862,6 +861,8 @@ type ServerInfoReplication {
 type ServerInfoStorage {
   """The maximal size of a single write-ahead log file"""
   wal_max_size: Long
+
+  """The maximal number of runs per level in vinyl LSM tree"""
   vinyl_run_count_per_level: Int
 
   """
@@ -871,15 +872,25 @@ type ServerInfoStorage {
 
   """Limit the pace at which replica submits new transactions to WAL"""
   wal_queue_max_size: Long
+
+  """The cache size for the vinyl storage engine"""
   vinyl_cache: Long
+
+  """The default maximum range size for a vinyl index, in bytes"""
   vinyl_range_size: Long
+
+  """Timeout between compactions"""
   vinyl_timeout: Float
 
   """
   Size of the smallest allocation unit, in bytes. It can be tuned up if most of the tuples are not so small.
   """
   memtx_min_tuple_size: Long
+
+  """Size of the largest allocation unit, for the vinyl storage engine"""
   vinyl_max_tuple_size: Long
+
+  """Page size. Page is a read/write unit for vinyl disk operations"""
   vinyl_page_size: Long
 
   """
@@ -913,10 +924,24 @@ type ServerInfoStorage {
   Warning in the WAL log if a transaction waits for quota for more than `too_long_threshold` seconds
   """
   too_long_threshold: Float
+
+  """Bloom filter false positive rate"""
   vinyl_bloom_fpr: Float
+
+  """The maximum number of in-memory bytes that vinyl uses"""
   vinyl_memory: Long
+
+  """Ratio between the sizes of different levels in the LSM tree"""
   vinyl_run_size_ratio: Float
+
+  """
+  The maximum number of write threads that vinyl can use for some concurrent operations, such as I/O and compression
+  """
   vinyl_write_threads: Int
+
+  """
+  The maximum number of read threads that vinyl can use for some concurrent operations, such as I/O and compression
+  """
   vinyl_read_threads: Int
 
   """Background fiber restart delay to follow xlog changes."""

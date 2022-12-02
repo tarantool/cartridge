@@ -69,6 +69,8 @@ Added
   and can be performed manually with ``require('cartridge.invalid-format').run_check()`` in runtime
   (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
 
+- Descriptions to Vinyl parameters and `http_address` in WebUI (`#1803 <https://github.com/tarantool/cartridge/issues/1803>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

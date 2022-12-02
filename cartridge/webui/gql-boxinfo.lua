@@ -215,17 +215,52 @@ local boxinfo_schema = {
                     },
 
                     -- vinyl
-                    vinyl_bloom_fpr = gql_types.float,
-                    vinyl_cache = gql_types.long,
-                    vinyl_memory = gql_types.long,
-                    vinyl_max_tuple_size = gql_types.long,
-                    vinyl_page_size = gql_types.long,
-                    vinyl_range_size = gql_types.long,
-                    vinyl_run_size_ratio = gql_types.float,
-                    vinyl_run_count_per_level = gql_types.int,
-                    vinyl_timeout = gql_types.float,
-                    vinyl_read_threads = gql_types.int,
-                    vinyl_write_threads = gql_types.int,
+                    vinyl_bloom_fpr = {
+                        kind = gql_types.float,
+                        description = 'Bloom filter false positive rate',
+                    },
+                    vinyl_cache = {
+                        kind = gql_types.long,
+                        description = 'The cache size for the vinyl storage engine',
+                    },
+                    vinyl_memory = {
+                        kind = gql_types.long,
+                        description = 'The maximum number of in-memory bytes that vinyl uses',
+                    },
+                    vinyl_max_tuple_size = {
+                        kind = gql_types.long,
+                        description = 'Size of the largest allocation unit, for the vinyl storage engine',
+                    },
+                    vinyl_page_size = {
+                        kind = gql_types.long,
+                        description = 'Page size. Page is a read/write unit for vinyl disk operations',
+                    },
+                    vinyl_range_size = {
+                        kind = gql_types.long,
+                        description = 'The default maximum range size for a vinyl index, in bytes',
+                    },
+                    vinyl_run_size_ratio = {
+                        kind = gql_types.float,
+                        description = 'Ratio between the sizes of different levels in the LSM tree',
+                    },
+                    vinyl_run_count_per_level = {
+                        kind = gql_types.int,
+                        description = 'The maximal number of runs per level in vinyl LSM tree',
+                    },
+                    vinyl_timeout = {
+                        kind = gql_types.float,
+                        description = 'Timeout between compactions',
+                    },
+                    vinyl_read_threads = {
+                        kind = gql_types.int,
+                        description = 'The maximum number of read threads that vinyl can use for some concurrent '..
+                        'operations, such as I/O and compression',
+                    },
+                    vinyl_write_threads = {
+                        kind = gql_types.int,
+                        description = 'The maximum number of write threads that vinyl can use for some concurrent ' ..
+                        'operations, such as I/O and compression',
+                    },
                 },
             }).nonNull,
             network = gql_types.object({
