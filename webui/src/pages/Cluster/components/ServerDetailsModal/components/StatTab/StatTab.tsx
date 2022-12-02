@@ -52,6 +52,7 @@ const StatTab = ({ sectionName }: StatTabProps) => {
             name,
             value,
             displayAs: FIELDS_DISPLAY_TYPES[name] ?? 'string',
+            description: descriptions?.[name],
           });
 
           return acc;
@@ -62,38 +63,49 @@ const StatTab = ({ sectionName }: StatTabProps) => {
             http_port: '',
             webui_prefix: '',
           },
-          params: [] as { name: string; value: unknown; displayAs: DisplayAs }[],
+          params: [],
+        } as {
+          http_address: {
+            http_host: string;
+            http_port: string;
+            webui_prefix: string;
+          };
+          params: {
+            name: string;
+            value: unknown;
+            displayAs: DisplayAs;
+            description?: string;
+          }[];
         }
       ),
-    [section]
+    [section, descriptions]
   );
 
   const items = useMemo(() => {
     if (!http_address.http_host) {
       return params;
     }
-    if (descriptions !== undefined) {
-      descriptions['http_address'] = 'HTTP address of the instance';
-    }
+
     return [
       ...params,
       {
         name: 'http_address',
         value: `${http_address.http_host}:${http_address.http_port}${http_address.webui_prefix}/`,
         displayAs: 'string' as DisplayAs,
+        description: 'HTTP address of the instance',
       },
     ];
   }, [params, http_address]);
 
   return (
     <div className={styles.wrap}>
-      {items.map(({ name, value, displayAs }) => (
+      {items.map(({ name, value, displayAs, description }) => (
         <div key={name} className={styles.listItem}>
           <div className={styles.leftCol}>
             <Text variant="basic">{name}</Text>
-            {descriptions?.[name] ? (
+            {description ? (
               <Text variant="basic" className={styles.description}>
-                {descriptions[name]}
+                {description}
               </Text>
             ) : null}
           </div>
