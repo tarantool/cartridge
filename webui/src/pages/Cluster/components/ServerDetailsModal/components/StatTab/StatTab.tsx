@@ -72,7 +72,9 @@ const StatTab = ({ sectionName }: StatTabProps) => {
     if (!http_address.http_host) {
       return params;
     }
-
+    if (descriptions !== undefined) {
+      descriptions['http_address'] = 'HTTP address of the instance';
+    }
     return [
       ...params,
       {
