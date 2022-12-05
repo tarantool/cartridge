@@ -55,8 +55,8 @@ g.before_all(function()
     g.s1:eval([[
         _G.__log_warn = {}
         _G.__log_error = {}
-        package.loaded['log'].warn = function(...) table.insert(_G.__log_warn, string.format(...)) end
-        package.loaded['log'].error = function(...) table.insert(_G.__log_error, string.format(...)) end
+        require('log').warn = function(...) table.insert(_G.__log_warn, string.format(...)) end
+        require('log').error = function(...) table.insert(_G.__log_error, string.format(...)) end
     ]])
 end)
 
