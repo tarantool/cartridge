@@ -7,13 +7,15 @@ local msgpack = require('msgpack')
 
 local utils = require('cartridge.utils')
 local upload = require('cartridge.upload')
-local log_warn_original = package.loaded.log.warn
+
+local log = require('log')
+local log_warn_original = log.warn
 
 g.before_each(function()
     g.datadir = fio.tempdir()
 
     g.warnings = {}
-    package.loaded.log.warn = function(...)
+    log.warn = function(...)
         table.insert(g.warnings, {...})
     end
 
@@ -25,7 +27,7 @@ g.after_each(function()
     g.datadir = nil
 
     g.warnings = nil
-    package.loaded.log.warn = log_warn_original
+    log.warn = log_warn_original
 end)
 
 function g.test_begin()
