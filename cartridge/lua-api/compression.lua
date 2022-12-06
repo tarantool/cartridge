@@ -22,8 +22,13 @@ local function get_cluster_compression_info()
             if role == 'vshard-storage' then
                 local master = rpl.master
 
+                local conn, err = pool.connect(master.uri, {wait_connected = true})
+                if not conn then
+                    return nil, err
+                end
+
                 local storage_compression_info, err = errors.netbox_call(
-                    pool.connect(master.uri, {wait_connected = true}),
+                    conn,
                     '_G.getStorageCompressionInfo', {master}, {timeout = 1}
                 )
                 if storage_compression_info == nil or err ~= nil then
