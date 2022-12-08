@@ -1,5 +1,4 @@
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
-local log = require('log')
 
 local pool = require('cartridge.pool')
 local errors = require('errors')
@@ -24,38 +23,22 @@ local function get_cluster_compression_info()
                 local master = rpl.master
 
                 local conn, err = pool.connect(master.uri, {wait_connected = true})
-                if not conn or err ~= nil then
-                    if err ~=nil then
-                        log.error(err)
-                    end
-                    table.insert(compression_info, {
-                        instance_id = master.uuid,
-                        instance_compression_info = {}
-                    })
-                    goto continue
+                if not conn then
+                    return nil, err
                 end
 
                 local storage_compression_info, err = errors.netbox_call(
                     conn,
                     '_G.getStorageCompressionInfo', {master}, {timeout = 1}
                 )
-
                 if storage_compression_info == nil or err ~= nil then
-                    if err ~=nil then
-                        log.error(err)
-                    end
-                    table.insert(compression_info, {
-                        instance_id = master.uuid,
-                        instance_compression_info = {}
-                    })
-                    goto continue
+                    return nil, err
                 end
 
                 table.insert(compression_info, {
                     instance_id = master.uuid,
                     instance_compression_info = storage_compression_info[1]})
             end
-            ::continue::
         end
     end
 
