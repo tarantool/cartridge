@@ -37,7 +37,7 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add instance labels to web UI (`#1962 <https://github.com/tarantool/cartridge/issues/1962>`_)
+- Add instance labels to web UI (`#1962 <https://github.com/tarantool/cartridge/issues/1962>`_).
 
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
   GraphQL and Lua API (`#1843 <https://github.com/tarantool/cartridge/issues/1843>`_).
@@ -73,7 +73,7 @@ Added
   and can be performed manually with ``require('cartridge.invalid-format').run_check()`` in runtime
   (`#1985 <https://github.com/tarantool/cartridge/issues/1985>`_).
 
-- Descriptions to Vinyl parameters and `http_address` in WebUI (`#1803 <https://github.com/tarantool/cartridge/issues/1803>`_).
+- Descriptions to Vinyl parameters and ``http_address`` in WebUI (`#1803 <https://github.com/tarantool/cartridge/issues/1803>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -176,7 +176,7 @@ Changed
   ``failover_suppress_timeout`` options of argparse.
 
 - Revert argparse throws an error when it encouters ``instance_name`` missing in
-   instances.yml.
+  instances.yml.
 
 - Update ``ddl`` to `1.6.1 <https://github.com/tarantool/ddl/releases/tag/1.6.1>`_.
 
