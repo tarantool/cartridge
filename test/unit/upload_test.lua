@@ -139,6 +139,7 @@ function g.test_cleanup()
     table.clear(g.warnings)
     _G.__cartridge_upload_cleanup('upload_id')
     t.assert(fio.path.exists(payload_path))
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_equals(g.warnings, {{
         'Error removing %s: %s', upload_path,
         errno.strerror(errno.EACCES)

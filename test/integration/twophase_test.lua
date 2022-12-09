@@ -1,4 +1,5 @@
 local fio = require('fio')
+local log = require('log')
 
 local t = require('luatest')
 local g = t.group()
@@ -150,6 +151,7 @@ function g.test_success()
     })
     t.assert_equals({ok, err}, {true, nil})
     t.assert_equals(g.s1:eval('return _G.__log_error'), {})
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_equals(g.s1:eval('return _G.__log_warn'), {
         "(2PC) twophase_commit upload phase...",
         "(2PC) twophase_commit prepare phase...",
@@ -185,6 +187,7 @@ function g.test_upload_skipped()
     })
     t.assert_equals({ok, err}, {true, nil})
     t.assert_equals(g.s1:eval('return _G.__log_error'), {})
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_equals(g.s1:eval('return _G.__log_warn'), {
         "(2PC) my_2pc prepare phase...",
         "Prepared for my_2pc at localhost:13301",
@@ -211,6 +214,7 @@ function g.test_prepare_fails()
         class_name = 'Err',
         err = '"localhost:13302": Error occured',
     })
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_items_include(g.s1:eval('return _G.__log_warn'), {
         'Aborted simple_twophase at localhost:13301'
     })
@@ -235,6 +239,7 @@ function g.test_commit_fails()
     t.assert_covers(err, {
         class_name = 'Err', err = '"localhost:13302": Error occured'
     })
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_items_include(g.s1:eval('return _G.__log_warn'),{
         'Committed simple_twophase at localhost:13301'
     })
@@ -261,6 +266,7 @@ function g.test_abort_fails()
         class_name = 'Err', err = '"localhost:13302": Error occured'
     })
     local error_log = g.s1:eval('return _G.__log_error')
+    t.xfail_if(log.name ~= nil, "See #1998")
     t.assert_str_contains(error_log[1],
         'Error preparing for simple_twophase at localhost:13302'
     )
