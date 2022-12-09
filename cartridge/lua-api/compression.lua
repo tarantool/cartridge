@@ -3,9 +3,12 @@ local log = require('log')
 
 local pool = require('cartridge.pool')
 local errors = require('errors')
+local vars = require('cartridge.vars').new('cartridge.compression')
+
+vars:new('timeout', 120)
 
 --- This function gets compression info on cluster aggregated by instances.
--- Function surfs by replicates to find master storages and calls on them getStorageCompressionInfo() func.
+-- Function surfs by replicates to find master storages and calls on them __cartridgeGetStorageCompressionInfo() func.
 -- @function get_cluster_compression_info
 -- @treturn[1] table {{instance_id, instance_compression_info},...}
 -- @treturn[2] nil
@@ -25,7 +28,7 @@ local function get_cluster_compression_info()
 
                 local conn, err = pool.connect(master.uri, {wait_connected = true})
                 if not conn or err ~= nil then
-                    if err ~=nil then
+                    if err ~= nil then
                         log.error(err)
                     end
                     table.insert(compression_info, {
@@ -37,7 +40,7 @@ local function get_cluster_compression_info()
 
                 local storage_compression_info, err = errors.netbox_call(
                     conn,
-                    '_G.getStorageCompressionInfo', {master}, {timeout = 1}
+                    '_G.__cartridgeGetStorageCompressionInfo', {master}, {timeout = vars.timeout}
                 )
 
                 if storage_compression_info == nil or err ~= nil then
@@ -116,11 +119,11 @@ local function create_test_space(space_name, space_type, orig_index, orig_format
 end
 
 --- This finds all user spaces with correct schema and index and calculates compression for their fields.
--- @function getStorageCompressionInfo
+-- @function __cartridgeGetStorageCompressionInfo
 -- @treturn[1] table {{space_name, fields_be_compressed},...}
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-function _G.getStorageCompressionInfo(_)
+function _G.__cartridgeGetStorageCompressionInfo(_)
     local storage_compression_info = {}
 
     for _, space_info in box.space._space:pairs() do
