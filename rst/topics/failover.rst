@@ -164,6 +164,10 @@ It might be useful when you have active and passive data centers.
 The time before failover will try to return the leader is configured by
 ``autoreturn_delay`` option in a failover configuration.
 
+Stateful failover automatically checks if there is a registered cluster
+in a state provider. Check is performed on a first stateful failover
+configuration and every time when cluster is restarted.
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

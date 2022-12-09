@@ -38,6 +38,7 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
+local cluster_cookie = require('cartridge.cluster-cookie')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
@@ -818,6 +819,14 @@ local function cfg(clusterwide_config, opts)
         vars.fencing_enabled = failover_cfg.fencing_enabled
         vars.fencing_timeout = failover_cfg.fencing_timeout
         vars.fencing_pause = failover_cfg.fencing_pause
+
+        -- WARNING: implicit yield
+        if package.loaded['cartridge.service-registry'].get('failover-coordinator') ~= nil then
+            local ok, err = vars.client:set_identification_string(cluster_cookie.get_cookie_hash())
+            if not ok then
+                return nil, err
+            end
+        end
 
         -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)

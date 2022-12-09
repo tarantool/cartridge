@@ -474,6 +474,55 @@ local function check_quorum(client)
     return false, err
 end
 
+
+local id_str_checked = false
+local function set_identification_string(client, new, prev)
+    checks('etcd2_client', 'string', '?string')
+    local session = client:get_session()
+
+    if not id_str_checked and prev == nil then
+        local resp, err = session.connection:request('GET', '/identification_str')
+
+        if resp and resp.node.value == new then
+            id_str_checked = true
+            return true
+        elseif err and err.etcd_code ~= etcd2.EcodeKeyNotFound then
+            return nil, SessionError:new(err)
+        end
+
+        local resp, err = session.connection:request('PUT', '/identification_str', {
+            prevExist = false, value = new,
+        })
+
+        if resp == nil then
+            if err.etcd_code == etcd2.EcodeNodeExist then
+                local resp, get_err = session.connection:request('GET', '/identification_str')
+                if resp and resp.node.value == new then
+                    id_str_checked = true
+                    return true
+                elseif resp then
+                    err.err = ('Prefix %s already used by another Cartridge cluster'):format(client.cfg.prefix)
+                else
+                    err = get_err
+                end
+            end
+            return nil, SessionError:new(err)
+        end
+        id_str_checked = true
+    else
+        local resp, err = session.connection:request('PUT', '/identification_str', {
+            prevValue = prev, value = new,
+        })
+        if resp == nil then
+            if err.etcd_code == etcd2.EcodeTestFailed then
+                err.err = ('Identification string changed between calls'):format(err.err)
+            end
+            return nil, SessionError:new(err)
+        end
+    end
+    return true
+end
+
 local client_mt = {
     __type = 'etcd2_client',
     __index = {
@@ -481,6 +530,7 @@ local client_mt = {
         get_session = get_session,
         drop_session = drop_session,
         check_quorum = check_quorum,
+        set_identification_string = set_identification_string,
     },
 }
 
