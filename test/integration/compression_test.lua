@@ -54,8 +54,6 @@ function g.test_compression()
         return tnt_version >= semver.new(...)
     end
 
-    --local tarantool_version = _G._TARANTOOL
-    --t.skip_if(tarantool_version < '2.10.0', 'Tarantool version '..tarantool_version..' should be 2.10 EE or greater')
     t.skip_if(not is_enterprise, 'Tarantool should be Enterprise version')
     t.skip_if(not version_is_at_least(2, 10, 0, nil, 0, 0), 'Tarantool version should be 2.10 or greater')
 
@@ -117,30 +115,15 @@ function g.test_compression()
         }
     ]]}).data.cluster.cluster_compression
 
-    t.assert_equals(cluster_compression, {
-        compression_info = {
-            {
-                instance_id = "bbbbbbbb-bbbb-0000-0000-000000000001",
-                instance_compression_info = {
-                    {
-                        space_name = "test1",
-                        fields_be_compressed = {
-                            {
-                                compression_percentage = 61, field_name = "str"
-                            }
-                        },
-                    },
-                    {
-                        space_name = "test2",
-                        fields_be_compressed = {
-                            {
-                                compression_percentage = 90, field_name = "arr1"
-                            }
-                        },
-                    },
-                },
-            },
-        },
-    })
+    for _, instance in pairs(cluster_compression.compression_info[1].instance_compression_info) do
+        for _, field in pairs(instance.fields_be_compressed) do
+            if field.field_name == "str" then
+                t.assert_le(field.compression_percentage, 63, "compression must be less or equal then 63%")
+            end
+            if field.field_name == "arr1" then
+                t.assert_le(field.compression_percentage, 92, "compression must be less or equal then 92%")
+            end
+        end
+    end
 
 end
