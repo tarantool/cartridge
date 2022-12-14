@@ -263,6 +263,7 @@ h.after_all(function()
 end)
 
 function h.test_zones_distances()
+    h.cluster:wait_until_healthy()
     helpers.retrying({}, function()
         t.assert_items_equals(
             h.A1:graphql({query = '{servers {uuid zone}}'}).data.servers,
