@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - id: set-build-id
-        run: echo "::set-output name=build-id::$(date +%s)"
+        run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
     outputs:
       build-id: ${{ steps.set-build-id.outputs.build-id }}
 
@@ -30,19 +30,19 @@ jobs:
     runs-on: ubuntu-20.04
     needs: set-build-id
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.8.0'
 
-      - uses: tarantool/setup-tarantool@v1
+      - uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '2.6'
 
       ##################################################################
       # Setup rocks
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/
@@ -54,7 +54,7 @@ jobs:
       ##################################################################
       # Cachce node_modules
       - name: Cache node_modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: webui/node_modules/
           key: node-modules-${{ hashFiles('webui/package-lock.json') }}
@@ -62,7 +62,7 @@ jobs:
       ##################################################################
       # Cachce webui bundle
       - name: Cache webui bundle
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             webui/build/bundle.lua
@@ -75,7 +75,7 @@ jobs:
       - name: Cache cypress
         if: startsWith(matrix.script, 'cypress')
         id: cache-cypress
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ./node_modules

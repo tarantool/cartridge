@@ -19,8 +19,8 @@ jobs:
         tarantool: ['1.10', '2.7', '2.8']
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: tarantool/setup-tarantool@v1
+      - uses: actions/checkout@v3
+      - uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '${{ matrix.tarantool }}'
           nightly-build: true
@@ -35,7 +35,7 @@ jobs:
 
       # Setup luatest
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/

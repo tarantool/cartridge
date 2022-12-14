@@ -29,15 +29,15 @@ jobs:
       CARTRIDGE_OLDER_VERSION: ${{ matrix.cartridge }}-1
       CARTRIDGE_DOWNGRADE: ${{ matrix.downgrade }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: tarantool/setup-tarantool@v1
+      - uses: actions/checkout@v3
+      - uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
       # Setup older cartridge for compatibility.cartridge_upgrade_test
       - name: Cache ${{ env.CARTRIDGE_OLDER_PATH }}
         id: cache-older-cartridge
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.CARTRIDGE_OLDER_PATH }}
           key: ${{ env.CARTRIDGE_OLDER_PATH }}
@@ -51,7 +51,7 @@ jobs:
 
       # Setup luatest
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/

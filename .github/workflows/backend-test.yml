@@ -17,17 +17,17 @@ jobs:
   misc:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.8.0'
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10.0'
 
       # Setup sphinx
       - name: Cache pip packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-venv
         with:
           path: ./venv
@@ -39,13 +39,13 @@ jobs:
         if: steps.cache-venv.outputs.cache-hit != 'true'
 
       # Setup tarantool
-      - uses: tarantool/setup-tarantool@v1
+      - uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '1.10'
 
       # Setup luacheck and ldoc
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/
@@ -58,7 +58,7 @@ jobs:
 
       # Setup graphql cli
       - name: Cache npm
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-npm
         with:
           path: node_modules
@@ -89,12 +89,12 @@ jobs:
         tarantool: ['1.10', '2.7', '2.8', '2.10']
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9.8'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - if: matrix.tarantool != 'latest'
-        uses: tarantool/setup-tarantool@v1
+        uses: tarantool/setup-tarantool@v2
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
@@ -113,7 +113,7 @@ jobs:
 
       # Setup luatest
       - name: Cache rocks
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-rocks
         with:
           path: .rocks/
@@ -124,7 +124,7 @@ jobs:
 
       # Setup pytest
       - name: Cache pytest
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-pytest
         with:
           path: ./pytest-venv
@@ -164,14 +164,14 @@ jobs:
           ]
       fail-fast: false
     steps:
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9.8'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Cache Tarantool SDK
         id: cache-sdk
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: tarantool-enterprise
           key: ${{ matrix.sdk-version }}
@@ -205,7 +205,7 @@ jobs:
 
       # Setup pytest
       - name: Cache pytest
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-pytest
         with:
           path: ./pytest-venv
