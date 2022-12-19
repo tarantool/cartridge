@@ -73,7 +73,10 @@ function g.test_clock_delta()
         for _, peer in pairs(g.servers) do
             local clock_delta = helpers.table_find_by_attr(
                 resp, 'uri', peer.advertise_uri
-            ).clock_delta
+            )
+            if clock_delta ~= nil then
+                clock_delta = clock_delta.clock_delta
+            end
             if clock_delta == nil then
                 observer:eval([[
                     local membership = require('membership')
