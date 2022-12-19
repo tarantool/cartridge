@@ -160,6 +160,7 @@ jobs:
       matrix:
         sdk-version: [
           "2.10.2-0-gf4228cb7d-r504-nogc64-linux-x86_64",
+          "2.10.2-0-gf4228cb7d-r505-linux-x86_64",
           "2.11.0-entrypoint-6-g2b6d21d3b-r496-nogc64-linux-x86_64"
           ]
       fail-fast: false
