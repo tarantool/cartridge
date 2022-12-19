@@ -251,7 +251,8 @@ Unelectable nodes
 
 You can restrict the election of a particular node in the ``stateful``
 failover mode by GraphQL or Lua API. An "unelectable" node can't become a
-leader in a replicaset.
+leader in a replicaset. It could be useful for nodes that could only be used
+for election process and for routers that shouldn't store the data.
 
 In ``edit_topology``:
 
