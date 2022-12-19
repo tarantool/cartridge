@@ -61,7 +61,9 @@ Added
 - "Beta" tag for failover selector in WebUI (`#1961 <https://github.com/tarantool/cartridge/issues/1961>`_).
 
 - Compression suggestion, see
-  `#1911 <https://github.com/tarantool/tarantool/issues/1911>`_.
+  `#1911 <https://github.com/tarantool/cartridge/issues/1911>`_.
+
+- Add a "Suggestions" button with a compression suggestions info in WebUI (`#1913 <https://github.com/tarantool/cartridge/issues/1913>`_).
 
 - Leader autoreturn feature for stateful failover (`#1942 <https://github.com/tarantool/cartridge/issues/1942>`_).
 

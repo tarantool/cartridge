@@ -11,6 +11,7 @@ import BootstrapButton from '../BootstrapButton';
 import FailoverButton from '../FailoverButton';
 import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
+import SuggestionsButton from '../SuggestionsButton';
 
 const { compact } = app.utils;
 const { isConfigured, isVshardAvailable, isVshardBootstrapped } = cluster.serverList.selectors;
@@ -40,6 +41,7 @@ const ButtonsPanel = () => {
       params
         ? compact([
             <IssuesButton key="IssuesButton" issues={issues} />,
+            <SuggestionsButton key="SuggestionsButton" />,
             <ProbeServerButton key="ProbeServerButton" />,
             params.showToggleAuth && (
               <AuthToggleButton
