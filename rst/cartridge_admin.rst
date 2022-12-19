@@ -530,7 +530,7 @@ Expelling instances
 Once an instance is *expelled*, it can never participate in the cluster again as
 every instance will reject it.
 
-To expel an instance, click **...** next to it, then click **Expel server** and
+To expel an instance, stop it, then click **...** next to it, then click **Expel server** and
 **Expel**:
 
 ..  image:: images/expelling-instance.png
@@ -1158,6 +1158,226 @@ Potential issues
     **Solution:** The replica set has an unreachable master and replica. Check the
     error message to detect this replica set. Then fix the issue in the same way
     as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
+
+.. _cartridge-issues-suggestions:
+
+-------------------------------------------------------------------------------
+Issues and suggestions
+-------------------------------------------------------------------------------
+
+Cartridge displays cluster and instances issues in WebUI:
+
+..  image:: images/cluster-issues-replication.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+*   Replication:
+    * **critical**: "Replication from ... to ... isn't running" --
+      when ``box.info.replication.upstream == nil``;
+    * **critical**: "Replication from ... to ... state "stopped"/"orphan"/etc. (...)";
+    * **warning**: "Replication from ... to ...: high lag" --
+      when ``upstream.lag > box.cfg.replication_sync_lag``;
+    * **warning**: "Replication from ... to ...: long idle" --
+      when ``upstream.idle > 2 * box.cfg.replication_timeout``;
+
+    ..  image:: images/cartridge-issues-high-lag.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+    Cartridge can propose you to fix some of replication issues by
+    restarting replication:
+
+    ..  image:: images/cartridge-issues-restart-replication.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+*   Failover:
+    * **warning**: "Can't obtain failover coordinator (...)";
+    * **warning**: "There is no active failover coordinator";
+    * **warning**: "Failover is stuck on ...: Error fetching appointments (...)";
+    * **warning**: "Failover is stuck on ...: Failover fiber is dead" -
+      this is likely a bug;
+
+*   Switchover:
+
+    * **warning**: "Consistency on ... isn't reached yet";
+
+*   Clock:
+
+    * **warning**: "Clock difference between ... and ... exceed threshold"
+     `limits.clock_delta_threshold_warning`;
+
+*   Memory:
+
+    * **critical**: "Running out of memory on ..." - when all 3 metrics
+      ``items_used_ratio``, ``arena_used_ratio``, ``quota_used_ratio`` from
+      ``box.slab.info()`` exceed ``limits.fragmentation_threshold_critical``;
+    * **warning**: "Memory is highly fragmented on ..." - when
+      ``items_used_ratio > limits.fragmentation_threshold_warning`` and
+      both ``arena_used_ratio``, ``quota_used_ratio`` exceed critical limit;
+
+*   Configuration:
+
+    * **warning**: "Configuration checksum mismatch on ...";
+    * **warning**: "Configuration is prepared and locked on ...";
+    * **warning**: "Advertise URI (...) differs from clusterwide config (...)";
+    * **warning**: "Configuring roles is stuck on ... and hangs for ... so far";
+
+    ..  image:: images/cartridge-issues-config-mismatch.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+    Cartridge can propose you to fix some of configuration issues by
+    force applying configuration:
+
+    ..  image:: images/cartridge-issues-force-apply.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+*   Alien members:
+
+    * **warning**: "Instance ... with alien uuid is in the membership" -
+      when two separate clusters share the same cluster cookie;
+
+    ..  image:: images/cartridge-issues-alien-uuid.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+*   Deprecated space format:
+
+    * **warning**: "Instance ... has spaces with deprecated format: space1, ..."
+
+*   Custom issues (defined by user):
+
+    * Custom roles can announce more issues with their own level, topic
+      and message. See `custom-role.get_issues`.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Compression suggestions (Enterprise only)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Since Tarantool Enterprise supporting compression, Cartridge can check if
+you have spaces where you can use compression.
+To enable it, click on button "Suggestions". Note that the operation can affect cluster
+perfomance, so choose the time to use it wisely.
+
+..  image:: images/compression-suggestion-1.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+You will see the warning about cluster perfomance and then click "Continue".
+
+..  image:: images/compression-suggestion-2.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+You will see information about fields that can be compressed.
+
+..  image:: images/compression-suggestion-3.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+
+.. _cartridge-instance-general-info:
+
+-------------------------------------------------------------------------------
+Instances general info
+-------------------------------------------------------------------------------
+
+You can check some general instance info in WebUI.
+To see it, click on "Server details button".
+
+..  image:: images/cartridge-server-details-button.png
+    :align: left
+    :scale: 40%
+
+    |nbsp|
+
+And then choose one of the tabs to see various parameters:
+
+..  image:: images/cartridge-server-details-button.png
+    :align: left
+    :scale: 40%
+
+    |nbsp|
+
+
+.. _cartridge-change-cookie:
+
+-------------------------------------------------------------------------------
+Changing cluster cookie
+-------------------------------------------------------------------------------
+
+In some cases it could be useful to change cluster-cookie (e.g. when you need to fix
+a broken cluster). To do it, perform next actions:
+
+#.  Change cluster-cookie on each instance:
+
+    ..  code-block:: lua
+
+        local cluster_cookie = require('cartridge.cluster-cookie')
+
+        cluster_cookie.set_cookie(new_cookie)
+
+        require('membership').set_encryption_key(cluster_cookie.cookie())
+
+        if require('cartridge.failover').is_leader() then
+            box.schema.user.passwd(new_cookie)
+        end
+
+#.  Call ``apply_config`` in cluster to reapply changes to each instance:
+
+    ..  code-block:: lua
+
+        local confapplier = require('cartridge.confapplier')
+        local clusterwide_config = confapplier.get_active_config()
+        return confapplier.apply_config(clusterwide_config)
+
+
+.. _cartridge-fix-config:
+
+-------------------------------------------------------------------------------
+Fixing broken instance configuration
+-------------------------------------------------------------------------------
+
+It's possible that some instances have a broken configuration. To do it,
+perform next actions:
+
+*   Try to reapply configuration forcefully:
+
+    ..  code-block:: lua
+
+        cartridge.config_force_reapply(instaces_uuids) -- pass here uuids of broken instances
+
+*   If it didn't work, you could try to copy a config from healthy instance:
+
+    #. Stop broken instance and remove it's ``config`` directory.
+       Don't touch any other files in working directory.
+
+    #. Copy ``config``  directory from a healthy instance to broken one's directory.
+
+    #. Start broken instance and check if it's working.
+
+    #. If nothing had worked, try to carefully remove a broken instance from cluster
+       and setup a new one.
 
 .. _cartridge-upgrading_schema:
 
