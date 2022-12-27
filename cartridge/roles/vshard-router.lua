@@ -53,6 +53,38 @@ local function get(group_name)
     return vars.routers[router_name]
 end
 
+local current_connections = 0
+local conn_limit = math.huge
+
+vars:new('on_connect')
+vars:new('on_disconnect')
+local function on_connect()
+    if box.session.type() == 'binary' then
+        if current_connections >= conn_limit then
+            error("Too many connections")
+        end
+        current_connections = current_connections + 1
+    end
+end
+local function on_disconnect()
+    if box.session.type() == 'binary' then
+        -- check on_disconnect called for dropped connection or not
+        current_connections = current_connections - 1
+    end
+end
+
+local function init(_)
+    local limit = require('cartridge.argparse').get_opts({connections_limit = 'number'}).connections_limit
+    if limit == nil then
+        return
+    end
+    conn_limit = limit
+    vars.on_connect = on_connect
+    vars.on_disconnect = on_disconnect
+    box.session.on_connect(vars.on_connect)
+    box.session.on_disconnect(vars.on_disconnect)
+end
+
 local function apply_config(conf)
     checks('table')
 
@@ -128,6 +160,8 @@ local function stop()
 
         router:discovery_set('off')
     end
+    box.session.on_connect(nil, vars.on_connect)
+    box.session.on_disconnect(nil, vars.on_disconnect)
 end
 
 local function bootstrap_group(group_name, vsgroup)
@@ -256,6 +290,7 @@ return {
     role_name = 'vshard-router',
     implies_router = true,
 
+    init = init,
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     stop = stop,
