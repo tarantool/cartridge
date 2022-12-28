@@ -23,6 +23,8 @@ Added
 - "Suggestions" button with a compression suggestions info in WebUI
   (`#1913 <https://github.com/tarantool/cartridge/issues/1913>`_).
 
+- Add ``app_name`` and ``app_version`` to feedback.
+
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
 -------------------------------------------------------------------------------
