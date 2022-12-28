@@ -12,6 +12,17 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Ability to limit incoming connections on ``vshard-router`` by the argparse option
+  ``TARANTOOL_CONNECTIONS_LIMIT`` or ``--connections-limit``
+  (`#1971 <https://github.com/tarantool/cartridge/issues/1971>`_).
+
+- "Suggestions" button with a compression suggestions info in WebUI
+  (`#1913 <https://github.com/tarantool/cartridge/issues/1913>`_).
+
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
 -------------------------------------------------------------------------------
@@ -62,8 +73,6 @@ Added
 
 - Compression suggestion, see
   `#1911 <https://github.com/tarantool/cartridge/issues/1911>`_.
-
-- Add a "Suggestions" button with a compression suggestions info in WebUI (`#1913 <https://github.com/tarantool/cartridge/issues/1913>`_).
 
 - Leader autoreturn feature for stateful failover (`#1942 <https://github.com/tarantool/cartridge/issues/1942>`_).
 
