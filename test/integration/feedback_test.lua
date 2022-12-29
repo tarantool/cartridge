@@ -68,6 +68,16 @@ function g.test_feedback()
     t.assert_type(g.msg.rocks.cartridge, 'string')
 end
 
+function g.test_app_name()
+    t.skip_if(
+        package.setsearchroot == nil,
+        'package.searchroot not implemented'
+    )
+
+    t.assert_equals(g.msg.app_name, 'cartridge')
+    t.assert_equals(g.msg.app_version, 'app_version_test_value')
+end
+
 function g.test_rocks()
     t.skip_if(
         package.setsearchroot == nil,

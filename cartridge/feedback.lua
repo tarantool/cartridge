@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fun = require('fun')
 local log   = require('log')
 local json  = require('json')
 local fiber = require('fiber')
@@ -118,6 +119,27 @@ function _daemon_mt.__index.generate_feedback()
         searchroot = package.searchroot()
     else
         searchroot = fio.abspath(fio.dirname(arg[0]))
+    end
+
+    local ok, listed_dir = pcall(fio.listdir, searchroot)
+    if ok ~= true or listed_dir == nil then
+        listed_dir = {}
+    end
+
+    local app_name_or = fun.iter(listed_dir):
+        filter(function(x) return x:find('.rockspec') ~= nil end):totable()[1] or ''
+    local app_name = app_name_or:gsub('%-scm%-1', ''):gsub('.rockspec', ''):match('[a-zA-z%-]+') or ''
+    if app_name:sub(-1) == '-' then
+        app_name = app_name:sub(1, -2)
+    end
+    local ok, app_version = pcall(require, 'VERSION')
+    if ok ~= true then
+        app_version = 'scm-1'
+    end
+
+    if feedback.app_name == nil and feedback.app_version == nil and app_name ~= '' then
+        feedback.app_name = app_name
+        feedback.app_version = app_version
     end
 
     local manifest = {}
