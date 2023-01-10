@@ -36,6 +36,13 @@ Changed
 - Limits of memory issues decreased. Cartridge now produce an issue when at least
   one of memory ratio is higher than 95%.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Use default values of ``replication_connect_quorum`` and
+  ``replication_sync_timeout`` in first ``box.cfg`` call.
+
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
 -------------------------------------------------------------------------------

@@ -394,6 +394,13 @@ local function boot_instance(clusterwide_config)
         box_opts.read_only = true
     end
 
+    -- Use default values in case they're missing
+    box_opts.replication_sync_timeout = box_opts.replication_sync_timeout or 300
+    -- Here we use 100 as a big quorum number to force Tarantool to use full quorum. Result value will be
+    -- min(#box.cfg.replication, box.cfg.replication_connect_quorum).
+    -- replication_connect_quorum will be reworked after https://github.com/tarantool/tarantool/pull/8037
+    box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
     local instance_uuid
@@ -545,6 +552,7 @@ local function boot_instance(clusterwide_config)
     -- Or bootstraps replication
     invalid_format.start_check()
     local snap1 = hotreload.snap_fibers()
+
     box.cfg(box_opts)
     local snap2 = hotreload.snap_fibers()
     hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
