@@ -24,6 +24,9 @@ function g.test_positive()
 
     check_ok({fragmentation_threshold_critical = 0})
     check_ok({fragmentation_threshold_critical = 1})
+
+    check_ok({fragmentation_threshold_full = 0})
+    check_ok({fragmentation_threshold_full = 1})
 end
 
 function g.test_negative()
@@ -84,5 +87,14 @@ function g.test_negative()
     check_error(
         {fragmentation_threshold_critical = 1 + 1e-7},
         'limits.fragmentation_threshold_critical must be in range [0, 1]'
+    )
+
+    check_error(
+        {fragmentation_threshold_full = 0 - 1e-7},
+        'limits.fragmentation_threshold_full must be in range [0, 1]'
+    )
+    check_error(
+        {fragmentation_threshold_full = 1 + 1e-7},
+        'limits.fragmentation_threshold_full must be in range [0, 1]'
     )
 end

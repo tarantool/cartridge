@@ -103,7 +103,8 @@ local vars = require('cartridge.vars').new(mod_name)
 --
 -- @table limits
 local default_limits = {
-    fragmentation_threshold_critical = 0.9, -- number: *default*: 0.9.
+    fragmentation_threshold_critical = 0.85, -- number: *default*: 0.85.
+    fragmentation_threshold_full = 0.95, -- number: *default*: 0.95.
     fragmentation_threshold_warning  = 0.6, -- number: *default*: 0.6.
     clock_delta_threshold_warning    = 5, -- number: *default*: 5.
 }
@@ -113,6 +114,7 @@ local default_limits = {
 local limits_ranges = {
     fragmentation_threshold_warning = {0, 1},
     fragmentation_threshold_critical = {0, 1},
+    fragmentation_threshold_full = {0, 1},
     clock_delta_threshold_warning = {0, math.huge},
 }
 
@@ -328,6 +330,9 @@ local function list_on_instance(opts)
     if  items_used_ratio > vars.limits.fragmentation_threshold_critical
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
+    or  items_used_ratio > vars.limits.fragmentation_threshold_full
+    or  arena_used_ratio > vars.limits.fragmentation_threshold_full
+    or  quota_used_ratio > vars.limits.fragmentation_threshold_full
     then
         table.insert(ret, {
             level = 'critical',
