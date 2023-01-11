@@ -650,7 +650,7 @@ role enabled. There are two options of external state provider:
   ``tarantool stateboard.init.lua``.
 
 - etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
-  is supported**.
+  API is supported**, so you can still use etcd v3 with ``ETCD_ENABLE_V2=true``.
 
 To enable stateful failover:
 

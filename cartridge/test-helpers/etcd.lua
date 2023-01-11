@@ -75,6 +75,10 @@ function Etcd:start()
 
     log.debug(table.concat(log_cmd, ' '))
 
+    if self.etcd_path:match('v3') then
+        self.env['ETCD_ENABLE_V2'] = 'true'
+    end
+
     self.process = Process:start(self.etcd_path, self.args, self.env, {
         output_prefix = 'etcd-' .. self.name,
     })

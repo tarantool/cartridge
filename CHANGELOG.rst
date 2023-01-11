@@ -25,6 +25,8 @@ Added
 
 - Add ``app_name`` and ``app_version`` to feedback.
 
+- etcd v3 support in ``test-helpers.etcd`` (with ``ETCD_ENABLE_V2=true``).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

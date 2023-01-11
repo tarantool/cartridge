@@ -87,6 +87,10 @@ jobs:
       fail-fast: false
       matrix:
         tarantool: ['1.10', '2.7', '2.8', '2.10']
+        etcd: ['v2.3.8']
+        include:
+          - tarantool: '2.10'
+            etcd: 'v3.5.0'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-python@v4
@@ -108,8 +112,10 @@ jobs:
         uses: ./.github/actions/setup-etcd
         if: runner.os == 'Linux'
         with:
-          etcd-version: v2.3.8
-          install-prefix: etcd-v2.3.8
+          etcd-version: '${{ matrix.etcd }}'
+          install-prefix: etcd-${{ matrix.etcd }}
+
+      - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
       - name: Cache rocks
@@ -163,6 +169,7 @@ jobs:
           "2.10.2-0-gf4228cb7d-r505-linux-x86_64",
           "2.11.0-entrypoint-6-g2b6d21d3b-r496-nogc64-linux-x86_64"
           ]
+        etcd: ['v2.3.8', 'v3.5.0']
       fail-fast: false
     steps:
       - uses: actions/setup-python@v4
@@ -197,8 +204,10 @@ jobs:
         uses: ./.github/actions/setup-etcd
         if: runner.os == 'Linux'
         with:
-          etcd-version: v2.3.8
-          install-prefix: etcd-v2.3.8
+          etcd-version: '${{ matrix.etcd }}'
+          install-prefix: etcd-${{ matrix.etcd }}
+
+      - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
       -
