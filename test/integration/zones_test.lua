@@ -275,7 +275,7 @@ function h.test_zones_distances()
         )
     end)
 
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 10}, function()
         local distances = h.cluster.main_server:call(
             'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
         )
