@@ -28,6 +28,7 @@ g.before_all(function()
             TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = math.huge,
             TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 1,
             TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 1,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_FULL = 1,
         }
     })
     g.cluster:start()
@@ -70,6 +71,7 @@ function g.test_issues_limits()
             clock_delta_threshold_warning = math.huge,
             fragmentation_threshold_warning = 1,
             fragmentation_threshold_critical = 1,
+            fragmentation_threshold_full = 1,
         }
     )
 
@@ -82,7 +84,8 @@ function g.test_issues_limits()
         {
             clock_delta_threshold_warning = 5,
             fragmentation_threshold_warning = 0.6,
-            fragmentation_threshold_critical = 0.9
+            fragmentation_threshold_critical = 0.85,
+            fragmentation_threshold_full = 0.95,
         }
     )
 
