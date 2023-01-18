@@ -111,7 +111,7 @@ local function get_info(uri)
         local ret = {
             general = {
                 version = box_info.version,
-                app_version = require('cartridge').VERSION,,
+                app_version = require('cartridge').VERSION,
                 pid = box_info.pid,
                 uptime = box_info.uptime,
                 instance_uuid = box_info.uuid,
