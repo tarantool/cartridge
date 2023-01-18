@@ -117,7 +117,7 @@ local function get_info(uri)
 
         local ret = {
             general = {
-                version = box_info.version .. " " ..  (is_enterprise and "CE" or "EE"),
+                version = box_info.version ..  (is_enterprise and " Enterprise" or " CE"),
                 app_version = app_version,
                 pid = box_info.pid,
                 uptime = box_info.uptime,
