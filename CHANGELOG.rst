@@ -27,6 +27,8 @@ Added
 
 - etcd v3 support in ``test-helpers.etcd`` (with ``ETCD_ENABLE_V2=true``).
 
+- Show tarantool edition version.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
