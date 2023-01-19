@@ -113,11 +113,9 @@ local function get_info(uri)
             app_version = box.NULL
         end
 
-        local is_enterprise = (require('tarantool').package == 'Tarantool Enterprise')
-
         local ret = {
             general = {
-                version = box_info.version ..  (is_enterprise and " Enterprise" or " CE"),
+                version = require('tarantool').package .. ' ' .. box_info.version,
                 app_version = app_version,
                 pid = box_info.pid,
                 uptime = box_info.uptime,
