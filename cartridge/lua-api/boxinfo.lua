@@ -117,7 +117,6 @@ local function get_info(uri)
 
         local ret = {
             general = {
-                version = require('tarantool').package .. ' ' .. box_info.version,
                 version = (package and (package .. ' ') or '') .. box_info.version,
                 app_version = app_version,
                 pid = box_info.pid,
