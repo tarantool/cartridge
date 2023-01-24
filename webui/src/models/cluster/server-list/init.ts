@@ -189,6 +189,7 @@ $cluster
           fencing_pause,
           leader_autoreturn,
           autoreturn_delay,
+          check_cookie_hash,
           mode,
           state_provider,
           etcd2_params,
@@ -201,6 +202,7 @@ $cluster
         exists(fencing_pause) && (failover_params.fencing_pause = fencing_pause);
         exists(leader_autoreturn) && (failover_params.leader_autoreturn = leader_autoreturn);
         exists(autoreturn_delay) && (failover_params.autoreturn_delay = autoreturn_delay);
+        exists(check_cookie_hash) && (failover_params.check_cookie_hash = check_cookie_hash);
         exists(mode) && (failover_params.mode = mode);
         exists(state_provider) && (failover_params.state_provider = state_provider);
         // etcd2_params

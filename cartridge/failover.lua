@@ -60,6 +60,7 @@ vars:new('consistency_needed', false)
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
+vars:new('cookie_check_err', nil)
 vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
@@ -821,10 +822,13 @@ local function cfg(clusterwide_config, opts)
         vars.fencing_pause = failover_cfg.fencing_pause
 
         -- WARNING: implicit yield
-        if package.loaded['cartridge.service-registry'].get('failover-coordinator') ~= nil then
+        vars.cookie_check_err = nil
+        if vars.cache.is_leader and failover_cfg.check_cookie_hash ~= false
+        and package.loaded['cartridge.service-registry'].get('failover-coordinator') ~= nil then
             local ok, err = vars.client:set_identification_string(cluster_cookie.get_cookie_hash())
             if not ok then
-                return nil, err
+                vars.cookie_check_err = err
+                log.error(err)
             end
         end
 
@@ -1012,6 +1016,10 @@ local function get_error()
     return vars.failover_err
 end
 
+local function check_cookie_hash_error()
+    return vars.cookie_check_err
+end
+
 --- Force inconsistent leader switching.
 -- Do it by resetting vclockkeepers in state provider.
 --
@@ -1095,6 +1103,7 @@ return {
     get_active_leaders = get_active_leaders,
     get_coordinator = get_coordinator,
     get_error = get_error,
+    check_cookie_hash_error = check_cookie_hash_error,
 
     consistency_needed = consistency_needed,
     is_vclockkeeper = is_vclockkeeper,

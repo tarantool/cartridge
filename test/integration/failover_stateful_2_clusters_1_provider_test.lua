@@ -48,12 +48,13 @@ end
 g_stateboard.setup_cluster = setup_cluster
 g_etcd2.setup_cluster = setup_cluster
 
-function g_stateboard.setup_failover(g, cluster)
+function g_stateboard.setup_failover(g, cluster, check_cookie_hash)
     return cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
             state_provider = 'tarantool',
+            check_cookie_hash = check_cookie_hash ~= false,
             tarantool_params = {
                 uri = g.state_provider.net_box_uri,
                 password = g.kvpassword,
@@ -93,12 +94,13 @@ end)
 
 local --[[const]] URI = 'http://127.0.0.1:14001'
 
-function g_etcd2.setup_failover(_, cluster)
+function g_etcd2.setup_failover(_, cluster, check_cookie_hash)
     return cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
             state_provider = 'etcd2',
+            check_cookie_hash = check_cookie_hash ~= false,
             etcd2_params = {
                 prefix = 'failover_stateful_test',
                 endpoints = {URI},
@@ -159,15 +161,36 @@ add('test_same_state_provider', function(g)
 
     g:setup_cluster{cookie1, cookie2}
     local ok, err = g:setup_failover(g.clusters[1])
-
     t.assert(ok, err)
+
     local ok, err = g:setup_failover(g.clusters[2])
-    t.assert_not(ok)
-    if g.type == 'etcd' then
-        t.assert_str_contains(err.err, 'Prefix failover_stateful_test already used by another Cartridge cluster')
-    else
-        t.assert_str_contains(err.err, 'Someone else already uses this stateboard')
-    end
+    t.assert(ok, err)
+
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[1].main_server), {})
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[2].main_server), {{
+        level = 'error',
+        topic = 'failover',
+        message = "Cookie hash check errored: " ..
+            (g.type == 'etcd' and 'Prefix failover_stateful_test already used by another Cartridge cluster'
+            or '"localhost:14401": Someone else already uses this stateboard'),
+        instance_uuid = box.NULL,
+        replicaset_uuid = box.NULL,
+    }})
+end)
+
+add('test_same_state_provider_check_disabled', function(g)
+    local cookie1 = helpers.random_cookie()
+    local cookie2 = helpers.random_cookie()
+
+    g:setup_cluster{cookie1, cookie2}
+    local ok, err = g:setup_failover(g.clusters[1], false)
+    t.assert(ok, err)
+
+    local ok, err = g:setup_failover(g.clusters[2], false)
+    t.assert(ok, err)
+
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[1].main_server), {})
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[2].main_server), {})
 end)
 
 add('test_restart', function(g)
@@ -178,6 +201,7 @@ add('test_restart', function(g)
     t.assert(ok, err)
 
     g.clusters[1]:restart()
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[1].main_server), {})
 end)
 
 add('test_change_cookie', function(g)
@@ -218,4 +242,5 @@ add('test_change_cookie', function(g)
         local clusterwide_config = confapplier.get_active_config()
         return confapplier.apply_config(clusterwide_config)
     end))
+    t.assert_items_include(helpers.list_cluster_issues(g.clusters[1].main_server), {})
 end)

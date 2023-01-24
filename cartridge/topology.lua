@@ -38,6 +38,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         -- fencing_pause = nil | number,
         -- leader_autoreturn = nil | boolean,
         -- autoreturn_delay = nil | number,
+        -- check_cookie_hash = nil | boolean,
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -486,6 +487,14 @@ local function validate_failover_schema(field, topology)
             )
         end
 
+        if topology.failover.check_cookie_hash ~= nil then
+            e_config:assert(
+                type(topology.failover.check_cookie_hash) == 'boolean',
+                '%s.failover.check_cookie_hash must be a boolean, got %s',
+                field, type(topology.failover.check_cookie_hash)
+            )
+        end
+
         if topology.failover.mode == 'stateful'
         and topology.failover.fencing_enabled == true
         then
@@ -672,6 +681,7 @@ local function validate_failover_schema(field, topology)
             ['fencing_pause'] = true,
             ['leader_autoreturn'] = true,
             ['autoreturn_delay'] = true,
+            ['check_cookie_hash'] = true,
             -- For the sake of backward compatibility with v2.0.1-78
             -- See bug https://github.com/tarantool/cartridge/issues/754
             ['enabled'] = true,
@@ -867,6 +877,7 @@ local function get_failover_params(topology_cfg)
             fencing_pause = topology_cfg.failover.fencing_pause,
             leader_autoreturn = topology_cfg.failover.leader_autoreturn,
             autoreturn_delay = topology_cfg.failover.autoreturn_delay,
+            check_cookie_hash = topology_cfg.failover.check_cookie_hash,
         }
 
         if ret.etcd2_params ~= nil then
@@ -963,6 +974,10 @@ local function get_failover_params(topology_cfg)
 
     if ret.autoreturn_delay == nil then
         ret.autoreturn_delay = 300
+    end
+
+    if ret.check_cookie_hash == nil then
+        ret.check_cookie_hash = true
     end
 
     return ret

@@ -29,6 +29,9 @@ Added
 
 - Show tarantool edition version.
 
+- ``check_cookie_hash`` parameter in stateful failover configuration
+  (`#1765 <https://github.com/tarantool/cartridge/issues/1765>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +50,7 @@ Fixed
 
 - Check hash of cluster cookie on stateful failover configuration
   (`#1765 <https://github.com/tarantool/cartridge/issues/1765>`_).
+
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
 -------------------------------------------------------------------------------
