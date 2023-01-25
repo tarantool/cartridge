@@ -61,6 +61,29 @@ function g.test_identity()
     conn:close()
 end
 
+function g.test_fetch_schema()
+    local conn, err = pool.connect('localhost:13301', {wait_connected = false, fetch_schema = true})
+    t.assert_not(err)
+
+    remote_control.accept({
+        username = 'admin',
+        password = g.cookie,
+    })
+    t.assert_is(pool.connect('localhost:13301'), conn)
+    t.assert_covers(conn, {
+        host = 'localhost',
+        port = '13301',
+        state = 'active',
+        opts = {
+            user = 'admin',
+            wait_connected = false,
+            fetch_schema = true,
+        },
+    })
+
+    conn:close()
+end
+
 function g.test_errors()
     local csw1 = utils.fiber_csw()
     local conn, err = pool.connect('localhost:13301', {wait_connected = 0})

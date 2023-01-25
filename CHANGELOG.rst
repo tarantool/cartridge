@@ -27,7 +27,9 @@ Added
 
 - etcd v3 support in ``test-helpers.etcd`` (with ``ETCD_ENABLE_V2=true``).
 
-- Show tarantool edition version.
+- Show tarantool edition version in WebUI.
+
+- ``fetch_schema`` option to ``cartridge.pool.connect``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -212,6 +214,8 @@ Changed
   instances.yml.
 
 - Update ``ddl`` to `1.6.1 <https://github.com/tarantool/ddl/releases/tag/1.6.1>`_.
+
+- Disable schema fetch for ``cartridge.pool`` connections (`#1750 <https://github.com/tarantool/cartridge/issues/1750>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

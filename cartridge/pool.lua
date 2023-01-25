@@ -57,6 +57,7 @@ end
 --   makes it return immediately. Also, passing a timeout makes it 
 --   wait before returning (e.g. `wait_connected=1.5` makes it wait 
 --   at most 1.5 seconds).
+-- @tparam ?number opts.fetch_schema Fetch schema from tarantool instances
 -- @tparam ?number opts.connect_timeout (*deprecated*)
 --   Use `wait_connected` instead
 -- @param opts.user (*deprecated*) don't use it
@@ -69,6 +70,7 @@ local function connect(uri, opts)
     opts = opts or {}
     checks('string', {
         wait_connected = '?boolean|number',
+        fetch_schema = '?boolean',
         user = '?string', -- deprecated
         password = '?string', -- deprecated
         reconnect_after = '?number', -- deprecated
@@ -86,6 +88,10 @@ local function connect(uri, opts)
             'Option "reconnect_after" is useless in pool.connect,' ..
             ' it never worked as intended and will never do'
         )
+    end
+
+    if opts.fetch_schema == nil then
+        opts.fetch_schema = false
     end
 
     local conn = vars.connections[uri]
@@ -110,7 +116,7 @@ local function connect(uri, opts)
         end
 
         conn, err = NetboxConnectError:pcall(netbox.connect,
-            _uri, {wait_connected = false, fetch_schema = false}
+            _uri, {wait_connected = false, fetch_schema = opts.fetch_schema}
         )
         if err ~= nil then
             return nil, err
