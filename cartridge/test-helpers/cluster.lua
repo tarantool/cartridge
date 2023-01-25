@@ -289,6 +289,12 @@ function Cluster:stop()
     self.running = nil
 end
 
+function Cluster:restart()
+    self:stop()
+    self:start()
+    self:wait_until_healthy()
+end
+
 function Cluster:build_server(config, replicaset_config, sn)
     replicaset_config = replicaset_config or {}
     local server_id = #self.servers + 1

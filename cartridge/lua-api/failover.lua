@@ -71,10 +71,14 @@ local function get_params()
     --   If enabled, then switched leader will return after ``autoreturn_delay``
     --   (default: false)
     -- @tfield number autoreturn_delay
-    --   (added in v2.3.0-57)
+    --   (added in v2.7.7)
     --   Time (in seconds) until failover try to return leader to the first node
     --   in ``failover_priority``
     --   (default: 300)
+    -- @tfield boolean check_cookie_hash
+    --   (added in v2.7.8)
+    --   If enabled, then check that nobody else uses this stateboard
+    --   (default: true)
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -102,6 +106,8 @@ end
 --   (added in v2.7.7)
 -- @tparam ?number opts.autoreturn_delay
 --   (added in v2.7.7)
+-- @tparam ?boolean opts.check_cookie_hash
+--   (added in v2.7.8)
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -117,6 +123,7 @@ local function set_params(opts)
         fencing_pause = '?number',
         leader_autoreturn = '?boolean',
         autoreturn_delay = '?number',
+        check_cookie_hash = '?boolean',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -181,6 +188,10 @@ local function set_params(opts)
     end
     if opts.autoreturn_delay ~= nil then
         topology_cfg.failover.autoreturn_delay = opts.autoreturn_delay
+    end
+
+    if opts.check_cookie_hash ~= nil then
+        topology_cfg.failover.check_cookie_hash = opts.check_cookie_hash
     end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})

@@ -38,6 +38,7 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
+local cluster_cookie = require('cartridge.cluster-cookie')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
@@ -59,6 +60,7 @@ vars:new('consistency_needed', false)
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
+vars:new('cookie_check_err', nil)
 vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
@@ -820,6 +822,17 @@ local function cfg(clusterwide_config, opts)
         vars.fencing_pause = failover_cfg.fencing_pause
 
         -- WARNING: implicit yield
+        vars.cookie_check_err = nil
+        if vars.cache.is_leader and failover_cfg.check_cookie_hash ~= false
+        and package.loaded['cartridge.service-registry'].get('failover-coordinator') ~= nil then
+            local ok, err = vars.client:set_identification_string(cluster_cookie.get_cookie_hash())
+            if not ok then
+                vars.cookie_check_err = err
+                log.error(err)
+            end
+        end
+
+        -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
         if appointments == nil then
             log.warn('Failed to get first appointments: %s', err)
@@ -1003,6 +1016,10 @@ local function get_error()
     return vars.failover_err
 end
 
+local function check_cookie_hash_error()
+    return vars.cookie_check_err
+end
+
 --- Force inconsistent leader switching.
 -- Do it by resetting vclockkeepers in state provider.
 --
@@ -1086,6 +1103,7 @@ return {
     get_active_leaders = get_active_leaders,
     get_coordinator = get_coordinator,
     get_error = get_error,
+    check_cookie_hash_error = check_cookie_hash_error,
 
     consistency_needed = consistency_needed,
     is_vclockkeeper = is_vclockkeeper,

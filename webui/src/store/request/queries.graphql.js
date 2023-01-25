@@ -56,6 +56,7 @@ export const getClusterQuery = gql`
         fencing_pause
         leader_autoreturn
         autoreturn_delay
+        check_cookie_hash
         etcd2_params {
           password
           lock_delay
@@ -451,6 +452,7 @@ export const changeFailoverMutation = gql`
     $fencing_pause: Float
     $leader_autoreturn: Boolean
     $autoreturn_delay: Float
+    $check_cookie_hash: Boolean
     $mode: String!
     $state_provider: String
     $etcd2_params: FailoverStateProviderCfgInputEtcd2
@@ -464,6 +466,7 @@ export const changeFailoverMutation = gql`
         fencing_pause: $fencing_pause
         leader_autoreturn: $leader_autoreturn
         autoreturn_delay: $autoreturn_delay
+        check_cookie_hash: $check_cookie_hash
         mode: $mode
         state_provider: $state_provider
         etcd2_params: $etcd2_params
@@ -594,6 +597,7 @@ export const getFailoverParams = gql`
         fencing_pause
         leader_autoreturn
         autoreturn_delay
+        check_cookie_hash
         etcd2_params {
           password
           lock_delay

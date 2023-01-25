@@ -32,6 +32,7 @@ const getFailoverFxMock = () =>
         mode: 'disabled',
         leader_autoreturn: false,
         autoreturn_delay: 300,
+        check_cookie_hash: true,
       },
     },
   });

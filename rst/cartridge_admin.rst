@@ -1329,6 +1329,15 @@ Changing cluster cookie
 In some cases it could be useful to change cluster-cookie (e.g. when you need to fix
 a broken cluster). To do it, perform next actions:
 
+#.  (Optional) If you use stateful failover:
+
+    ..  code-block:: lua
+
+        -- remember old cookie hash
+        local cluster_cookie = require('cartridge.cluster-cookie')
+
+        local old_hash = cluster_cookie.get_cookie_hash()
+
 #.  Change cluster-cookie on each instance:
 
     ..  code-block:: lua
@@ -1342,6 +1351,14 @@ a broken cluster). To do it, perform next actions:
         if require('cartridge.failover').is_leader() then
             box.schema.user.passwd(new_cookie)
         end
+
+#.  (Optional) If you use stateful failover:
+
+    ..  code-block:: lua
+
+        -- update cookie hash in a state provider
+        require('cartridge.vars').new('cartridge.failover').client:set_identification_string(
+            cluster_cookie.get_cookie_hash(), old_hash)
 
 #.  Call ``apply_config`` in cluster to reapply changes to each instance:
 
@@ -1414,4 +1431,3 @@ Backups
 Please see the
 `backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_
 in the Tarantool manual.
-

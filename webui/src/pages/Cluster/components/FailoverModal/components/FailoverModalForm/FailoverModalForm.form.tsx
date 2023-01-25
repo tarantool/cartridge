@@ -35,6 +35,7 @@ const INFOS = {
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   leaderAutoreturn: 'Return leader to the first instance in priority list',
   autoreturnDelay: 'Delay before the leader is returned',
+  checkCookieHash: 'Check that nobody else uses this stateboard',
 };
 
 const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [
@@ -53,6 +54,7 @@ export interface FailoverFormValues {
   fencing_pause?: number;
   leader_autoreturn?: boolean;
   autoreturn_delay?: number;
+  check_cookie_hash?: boolean;
   state_provider?: FailoverStateProvider;
   tarantool_params: {
     uri: string;
@@ -92,6 +94,7 @@ const validationSchema = yup
     fencing_pause: yup.number().when(['mode', 'fencing_enabled'], reqNumber),
     leader_autoreturn: yup.boolean(),
     autoreturn_delay: yup.number().when(['mode', 'leader_autoreturn'], reqNumber),
+    check_cookie_hash: yup.boolean(),
     state_provider: yup.string().oneOf(['tarantool', 'etcd2']).when(['mode', 'fencing_enabled'], reqString),
     tarantool_params: yup
       .object({
@@ -141,6 +144,7 @@ export const withFailoverForm = withFormik<FailoverFormProps, FailoverFormValues
       fencing_pause: failover_params?.fencing_pause,
       leader_autoreturn: failover_params?.leader_autoreturn,
       autoreturn_delay: failover_params?.autoreturn_delay,
+      check_cookie_hash: failover_params?.check_cookie_hash,
       state_provider: toFailoverStateProvider(failover_params?.state_provider),
       tarantool_params: {
         uri: tarantool_params?.uri ?? '',
@@ -364,6 +368,17 @@ const FailoverModalFormForm = ({
                 onChange={handleChange}
               />
             </div>
+            <FormField label="Check cookie hash" info={INFOS.checkCookieHash}>
+              <Checkbox
+                name="check_cookie_hash"
+                className="meta-test__checkCookieHashCheckbox"
+                checked={values.check_cookie_hash}
+                onChange={handleChange}
+              >
+                Enabled
+              </Checkbox>
+            </FormField>
+
             <LabeledInput
               name="state_provider"
               label="State provider"

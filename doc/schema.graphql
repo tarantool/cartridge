@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Fri Dec 02 2022 13:42:36 GMT+0300 (Москва, стандартное время)
+# timestamp: Tue Jan 24 2023 18:56:56 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -139,12 +139,13 @@ type FailoverAPI {
   fencing_enabled: Boolean!
   failover_timeout: Float!
   autoreturn_delay: Float!
+  fencing_pause: Float!
+  leader_autoreturn: Boolean!
+  check_cookie_hash: Boolean!
+  tarantool_params: FailoverStateProviderCfgTarantool
 
   """Supported modes are "disabled", "eventual", "stateful" or "raft"."""
   mode: String!
-  leader_autoreturn: Boolean!
-  tarantool_params: FailoverStateProviderCfgTarantool
-  fencing_pause: Float!
   fencing_timeout: Float!
 
   """
@@ -377,22 +378,25 @@ type MutationApicluster {
     autoreturn_delay: Float
 
     """
-    The `String` scalar type represents textual data, represented as UTF-8
-    character sequences. The String type is most often used by GraphQL to
-    represent free-form human-readable text.
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
     """
-    mode: String
+    fencing_pause: Float
 
     """The `Boolean` scalar type represents `true` or `false`."""
     leader_autoreturn: Boolean
+
+    """The `Boolean` scalar type represents `true` or `false`."""
+    check_cookie_hash: Boolean
 
     """State provider configuration (Tarantool)"""
     tarantool_params: FailoverStateProviderCfgInputTarantool
 
     """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
     """
-    fencing_pause: Float
+    mode: String
 
     """
     The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.

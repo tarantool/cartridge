@@ -281,6 +281,22 @@ local function check_quorum(client)
     return session.connection:ping()
 end
 
+local id_str_checked = false
+local function set_identification_string(client, new, prev)
+    checks('stateboard_client', 'string', '?string')
+    if not id_str_checked or prev ~= nil then
+        local session = client:get_session()
+        local ret, err = errors.netbox_call(session.connection,
+            'set_identification_string', {new, prev},
+            {timeout = session.call_timeout})
+        if ret == nil then
+            return nil, SessionError:new(err)
+        end
+        id_str_checked = true
+    end
+    return true
+end
+
 local client_mt = {
     __type = 'stateboard_client',
     __index = {
@@ -288,6 +304,7 @@ local client_mt = {
         get_session = get_session,
         drop_session = drop_session,
         check_quorum = check_quorum,
+        set_identification_string = set_identification_string,
     },
 }
 
