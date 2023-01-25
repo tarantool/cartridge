@@ -142,13 +142,16 @@ local function reconnect(connection_old)
 end
 
 function Server:connect_net_box()
-
-    if self.transport == 'ssl' then
+    local transport = self.transport
+    if transport ~= nil and type(transport) == 'string' then
+        transport = transport:lower()
+    end
+    if transport == 'ssl' then
         if type(self.net_box_uri) == 'string' then
             self.net_box_uri = {
                 uri = self.net_box_uri,
                 params = {
-                    transport = self.transport,
+                    transport = transport,
                     ssl_ciphers = self.ssl_ciphers,
                     ssl_cert_file = self.ssl_client_cert_file,
                     ssl_key_file = self.ssl_client_key_file,

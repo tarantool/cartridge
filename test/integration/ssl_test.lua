@@ -55,7 +55,7 @@ g.before_all = function()
                         advertise_port = 13302,
                         http_port = 8082,
 
-                        transport = 'ssl',
+                        transport = 'SSL',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
                         ssl_server_key_file = SERVER_KEY_FILE,
