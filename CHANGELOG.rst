@@ -47,7 +47,7 @@ Fixed
 - Use default values of ``replication_connect_quorum`` and
   ``replication_sync_timeout`` in first ``box.cfg`` call.
 
-- Lowercase ``transport`` param to handle different cases of value.
+- Lowercase ``transport`` param to handle different cases of value (`#2021 <https://github.com/tarantool/cartridge/issues/2021>`_).
 
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
