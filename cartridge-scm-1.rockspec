@@ -8,7 +8,7 @@ dependencies = {
     'lua >= 5.1',
     'ddl == 1.6.2-1',
     'http == 1.4.0-1',
-    'checks == 3.1.0-1',
+    'checks == 3.2.0-1',
     'errors == 2.2.1-1',
     'vshard == 0.1.21-1',
     'membership == 2.4.0-1',
