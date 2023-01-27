@@ -164,6 +164,11 @@ It might be useful when you have active and passive data centers.
 The time before failover will try to return the leader is configured by
 ``autoreturn_delay`` option in a failover configuration.
 
+Stateful failover automatically checks if there is a registered cluster
+in a state provider. Check is performed on a first stateful failover
+configuration and every time when cluster is restarted. You can disable that
+option by using ``check_cookie_hash = false`` in failover configuration.
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -349,6 +354,7 @@ These are clusterwide parameters:
 * ``leader_autoreturn``: ``true`` / ``false`` (default: false).
 * ``autoreturn_delay`` -- the time before failover will try to return leader
   in replicaset to the first instance in ``failover_priority`` list (default: 300).
+* ``check_cookie_hash`` -- enable check that nobody else uses this stateboard.
 
 It's required that ``failover_timeout > fencing_timeout >= fencing_pause``.
 

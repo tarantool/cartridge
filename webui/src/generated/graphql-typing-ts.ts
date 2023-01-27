@@ -148,6 +148,7 @@ export type Error = {
 export type FailoverApi = {
   __typename?: 'FailoverAPI';
   autoreturn_delay: Scalars['Float'];
+  check_cookie_hash: Scalars['Boolean'];
   etcd2_params?: Maybe<FailoverStateProviderCfgEtcd2>;
   failover_timeout: Scalars['Float'];
   fencing_enabled: Scalars['Boolean'];
@@ -415,6 +416,7 @@ export type MutationApiclusterFailoverArgs = {
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {
   autoreturn_delay?: InputMaybe<Scalars['Float']>;
+  check_cookie_hash?: InputMaybe<Scalars['Boolean']>;
   etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
   failover_timeout?: InputMaybe<Scalars['Float']>;
   fencing_enabled?: InputMaybe<Scalars['Boolean']>;
@@ -1057,6 +1059,7 @@ export type GetClusterQuery = {
       fencing_pause: number;
       leader_autoreturn: boolean;
       autoreturn_delay: number;
+      check_cookie_hash: boolean;
       mode: string;
       state_provider?: string | null;
       etcd2_params?: {
@@ -1668,6 +1671,7 @@ export type ChangeFailoverMutationVariables = Exact<{
   fencing_pause?: InputMaybe<Scalars['Float']>;
   leader_autoreturn?: InputMaybe<Scalars['Boolean']>;
   autoreturn_delay?: InputMaybe<Scalars['Float']>;
+  check_cookie_hash?: InputMaybe<Scalars['Boolean']>;
   mode: Scalars['String'];
   state_provider?: InputMaybe<Scalars['String']>;
   etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
@@ -1808,6 +1812,7 @@ export type GetFailoverParamsQuery = {
       fencing_pause: number;
       leader_autoreturn: boolean;
       autoreturn_delay: number;
+      check_cookie_hash: boolean;
       mode: string;
       state_provider?: string | null;
       etcd2_params?: {

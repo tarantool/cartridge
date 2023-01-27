@@ -76,6 +76,7 @@ const messages = {
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...',
   leaderAutoreturn: 'Return leader to the first instance in priority list',
   autoreturnDelay: 'Delay before the leader is returned',
+  checkCookieHash: 'Check that nobody else uses this state provider',
 };
 /* eslint-enable max-len */
 
@@ -95,6 +96,7 @@ type FailoverModalState = {
   fencing_pause: string,
   leader_autoreturn: boolean,
   autoreturn_delay: number,
+  check_cookie_hash: boolean,
   mode: string,
   state_provider?: string,
   tarantool_params: {|
@@ -121,6 +123,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_pause: '',
       leader_autoreturn: false,
       autoreturn_delay: '',
+      check_cookie_hash: true,
       mode: 'disabled',
       tarantool_params: {
         uri: '',
@@ -154,6 +157,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_pause,
         leader_autoreturn,
         autoreturn_delay,
+        check_cookie_hash,
         mode,
         tarantool_params,
         etcd2_params,
@@ -167,6 +171,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         fencing_pause: fencing_pause.toString(),
         leader_autoreturn,
         autoreturn_delay: autoreturn_delay.toString(),
+        check_cookie_hash,
         mode,
         tarantool_params: {
           uri: (tarantool_params && tarantool_params.uri) || '',
@@ -189,6 +194,9 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   handleStateProviderChange = (state_provider: string) => this.setState({ state_provider });
 
   handleFencingToggle = () => this.setState(({ fencing_enabled }) => ({ fencing_enabled: !fencing_enabled }));
+
+  handleCheckCookieHashToggle = () =>
+    this.setState(({ check_cookie_hash }) => ({ check_cookie_hash: !check_cookie_hash }));
 
   handleAutoreturnToggle = () => this.setState(({ leader_autoreturn }) => ({ leader_autoreturn: !leader_autoreturn }));
 
@@ -217,6 +225,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_pause,
       leader_autoreturn,
       autoreturn_delay,
+      check_cookie_hash,
       mode,
       etcd2_params,
       tarantool_params,
@@ -232,6 +241,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_pause: parseFloat(fencing_pause),
       leader_autoreturn,
       autoreturn_delay: parseFloat(autoreturn_delay),
+      check_cookie_hash,
       mode,
       tarantool_params: mode === 'stateful' && state_provider === 'tarantool' ? tarantool_params : null,
       etcd2_params:
@@ -258,6 +268,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       fencing_pause,
       leader_autoreturn,
       autoreturn_delay,
+      check_cookie_hash,
       fencing_timeout,
       state_provider,
       tarantool_params,
@@ -400,6 +411,15 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
                   onChange={this.handleInputChange(['autoreturn_delay'])}
                 />
               </div>
+              <FormField label="Check cookie hash" info={messages.checkCookieHash}>
+                <Checkbox
+                  className="meta-test__check_cookie_hashEnableCheckbox"
+                  checked={check_cookie_hash}
+                  onChange={() => this.handleCheckCookieHashToggle()}
+                >
+                  Enabled
+                </Checkbox>
+              </FormField>
               <LabeledInput
                 label="State provider"
                 className="meta-test__stateProviderChoice"

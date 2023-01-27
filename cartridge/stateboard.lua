@@ -218,6 +218,19 @@ local function get_vclockkeeper(replicaset_uuid)
     return vclockkeeper
 end
 
+local function set_identification_string(new, prev)
+    local id_str = box.space.identification_string:get('identification_string')
+    if id_str == nil then
+        return box.space.identification_string:insert({'identification_string', new})
+    elseif id_str.id_value == new then
+        return id_str
+    elseif id_str.id_value == prev then
+        return box.space.identification_string:replace({'identification_string', new})
+    else
+        error("Someone else already uses this stateboard", 0)
+    end
+end
+
 local function cfg()
     local opts, err = argparse.get_opts({
         listen = 'string',
@@ -277,6 +290,7 @@ local function cfg()
     rawset(_G, 'set_vclockkeeper', set_vclockkeeper)
     rawset(_G, 'get_vclockkeeper', get_vclockkeeper)
     rawset(_G, 'delete_replicasets', delete_replicasets)
+    rawset(_G, 'set_identification_string', set_identification_string)
 
     ------------------------------------------------------------------------
     box.schema.user.create('client', { if_not_exists = true })
@@ -292,6 +306,7 @@ local function cfg()
     box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
     box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
     box.schema.func.create('delete_replicasets', { if_not_exists = true })
+    box.schema.func.create('set_identification_string', { if_not_exists = true })
 
     ------------------------------------------------------------------------
     box.schema.sequence.create('coordinator_audit', {
@@ -397,12 +412,29 @@ local function cfg()
     })
 
     ------------------------------------------------------------------------
+    box.schema.space.create('identification_string', {
+        format = {
+            { name = 'id_name', type = 'string', is_nullable = false },
+            { name = 'id_value', type = 'string', is_nullable = false },
+        },
+        if_not_exists = true,
+    })
+
+    box.space.identification_string:create_index('identification_string', {
+        unique = true,
+        type = 'TREE',
+        parts = { { field = 'id_name', type = 'string' } },
+        if_not_exists = true,
+    })
+
+    ------------------------------------------------------------------------
 
     box.schema.user.grant('client', 'read,write', 'space', 'coordinator_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'leader_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'leader', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper_audit', { if_not_exists = true })
+    box.schema.user.grant('client', 'read,write', 'space', 'identification_string', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'sequence', 'coordinator_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'sequence', 'leader_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'sequence', 'vclockkeeper_audit', { if_not_exists = true })
@@ -415,6 +447,8 @@ local function cfg()
     box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'set_identification_string', { if_not_exists = true })
+        box.schema.user.grant('guest', 'super', nil, nil, { if_not_exists = true })
 
     -- Enable listen port only after all spaces are set up
     box.cfg({ listen = opts.listen })

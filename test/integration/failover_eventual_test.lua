@@ -156,6 +156,7 @@ local function get_failover_params()
                 fencing_pause
                 leader_autoreturn
                 autoreturn_delay
+                check_cookie_hash
             }}
         }
     ]]}).data.cluster.failover_params
@@ -427,6 +428,7 @@ g.test_api_failover = function()
             fencing_pause = 2,
             leader_autoreturn = false,
             autoreturn_delay = 300,
+            check_cookie_hash = true,
         }
     )
 
@@ -471,6 +473,7 @@ g.test_api_failover = function()
             fencing_pause = 2,
             leader_autoreturn = false,
             autoreturn_delay = 300,
+            check_cookie_hash = true,
         }
     )
     t.assert_equals(
@@ -486,6 +489,7 @@ g.test_api_failover = function()
             fencing_pause = 2,
             leader_autoreturn = false,
             autoreturn_delay = 300,
+            check_cookie_hash = true,
         }
     )
     t.assert_equals(_call('admin_get_failover'), true)
@@ -532,6 +536,7 @@ g.test_api_failover = function()
             fencing_pause = 2,
             leader_autoreturn = false,
             autoreturn_delay = 300,
+            check_cookie_hash = true,
         }
     )
     t.assert_equals(
@@ -547,6 +552,7 @@ g.test_api_failover = function()
             fencing_pause = 2,
             leader_autoreturn = false,
             autoreturn_delay = 300,
+            check_cookie_hash = true,
         }
     )
 

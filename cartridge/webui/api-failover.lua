@@ -69,6 +69,7 @@ local gql_type_userapi = gql_types.object({
         fencing_pause = gql_types.float.nonNull,
         leader_autoreturn = gql_types.boolean.nonNull,
         autoreturn_delay = gql_types.float.nonNull,
+        check_cookie_hash = gql_types.boolean.nonNull,
     }
 })
 
@@ -164,6 +165,7 @@ local function init(graphql)
             fencing_pause = gql_types.float,
             leader_autoreturn = gql_types.boolean,
             autoreturn_delay = gql_types.float,
+            check_cookie_hash = gql_types.boolean,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',

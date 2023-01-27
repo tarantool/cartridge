@@ -551,6 +551,18 @@ local function list_on_cluster()
                 message = 'There is no active failover coordinator'
             })
         end
+
+        local check_cookie_error = failover.check_cookie_hash_error()
+        if check_cookie_error ~= nil then
+            table.insert(ret, {
+                level = 'error',
+                topic = 'failover',
+                message = string.format(
+                    'Cookie hash check errored: %s',
+                    check_cookie_error.err
+                ),
+            })
+        end
     end
 
     -- Check aliens in membership

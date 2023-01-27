@@ -1,6 +1,7 @@
 local os = require('os')
 local fio = require('fio')
 local errno = require('errno')
+local digest = require('digest')
 
 local M = rawget(_G, '__module_cluster_cookie')
 if not M then
@@ -107,10 +108,18 @@ local function set_cookie(value)
     init(M.workdir)
 end
 
+local function get_cookie_hash(cookie)
+    if cookie == nil then
+        cookie = M.cookie
+    end
+    return digest.sha256_hex(cookie or '')
+end
+
 return {
     init = init,
     cookie = cookie,
     set_cookie = set_cookie,
+    get_cookie_hash = get_cookie_hash,
     username = username,
     filename = filename,
 }

@@ -31,6 +31,9 @@ Added
 
 - ``fetch_schema`` option to ``cartridge.pool.connect``.
 
+- ``check_cookie_hash`` parameter in stateful failover configuration
+  (`#1765 <https://github.com/tarantool/cartridge/issues/1765>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,6 +51,9 @@ Fixed
   ``replication_sync_timeout`` in first ``box.cfg`` call.
 
 - Lowercase ``transport`` param to handle different cases of value (`#2021 <https://github.com/tarantool/cartridge/issues/2021>`_).
+
+- Check hash of cluster cookie on stateful failover configuration
+  (`#1765 <https://github.com/tarantool/cartridge/issues/1765>`_).
 
 -------------------------------------------------------------------------------
 [2.7.7] - 2022-12-09
