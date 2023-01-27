@@ -50,6 +50,8 @@ Fixed
 - Use default values of ``replication_connect_quorum`` and
   ``replication_sync_timeout`` in first ``box.cfg`` call.
 
+- Lowercase ``transport`` param to handle different cases of value (`#2021 <https://github.com/tarantool/cartridge/issues/2021>`_).
+
 - Check hash of cluster cookie on stateful failover configuration
   (`#1765 <https://github.com/tarantool/cartridge/issues/1765>`_).
 

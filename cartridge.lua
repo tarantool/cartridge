@@ -351,6 +351,10 @@ local function cfg(opts, box_opts)
         box_opts[k] = v
     end
 
+    if type(opts.transport) == 'string' then
+        opts.transport = opts.transport:lower()
+    end
+
     if opts.transport == 'ssl' then
         if type(cartridge_utils.feature) ~= 'table' then
             log.error('No SSL support for this tarantool version')
