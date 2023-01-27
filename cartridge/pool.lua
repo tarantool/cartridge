@@ -98,6 +98,7 @@ local function connect(uri, opts)
     if conn == nil
     or conn.state == 'error'
     or conn.state == 'closed'
+    or conn.space == nil and opts.fetch_schema
     then
         -- concurrent part, won't yeild
         local _uri, err = format_uri(uri)
