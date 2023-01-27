@@ -40,6 +40,8 @@ Changed
 
 - Update ``http`` dependency to `1.4.0 <https://github.com/tarantool/http/releases/tag/1.4.0>`_.
 
+- Update ``checks`` dependency to `3.2.0 <https://github.com/tarantool/checks/releases/tag/3.2.0>`_.
+
 - Limits of memory issues decreased. Cartridge now produce an issue when at least
   one of memory ratio is higher than 95%.
 
