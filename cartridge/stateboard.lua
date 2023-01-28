@@ -448,7 +448,6 @@ local function cfg()
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'set_identification_string', { if_not_exists = true })
-        box.schema.user.grant('guest', 'super', nil, nil, { if_not_exists = true })
 
     -- Enable listen port only after all spaces are set up
     box.cfg({ listen = opts.listen })
