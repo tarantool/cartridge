@@ -11,24 +11,14 @@ env:
   CMAKE_DUMMY_WEBUI: false
 
 jobs:
-  set-build-id:
-    runs-on: ubuntu-20.04
-    steps:
-      - id: set-build-id
-        run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
-    outputs:
-      build-id: ${{ steps.set-build-id.outputs.build-id }}
-
   webui-test:
     strategy:
       fail-fast: false
       matrix:
         script:
           - frontend
-          - cypress-1
-          - cypress-2
+          - cypress
     runs-on: ubuntu-20.04
-    needs: set-build-id
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -73,7 +63,7 @@ jobs:
       # Cache cypress
       - run: echo node_modules/.bin/ >> $GITHUB_PATH
       - name: Cache cypress
-        if: startsWith(matrix.script, 'cypress')
+        if: matrix.script == 'cypress'
         id: cache-cypress
         uses: actions/cache@v3
         with:
@@ -86,7 +76,7 @@ jobs:
           npm install cypress@7.7.0
           npx cypress verify
         if: >
-          startsWith(matrix.script, 'cypress') &&
+          matrix.script == 'cypress' &&
           steps.cache-cypress.outputs.cache-hit != 'true'
 
       ##################################################################
@@ -101,16 +91,12 @@ jobs:
       - if: matrix.script == 'frontend'
         run: ./frontend-test.sh
 
-      - if: startsWith(matrix.script, 'cypress')
+      - if: matrix.script == 'cypress'
         run: ./cypress-test.sh run
-          --parallel
-          --record
-          --key ${{ secrets.CYPRESS_RECORD_KEY }}
-          --ci-build-id ${{ needs.set-build-id.outputs.build-id }}
 
       - name: Create upload folder for screenshots
         uses: actions/upload-artifact@v3
-        if: failure() && startsWith(matrix.script, 'cypress')
+        if: failure() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-screenshots-from-server
           path: webui/cypress/screenshots/
@@ -119,7 +105,7 @@ jobs:
 
       - name: Create upload folder for diff outputs
         uses: actions/upload-artifact@v3
-        if: failure() && startsWith(matrix.script, 'cypress')
+        if: failure() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-snapshots-diff-output-from-server
           path: webui/cypress/snapshots/**/__diff_output__/**
@@ -128,7 +114,7 @@ jobs:
 
       - name: Create upload folder for snapshots
         uses: actions/upload-artifact@v3
-        if: always() && startsWith(matrix.script, 'cypress')
+        if: always() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-snapshots-from-server
           path: webui/cypress/snapshots/
