@@ -16,7 +16,13 @@ and this project adheres to
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``vshard`` dependency to `0.1.22` <https://github.com/tarantool/vshard/releases/tag/0.1.22>`_.
+- Update ``vshard`` dependency to `0.1.22 <https://github.com/tarantool/vshard/releases/tag/0.1.22>`_.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Compatibility with metrics in feedback (`#2033 <https://github.com/tarantool/cartridge/issues/2033>`_).
 
 -------------------------------------------------------------------------------
 [2.7.8] - 2023-01-27
