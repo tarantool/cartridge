@@ -588,7 +588,7 @@ function reconfigure_all(active_leaders)
         local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
             local mod = service_registry.get(role_name)
-            log.info('Appling "%s" role config from failover', role_name)
+            log.info('Applying "%s" role config from failover', role_name)
             local start_time = clock.monotonic()
             local _, err = apply_config(mod)
             if err then

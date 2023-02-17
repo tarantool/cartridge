@@ -741,7 +741,7 @@ local function _force_reapply(uuids)
                 if err == nil then
                     err = ForceReapplyError:new('Unknown error at %s', uri)
                 end
-                log.error('Error reappling config at %s:\n%s', uri, err)
+                log.error('Error reapplying config at %s:\n%s', uri, err)
                 _reapply_error = err
             end
         end

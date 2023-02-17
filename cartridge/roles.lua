@@ -448,7 +448,7 @@ local function apply_config(conf, opts)
             service_registry.set(role.role_name, role.M)
 
             if type(role.M.apply_config) == 'function' then
-                log.info('Appling "%s" role config', role.role_name)
+                log.info('Applying "%s" role config', role.role_name)
                 local start_time = clock.monotonic()
                 local _, _err = ApplyConfigError:pcall(
                     role.M.apply_config, conf, opts
