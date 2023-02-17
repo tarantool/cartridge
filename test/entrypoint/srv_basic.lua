@@ -30,7 +30,7 @@ package.preload['mymodule'] = function()
     local master = nil
     local service_registry = require('cartridge.service-registry')
     local httpd = service_registry.get('httpd')
-    local validated = false
+    local validated = {}
     local master_switches = {}
 
     if httpd ~= nil then
@@ -73,12 +73,12 @@ package.preload['mymodule'] = function()
         is_master = function() return master end,
         get_master_switches = function() return master_switches end,
         validate_config = function()
-            validated = true
+            table.insert(validated, true)
             return true
         end,
         init = function(opts)
             assert(opts.is_master ~= nil)
-            assert(validated,
+            assert(#validated > 0,
                 'Config was not validated prior to init()'
             )
             if opts.is_master then
@@ -88,19 +88,21 @@ package.preload['mymodule'] = function()
             table.insert(master_switches, opts.is_master)
         end,
         apply_config = function(_, opts)
+            collectgarbage()
+                collectgarbage()
             assert(opts.is_master ~= nil)
-            assert(validated,
+            assert(#validated > 0,
                 'Config was not validated prior to apply_config()'
             )
             if opts.is_master then
                 assert(box.info().ro == false)
             end
             master = opts.is_master
-            validated = false
+            table.remove(validated, #validated)
         end,
         stop = function()
             state = 'stopped'
-            validated = false
+            table.remove(validated, #validated)
         end,
 
         -- rpc functions
