@@ -19,15 +19,14 @@ Changed
 - ``fragmentation_threshold_full`` in issues increased up to 100%. The behaviour
   can be changed with ``set_limits`` function.
 
+- Update ``vshard`` dependency to `0.1.22 <https://github.com/tarantool/vshard/releases/tag/0.1.22>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Allow to promote instances without electable configuration (`#2062 <https://github.com/tarantool/cartridge/issues/2062>`_)
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Fixed
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Compression suggestion: fix instances freezing. Skip indexes compressing.
   (`#2041 <https://github.com/tarantool/cartridge/issues/2041>`_).
 
