@@ -10,7 +10,7 @@ dependencies = {
     'http == 1.4.0-1',
     'checks == 3.2.0-1',
     'errors == 2.2.1-1',
-    'vshard == 0.1.21-1',
+    'vshard == 0.1.22-1',
     'membership == 2.4.0-1',
     'frontend-core == 8.2.1-1',
     'graphql == 0.2.0-1',
