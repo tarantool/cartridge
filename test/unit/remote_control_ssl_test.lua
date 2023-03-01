@@ -631,8 +631,8 @@ function g.test_async()
 end
 
 function g.test_bad_username()
-    local function check_conn(conn)
-        t.assert_equals(conn.error, "User 'bad-user' is not found")
+    local function check_conn(conn, err)
+        t.assert_equals(conn.error, err)
         t.assert_equals(conn.state, "error")
     end
 
@@ -645,7 +645,7 @@ function g.test_bad_username()
         ssl_key_file = CLIENT_KEY_FILE,
         timeout = 10,
     }}))
-    check_conn(conn_rc)
+    check_conn(conn_rc, "User 'bad-user' is not found")
     conn_rc:close()
 
     remote_control.stop()
@@ -664,13 +664,13 @@ function g.test_bad_username()
             ssl_key_file = CLIENT_KEY_FILE,
             timeout = 10,
         }}))
-    check_conn(conn_box)
+    check_conn(conn_box, "User not found or supplied credentials are invalid")
     conn_box:close()
 end
 
 function g.test_bad_password()
-    local function check_conn(conn)
-        t.assert_equals(conn.error, "Incorrect password supplied for user 'superuser'")
+    local function check_conn(conn, err)
+        t.assert_equals(conn.error, err)
         t.assert_equals(conn.state, "error")
     end
 
@@ -684,7 +684,7 @@ function g.test_bad_password()
         ssl_key_file = CLIENT_KEY_FILE,
         timeout = 10,
     }}))
-    check_conn(conn_rc)
+    check_conn(conn_rc, "Incorrect password supplied for user 'superuser'")
     conn_rc:close()
 
     remote_control.stop()
@@ -703,7 +703,7 @@ function g.test_bad_password()
         ssl_key_file = CLIENT_KEY_FILE,
         timeout = 10,
     }}))
-    check_conn(conn_box)
+    check_conn(conn_box, "User not found or supplied credentials are invalid")
     conn_box:close()
 end
 
