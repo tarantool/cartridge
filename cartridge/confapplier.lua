@@ -286,7 +286,11 @@ local function apply_config(clusterwide_config)
     set_state('ConfiguringRoles')
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
-    box.cfg({replication_connect_quorum = 0})
+    if not utils.feature.bootstrap_strategy_auto then
+        box.cfg({replication_connect_quorum = 0})
+    else
+        box.cfg{bootstrap_strategy = 'auto'}
+    end
     box.cfg({
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
@@ -399,7 +403,11 @@ local function boot_instance(clusterwide_config)
     -- Here we use 100 as a big quorum number to force Tarantool to use full quorum. Result value will be
     -- min(#box.cfg.replication, box.cfg.replication_connect_quorum).
     -- replication_connect_quorum will be reworked after https://github.com/tarantool/tarantool/pull/8037
-    box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+    if not utils.feature.bootstrap_strategy_auto then
+        box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+    else
+        box_opts.replication_connect_quorum = nil
+    end
 
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
@@ -455,7 +463,9 @@ local function boot_instance(clusterwide_config)
 
         box_opts.instance_uuid = instance_uuid
         box_opts.replicaset_uuid = assert(replicaset_uuid)
-        box_opts.replication_connect_quorum = 1
+        if not utils.feature.bootstrap_strategy_auto then
+            box_opts.replication_connect_quorum = 1
+        end
         box_opts.replication = topology.get_fullmesh_replication(
             topology_cfg, replicaset_uuid,
             -- Workaround for https://github.com/tarantool/tarantool/issues/3760
@@ -519,7 +529,9 @@ local function boot_instance(clusterwide_config)
             -- enter orphan mode (temporarily, until it connects to the
             -- replica) and replica would fail to join because leader is
             -- readonly.
-            box_opts.replication_connect_quorum = 0
+            if not utils.feature.bootstrap_strategy_auto then
+                box_opts.replication_connect_quorum = 0
+            end
         else
             if vars.transport == 'ssl' then
                 local uri = {

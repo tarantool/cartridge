@@ -541,6 +541,9 @@ local feature = {
         -- Backported into 2.10 since EE 2.10.0-2-g6b29095.
         return false
     end)(),
+    bootstrap_strategy_auto = (function()
+        return version_is_at_least(2, 11, 0, 'rc', 1, 0)
+    end)(),
 }
 
 return {
