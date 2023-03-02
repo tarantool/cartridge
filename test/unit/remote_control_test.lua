@@ -40,6 +40,7 @@ function _G.object:method()
 end
 
 g.before_all(function()
+    t.skip_if(jit.os == 'OSX', "Doesn't work on MacOS")
     helpers.box_cfg()
     box.schema.user.create(
         username,
