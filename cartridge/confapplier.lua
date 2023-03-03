@@ -288,8 +288,6 @@ local function apply_config(clusterwide_config)
     local topology_cfg = clusterwide_config:get_readonly('topology')
     if not utils.feature.bootstrap_strategy_auto then
         box.cfg({replication_connect_quorum = 0})
-    else
-        box.cfg{bootstrap_strategy = 'auto'}
     end
     box.cfg({
         replication = topology.get_fullmesh_replication(
@@ -520,7 +518,8 @@ local function boot_instance(clusterwide_config)
         -- Set up 'star' replication for the bootstrap
         local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
         if bootstrap_from ~= nil then
-            box_opts.replication = {bootstrap_from}
+            local bootstrap_table = bootstrap_from:split(',')
+            box_opts.replication = bootstrap_table
         elseif instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
@@ -565,6 +564,9 @@ local function boot_instance(clusterwide_config)
     invalid_format.start_check()
     local snap1 = hotreload.snap_fibers()
 
+    if utils.bootstrap_strategy_auto then
+        box_opts.bootstrap_strategy = 'auto'
+    end
     box.cfg(box_opts)
     local snap2 = hotreload.snap_fibers()
     hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))

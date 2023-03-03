@@ -3,6 +3,7 @@ local h = require('test.helper')
 local g = t.group()
 
 local fio = require('fio')
+local fun = require('fun')
 
 g.before_all(function()
     g.cluster = h.Cluster:new({
@@ -104,6 +105,20 @@ function g.test_server_restart()
     local cookie = target:eval(q_get_cookie)
     t.assert_equals(cookie, new_cookie)
 
+    local uuids = fun.iter(
+    h.get_suggestions(g.cluster.main_server).restart_replication):map(function(x)
+        return x.uuid
+    end):totable()
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation ($uuids : [String!]) {
+                cluster {
+                    restart_replication(uuids: $uuids)
+                }
+            }
+        ]],
+        variables = {uuids = uuids}
+    })
     h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.main), {})
     end)

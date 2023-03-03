@@ -91,26 +91,28 @@ function g.test_issues()
 end
 
 function g.test_topology_query()
-    local servers = g.cluster.main_server:graphql({
-        query = [[{
-            servers {
-                uri uuid alias
-                boxinfo { general { listen ro } }
-            }
-        }]]
-    }).data.servers
+    g.cluster:retrying({}, function ()
+        local servers = g.cluster.main_server:graphql({
+            query = [[{
+                servers {
+                    uri uuid alias
+                    boxinfo { general { listen ro } }
+                }
+            }]]
+        }).data.servers
 
-    t.assert_items_include(servers, {{
-        uri = 'localhost:13311',
-        uuid = g.A1.instance_uuid,
-        alias = 'A-1',
-        boxinfo = {general = {listen = '127.0.0.1:13311', ro = false}},
-    }, {
-        uri = 'localhost:13312',
-        uuid = g.B1.instance_uuid,
-        alias = 'B-1',
-        boxinfo = {general = {listen = '127.0.0.1:13312', ro = false}},
-    }})
+        t.assert_items_include(servers, {{
+            uri = 'localhost:13311',
+            uuid = g.A1.instance_uuid,
+            alias = 'A-1',
+            boxinfo = {general = {listen = '127.0.0.1:13311', ro = false}},
+        }, {
+            uri = 'localhost:13312',
+            uuid = g.B1.instance_uuid,
+            alias = 'B-1',
+            boxinfo = {general = {listen = '127.0.0.1:13312', ro = false}},
+        }})
+    end)
 end
 
 function g.test_suggestion()
@@ -127,6 +129,7 @@ function g.test_suggestion()
 end
 
 g.before_test('test_2pc', function()
+    t.skip_if(helpers.tarantool_version_ge('2.11.0'), "Behavior has changed in new Tarantool")
     g.query = [[ mutation($servers: [EditServerInput]) {
         cluster{ edit_topology(servers: $servers){ servers { uri } } }
     }]]
@@ -171,6 +174,7 @@ g.after_test('test_2pc', function()
 end)
 
 g.before_test('test_failover', function()
+    t.skip_if(helpers.tarantool_version_ge('2.11.0'), "Behavior has changed in new Tarantool")
     local ok, err = g.A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{mode = 'eventual'}}

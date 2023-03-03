@@ -74,11 +74,11 @@ g.before_all = function()
                 servers = {
                     {
                         instance_uuid = storage_3_uuid,
-                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
+                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302,admin:cookieA@localhost:3303' }
                     },
                     {
                         instance_uuid = storage_4_uuid,
-                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
+                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302,admin:cookieA@localhost:3303' }
                     },
                 },
             },
