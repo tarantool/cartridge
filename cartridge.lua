@@ -315,15 +315,15 @@ local function cfg(opts, box_opts)
         disable_errstack = '?boolean',
     }, '?table')
 
-    local ok, compat = pcall(require, 'compat')
-    if ok then
-        compat.yaml_pretty_multiline            = 'new'
-        compat.sql_seq_scan_default             = 'new'
-        compat.json_escape_forward_slash        = 'new'
-        compat.fiber_channel_close_mode         = 'new'
-        compat.fiber_slice_default              = 'new'
-        compat.box_cfg_replication_sync_timeout = 'new'
-    end
+    -- local ok, compat = pcall(require, 'compat')
+    -- if ok then
+    --     compat.yaml_pretty_multiline            = 'new'
+    --     compat.sql_seq_scan_default             = 'new'
+    --     compat.json_escape_forward_slash        = 'new'
+    --     compat.fiber_channel_close_mode         = 'new'
+    --     compat.fiber_slice_default              = 'new'
+    --     compat.box_cfg_replication_sync_timeout = 'new'
+    -- end
 
     if opts.webui_blacklist ~= nil then
         local i = 0

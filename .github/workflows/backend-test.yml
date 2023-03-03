@@ -232,7 +232,7 @@ jobs:
       - name: 'Stop Mono server'
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
-      - run: .rocks/bin/luatest -v
+      - run: .rocks/bin/luatest
 
       - name: Run pytest -v
         run: |
