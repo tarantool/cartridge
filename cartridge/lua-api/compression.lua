@@ -141,7 +141,7 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
             end
 
             local unique_index = nil
-            for k, index in pairs(space.index) do
+            for _, index in pairs(space.index) do
                 if index.unique then
                     unique_index = index
                     break
@@ -191,7 +191,7 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                     random_seed = random_seed + 1
                     local full_tuple = unique_index:random(random_seed)
                     local tmp_tuple = {}
-                    for k, index_part in pairs(unique_index.parts) do
+                    for _, index_part in pairs(unique_index.parts) do
                         local key_field = full_tuple[index_part.fieldno]
                         table.insert(tmp_tuple, key_field)
                     end
