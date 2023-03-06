@@ -6,6 +6,8 @@ local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
 local utils = require('cartridge.utils')
 
+local _, luarocks_vers = pcall(require, 'luarocks.core.vers')
+
 local errno = require('errno')
 local errno_list = getmetatable(errno).__index
 setmetatable(errno_list, {
@@ -205,6 +207,104 @@ function helpers.is_timeout_error(error_msg)
         error_msg = tostring(error_msg)
     end
     return  string.find(error_msg, 'Timeout exceeded') ~= nil or  string.find(error_msg, 'timed out') ~= nil
+end
+
+-- Based on
+-- https://github.com/tarantool/metrics/blob/eb35baf54f687c559420bef020e7a8a1fee57132/test/helper.lua#L47-L62
+function helpers.upload_default_metrics_config(cluster)
+    cluster:upload_config({
+        metrics = {
+            export = {
+                {
+                    path = '/health',
+                    format = 'health'
+                },
+                {
+                    path = '/metrics',
+                    format = 'json'
+                },
+            },
+        }
+    })
+end
+
+-- Based on
+-- https://github.com/tarantool/metrics/blob/eb35baf54f687c559420bef020e7a8a1fee57132/test/utils.lua#L60-L68
+function helpers.find_metric(metric_name, metrics_data)
+    local m = {}
+    for _, v in ipairs(metrics_data) do
+        if v.metric_name == metric_name then
+            table.insert(m, v)
+        end
+    end
+    return #m > 0 and m or nil
+end
+
+-- Based on
+-- https://github.com/tarantool/metrics/blob/eb35baf54f687c559420bef020e7a8a1fee57132/test/helper.lua#L64-L74
+function helpers.set_metrics_export(cluster, export)
+    local server = cluster.main_server
+    return server.net_box:eval([[
+        local cartridge = require('cartridge')
+        local metrics = cartridge.service_get('metrics')
+        local _, err = pcall(
+            metrics.set_export, ...
+        )
+        return err
+    ]], {export})
+end
+
+local function guess_metrics_version()
+    local module = require('metrics')
+
+    -- _VERSION was introduced in 0.16.0
+    if module._VERSION ~= nil then
+        return module._VERSION
+    end
+
+    if module.summary == nil then
+        if module.set_global_labels ~= nil then
+            return '0.1.8'
+        end
+
+        return '0.0.0'
+    end
+
+    if pcall(require, 'metrics.tarantool.average') ~= nil then
+        if module.unregister_callback ~= nil then
+            return '0.10.0'
+        end
+
+        if module.enable_cartridge_metrics ~= nil then
+            return '0.6.0'
+        end
+
+        if module.summary ~= nil then
+            return '0.5.0'
+        end
+
+        return '0.4.0'
+    end
+
+    if pcall(require, 'metrics.tarantool.memtx') then
+        return '0.15.1'
+    end
+
+    if module.enable_cartridge_metrics == nil then
+        return '0.14.0'
+    end
+
+    if module.VERSION ~= nil then
+        return '0.13.0'
+    end
+
+    return '0.11.0'
+end
+
+function helpers.is_metrics_version_less(expected_version)
+    local actual_version = guess_metrics_version()
+
+    return luarocks_vers.compare_versions(expected_version, actual_version)
 end
 
 return helpers
