@@ -104,7 +104,7 @@ local vars = require('cartridge.vars').new(mod_name)
 -- @table limits
 local default_limits = {
     fragmentation_threshold_critical = 0.85, -- number: *default*: 0.85.
-    fragmentation_threshold_full = 0.95, -- number: *default*: 0.95.
+    fragmentation_threshold_full = 1.0, -- number: *default*: 1.0.
     fragmentation_threshold_warning  = 0.6, -- number: *default*: 0.6.
     clock_delta_threshold_warning    = 5, -- number: *default*: 5.
 }

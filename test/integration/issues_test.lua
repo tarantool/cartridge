@@ -85,7 +85,7 @@ function g.test_issues_limits()
             clock_delta_threshold_warning = 5,
             fragmentation_threshold_warning = 0.6,
             fragmentation_threshold_critical = 0.85,
-            fragmentation_threshold_full = 0.95,
+            fragmentation_threshold_full = 1.0,
         }
     )
 
