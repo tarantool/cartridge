@@ -307,4 +307,29 @@ function helpers.is_metrics_version_less(expected_version)
     return luarocks_vers.compare_versions(expected_version, actual_version)
 end
 
+-- Based on
+-- https://github.com/tarantool/metrics/blob/eb35baf54f687c559420bef020e7a8a1fee57132/test/utils.lua#L98-L104
+function helpers.len(tbl)
+    local l = 0
+    for _ in pairs(tbl) do
+        l = l + 1
+    end
+    return l
+end
+
+-- Based on
+-- https://github.com/tarantool/metrics/blob/eb35baf54f687c559420bef020e7a8a1fee57132/test/utils.lua#L25-L36
+function helpers.find_metrics_obs(t, metric_name, label_pairs, observations, comparator)
+    comparator = comparator or t.assert_equals
+
+    for _, obs in pairs(observations) do
+        local same_label_pairs = pcall(comparator, obs.label_pairs, label_pairs)
+        if obs.metric_name == metric_name and same_label_pairs then
+            return obs
+        end
+    end
+    t.assert_items_include(observations, {metric_name = metric_name, label_pairs = label_pairs},
+        'Missing observation')
+end
+
 return helpers
