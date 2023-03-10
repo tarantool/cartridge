@@ -185,6 +185,9 @@ function Server:stop()
     if self.net_box then
         -- Don't try to reconnect anymore
         self.net_box:on_disconnect(nil, reconnect)
+        self:exec(function ()
+            box.cfg{replication_connect_quorum = 0}
+        end)
     end
     getmetatable(getmetatable(self)).stop(self)
     luatest.helpers.retrying({}, function()
