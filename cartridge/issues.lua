@@ -331,7 +331,6 @@ local function list_on_instance(opts)
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
     or  items_used_ratio > vars.limits.fragmentation_threshold_full
-    or  arena_used_ratio > vars.limits.fragmentation_threshold_full
     or  quota_used_ratio > vars.limits.fragmentation_threshold_full
     then
         table.insert(ret, {
