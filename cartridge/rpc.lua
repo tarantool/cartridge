@@ -18,6 +18,7 @@ local confapplier = require('cartridge.confapplier')
 local twophase = require('cartridge.twophase')
 local service_registry = require('cartridge.service-registry')
 local label_utils = require('cartridge.label-utils')
+local health = require('cartridge.health')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
 
@@ -49,24 +50,6 @@ local function call_local(role_name, fn_name, args)
     else
         return RemoteCallError:pcall(fn)
     end
-end
-
-local function member_is_healthy(uri, instance_uuid)
-    local member = membership.get_member(uri)
-    return (
-        (member ~= nil)
-        and (member.status == 'alive' or member.status == 'suspect')
-        and (member.payload.uuid == instance_uuid)
-        and (
-            member.payload.state_prev == nil or -- for backward compatibility with old versions
-            member.payload.state_prev == 'RolesConfigured' or
-            member.payload.state_prev == 'ConfiguringRoles'
-        )
-        and (
-            member.payload.state == 'ConfiguringRoles' or
-            member.payload.state == 'RolesConfigured'
-        )
-    )
 end
 
 
@@ -123,7 +106,7 @@ local function get_candidates(role_name, opts)
         local replicaset = replicasets[replicaset_uuid]
 
         if roles.get_enabled_roles(replicaset.roles)[role_name]
-        and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
+        and (not opts.healthy_only or health.member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
         and (not opts.labels or label_utils.labels_match(opts.labels, server.labels))
         then

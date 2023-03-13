@@ -88,9 +88,26 @@ jobs:
       matrix:
         tarantool: ['1.10', '2.7', '2.8', '2.10', '2.11']
         etcd: ['v2.3.8']
+        metrics: ['']
         include:
           - tarantool: '2.11'
             etcd: 'v3.5.0'
+            metrics: ''
+          - tarantool: '2.10'
+            etcd: 'v2.3.8'
+            metrics: '0.9.0'
+          - tarantool: '2.10'
+            etcd: 'v2.3.8'
+            metrics: '0.13.0'
+          - tarantool: '2.10'
+            etcd: 'v2.3.8'
+            metrics: '0.14.0'
+          - tarantool: '2.10'
+            etcd: 'v2.3.8'
+            metrics: '0.15.1'
+          - tarantool: '2.10'
+            etcd: 'v2.3.8'
+            metrics: '0.16.0'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-python@v4
@@ -140,6 +157,11 @@ jobs:
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
+
+      # Setup optional rocks
+      - name: Install metrics
+        if: matrix.metrics != ''
+        run: tarantoolctl rocks install metrics ${{ matrix.metrics }}
 
       - run: tarantoolctl rocks make
 
