@@ -330,8 +330,8 @@ local function list_on_instance(opts)
     if  items_used_ratio > vars.limits.fragmentation_threshold_critical
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
-    or  items_used_ratio > vars.limits.fragmentation_threshold_full
-    or  quota_used_ratio > vars.limits.fragmentation_threshold_full
+    or  items_used_ratio >= vars.limits.fragmentation_threshold_full
+    or  quota_used_ratio >= vars.limits.fragmentation_threshold_full
     then
         table.insert(ret, {
             level = 'critical',
