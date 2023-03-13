@@ -47,12 +47,12 @@ local function get_appointments(topology_cfg)
             local member = membership.get_member(server.uri)
 
             if member ~= nil
-            and member.payload.raft_leader ~= nil
-            and member.payload.raft_leader ~= 0
-            and member.payload.raft_term or 0 >= latest_term
+            and member.payload.raft ~= nil
+            and member.payload.raft.leader ~= nil
+            and (member.payload.raft.term or 0) >= latest_term
             then
-                latest_leader = member.payload.raft_leader
-                latest_term = member.payload.raft_term or 0
+                latest_leader = member.payload.raft.leader
+                latest_term = member.payload.raft.term or 0
             end
         end
         appointments[replicaset_uuid] = latest_leader
@@ -74,8 +74,7 @@ local function on_election_trigger()
         vars.cache.is_leader = vars.leader_uuid == vars.instance_uuid
         membership.set_payload('leader_uuid', vars.leader_uuid)
     end
-    membership.set_payload('raft_term', election.term)
-    membership.set_payload('raft_leader', leader.uuid)
+    membership.set_payload('raft', {term = election.term, leader = leader.uuid})
 end
 
 _G.__cartridge_on_election_trigger = on_election_trigger
@@ -130,8 +129,12 @@ local function cfg()
         vars.raft_trigger = box.ctl.on_election(on_election_trigger)
     end
 
-    membership.set_payload('raft_term', box.info.election.term)
-    membership.set_payload('raft_leader', box.info.election.leader)
+    local box_info = box.info()
+
+    local election = box_info.election
+    local leader = box_info.replication[election.leader] or {}
+
+    membership.set_payload('raft', {term = election.term, leader = leader.uuid})
 
     return true
 end
