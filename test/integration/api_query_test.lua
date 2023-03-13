@@ -184,7 +184,7 @@ function g.test_self()
         os.setenv('TARANTOOL_DEMO_URI', ...)
     ]], {demo_uri})
 
-    t.assert_equals(_get_demo_uri(g.server), demo_uri)
+    t.assert_equals(_get_demo_uri(), demo_uri)
 end
 
 function g.test_suggestions()
