@@ -24,6 +24,8 @@ Fixed
 
 - Compatibility with metrics in feedback (`#2033 <https://github.com/tarantool/cartridge/issues/2033>`_).
 
+- Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
+
 -------------------------------------------------------------------------------
 [2.7.8] - 2023-01-27
 -------------------------------------------------------------------------------

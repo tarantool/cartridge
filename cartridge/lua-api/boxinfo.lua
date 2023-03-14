@@ -115,6 +115,13 @@ local function get_info(uri)
 
         local package = require('tarantool').package
 
+        local listen
+        if type(box_cfg.listen) ~= "table" then
+            listen = box_cfg.listen and tostring(box_cfg.listen)
+        else
+            listen = box_cfg.listen.uri or box_cfg.listen[1].uri
+        end
+
         local ret = {
             general = {
                 version = (package and (package .. ' ') or '') .. box_info.version,
@@ -128,7 +135,7 @@ local function get_info(uri)
                 vinyl_dir = box_cfg.vinyl_dir,
                 wal_dir = box_cfg.wal_dir,
                 worker_pool_threads = box_cfg.worker_pool_threads,
-                listen = box_cfg.listen and tostring(box_cfg.listen),
+                listen = listen,
                 http_host = vars.http_host,
                 http_port = vars.http_port,
                 webui_prefix = vars.webui_prefix,
