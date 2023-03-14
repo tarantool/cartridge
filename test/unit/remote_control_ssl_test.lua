@@ -54,6 +54,7 @@ function _G.object:method()
 end
 
 g.before_all(function()
+    t.skip_if(jit.os == 'OSX', "Doesn't work on MacOS")
     if type(cartridge_utils.feature) ~= 'table' then
         t.skip("No SSL support")
     end
