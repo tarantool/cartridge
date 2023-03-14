@@ -87,6 +87,9 @@ function helpers.get_suggestions(server)
     }).data.cluster.suggestions
 end
 
+local tmpdir = fio.tempdir()
+local logfile = tmpdir .. '/tarantool.log'
+
 function helpers.box_cfg()
     if type(box.cfg) ~= 'function' then
         return
@@ -96,9 +99,18 @@ function helpers.box_cfg()
     box.cfg({
         memtx_dir = tempdir,
         wal_mode = 'none',
+        log = 'file:' .. logfile,
     })
     fio.rmtree(tempdir)
 end
+
+function helpers.logfile()
+    return logfile
+end
+
+require('luatest').after_suite(function()
+    fio.rmtree(tmpdir)
+end)
 
 function helpers.wish_state(srv, desired_state, timeout)
     srv.net_box:eval([[

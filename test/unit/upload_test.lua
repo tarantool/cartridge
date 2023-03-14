@@ -7,27 +7,20 @@ local msgpack = require('msgpack')
 
 local utils = require('cartridge.utils')
 local upload = require('cartridge.upload')
+local helpers = require('test.helper')
 
-local log = require('log')
-local log_warn_original = log.warn
+g.before_all(function()
+    helpers.box_cfg()
+end)
 
 g.before_each(function()
     g.datadir = fio.tempdir()
-
-    g.warnings = {}
-    log.warn = function(...)
-        table.insert(g.warnings, {...})
-    end
-
 end)
 
 g.after_each(function()
     os.execute('chmod -R 755 ' .. g.datadir)
     fio.rmtree(g.datadir)
     g.datadir = nil
-
-    g.warnings = nil
-    log.warn = log_warn_original
 end)
 
 function g.test_begin()
@@ -136,27 +129,35 @@ function g.test_cleanup()
     -- The first attempt fails: can't rename
     fio.chmod(prefix, tonumber('555', 8))
 
-    table.clear(g.warnings)
+    local f = fio.open(helpers.logfile(), {'O_RDWR'})
+    f:truncate(0)
+
     _G.__cartridge_upload_cleanup('upload_id')
     t.assert(fio.path.exists(payload_path))
-    t.xfail_if(log.name ~= nil, "See #1998")
-    t.assert_equals(g.warnings, {{
-        'Error removing %s: %s', upload_path,
-        errno.strerror(errno.EACCES)
-    }})
+
+    local mes = f:read(1024)
+    local d = ('W> Error removing %s: %s'):format(upload_path,
+    errno.strerror(errno.EACCES)):gsub('-', '%%-')
+    t.assert(mes:find(d))
+    f:close()
 
     fio.chmod(prefix, tonumber('755', 8))
 
     -- The second attempt fails: can't rmtree
     fio.chmod(upload_path, tonumber('555', 8))
 
-    table.clear(g.warnings)
+    local f = fio.open(helpers.logfile(), {'O_RDWR'})
+    f:truncate(0)
     _G.__cartridge_upload_cleanup('upload_id')
     local random_path = prefix .. '/' .. fio.listdir(prefix)[1]
-    t.assert_equals(g.warnings, {{
-        'Error removing %s: %s', random_path,
-        errno.strerror(errno.EACCES)
-    }})
+
+    local mes = f:read(1024)
+    local d = ('W> Error removing %s: %s'):format(random_path,
+    errno.strerror(errno.EACCES)):gsub('-', '%%-')
+
+    t.assert(mes:find(d))
+    f:close()
+
     fio.rename(random_path, upload_path)
 
     fio.chmod(upload_path, tonumber('755', 8))
