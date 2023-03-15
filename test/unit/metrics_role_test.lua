@@ -14,7 +14,7 @@ g.before_all(function()
     local is_metrics_provided = pcall(require, 'metrics')
     t.skip_if(not is_metrics_provided, "metrics not installed")
 
-    box.cfg{}
+    helpers.box_cfg()
 end)
 
 g.after_each(function()
