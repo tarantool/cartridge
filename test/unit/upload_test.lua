@@ -129,7 +129,8 @@ function g.test_cleanup()
     -- The first attempt fails: can't rename
     fio.chmod(prefix, tonumber('555', 8))
 
-    local f = fio.open(helpers.logfile(), {'O_RDWR'})
+    local f, err = fio.open(helpers.logfile(), {'O_RDWR'})
+    t.skip_if(not f, err)
     f:truncate(0)
 
     _G.__cartridge_upload_cleanup('upload_id')
@@ -146,7 +147,8 @@ function g.test_cleanup()
     -- The second attempt fails: can't rmtree
     fio.chmod(upload_path, tonumber('555', 8))
 
-    local f = fio.open(helpers.logfile(), {'O_RDWR'})
+    local f, err = fio.open(helpers.logfile(), {'O_RDWR'})
+    t.skip_if(not f, err)
     f:truncate(0)
     _G.__cartridge_upload_cleanup('upload_id')
     local random_path = prefix .. '/' .. fio.listdir(prefix)[1]
