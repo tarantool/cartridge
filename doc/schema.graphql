@@ -192,6 +192,9 @@ type FieldCompressionInfo {
 
   """compression percentage"""
   compression_percentage: Int!
+
+  """compression time"""
+  compression_time: Int!
 }
 
 """

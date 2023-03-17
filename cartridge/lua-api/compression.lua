@@ -1,12 +1,13 @@
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 local log = require('log')
 local fiber = require('fiber')
+local clock = require('clock')
 
 local pool = require('cartridge.pool')
 local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.compression')
 
-vars:new('timeout', 300)
+vars:new('timeout', 3000)
 
 --- This function gets compression info on cluster aggregated by instances.
 -- Function surfs by replicates to find master storages and calls on them __cartridgeGetStorageCompressionInfo() func.
@@ -140,17 +141,7 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                 break
             end
 
-            local unique_index = nil
-            for _, index in pairs(space.index) do
-                if index.unique then
-                    unique_index = index
-                    break
-                end
-            end
-
-            if unique_index == nil then
-                break
-            end
+            local unique_index = space.index[0]
 
             for fieldno, field_format in pairs(space_format) do
                 local field_in_index = false
@@ -186,6 +177,9 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                     temp_space_len = temp_space_len_limit
                 end
 
+                local uncompress_time = 0
+                local compress_time = 0
+
                 -- fill temporary spaces with limited count of items
                 while added < temp_space_len do
                     random_seed = random_seed + 1
@@ -196,15 +190,26 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                         table.insert(tmp_tuple, key_field)
                     end
 
-                    local exist_in_compressed_space = compressed_space:get(tmp_tuple)
+                    local exist_in_compressed_space = index_space:get(tmp_tuple)
                     if exist_in_compressed_space == nil then
+                        -- tmp spaces does not yield after insert,
+                        -- so need to call yeild explicit.
+
                         index_space:insert(tmp_tuple)
                         fiber.yield()
+
                         table.insert(tmp_tuple, full_tuple[fieldno])
+
+                        local time = clock.proc64()
                         uncompressed_space:insert(tmp_tuple)
+                        uncompress_time = uncompress_time + clock.proc64() - time
                         fiber.yield()
+
+                        time = clock.proc64()
                         compressed_space:insert(tmp_tuple)
+                        compress_time = compress_time + clock.proc64() - time
                         fiber.yield()
+
                         added = added + 1
                     end
                 end
@@ -214,12 +219,19 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                     compression_percentage =
                         (compressed_space:bsize() - index_space:bsize()) * 100 /
                         (uncompressed_space:bsize() - index_space:bsize() + 1),
+                    compression_time = 100 - 100 * uncompress_time / compress_time,
                 }
                 table.insert(space_compression_info, field_compression_info)
 
                 compressed_space:drop()
                 uncompressed_space:drop()
                 index_space:drop()
+
+                log.info('Field "%s" in space "%s" can be compressed down to %q%%. Slowdown %q%%.',
+                    space_name,
+                    field_compression_info.field_name,
+                    field_compression_info.compression_percentage,
+                    field_compression_info.compression_time)
 
                 ::continue::
             end
@@ -235,6 +247,8 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
         storage_compression_info,
     }, nil
 end
+
+--require('jit').off(_G.__cartridgeGetStorageCompressionInfo)
 
 return {
     get_cluster_compression_info = get_cluster_compression_info,

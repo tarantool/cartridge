@@ -18,7 +18,10 @@ Changed
 
 - Update ``vshard`` dependency to `0.1.22` <https://github.com/tarantool/vshard/releases/tag/0.1.22>`_.
 
-- Fix compression:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fix compression suggestion:
   Fix instances freezing.
   Do not compress indexes.
   (`#2041 https://github.com/tarantool/cartridge/issues/2041`_).
