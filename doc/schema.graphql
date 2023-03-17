@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Tue Jan 24 2023 18:56:56 GMT+0300 (Москва, стандартное время)
+# timestamp: Fri Mar 17 2023 16:41:38 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -187,11 +187,11 @@ type FailoverStateProviderCfgTarantool {
 
 """Information about single field compression rate possibility"""
 type FieldCompressionInfo {
-  """field name"""
-  field_name: String!
-
   """compression percentage"""
   compression_percentage: Int!
+
+  """field name"""
+  field_name: String!
 
   """compression time"""
   compression_time: Int!
