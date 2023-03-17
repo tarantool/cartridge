@@ -919,6 +919,7 @@ _G.cartridge_set_schema = twophase.set_schema
 
 return {
     VERSION = VERSION,
+    _VERSION = VERSION,
 
     cfg = cfg,
 
