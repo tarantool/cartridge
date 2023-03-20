@@ -37,11 +37,10 @@ Fixed
 
 - Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Fixed
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Compression suggestion: fix instances freezing. Skip indexes compressing.
   (`#2041 <https://github.com/tarantool/cartridge/issues/2041>`_).
+
+- Delete instances before box.cfg.replication change (`#1948 <https://github.com/tarantool/cartridge/issues/1948>`_).
 
 -------------------------------------------------------------------------------
 [2.7.8] - 2023-01-27
