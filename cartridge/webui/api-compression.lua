@@ -15,6 +15,10 @@ local gql_field_compression_info = gql_types.object({
             kind = gql_types.int.nonNull,
             description = 'compression percentage',
         },
+        compression_time = {
+            kind = gql_types.int.nonNull,
+            description = 'compression time',
+        },
     }
 })
 
