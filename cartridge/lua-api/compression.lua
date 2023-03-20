@@ -248,8 +248,6 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
     }, nil
 end
 
---require('jit').off(_G.__cartridgeGetStorageCompressionInfo)
-
 return {
     get_cluster_compression_info = get_cluster_compression_info,
 }
