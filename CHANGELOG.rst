@@ -38,10 +38,8 @@ Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Fix compression suggestion:
-  Fix instances freezing.
-  Do not compress indexes.
-  (`#2041 https://github.com/tarantool/cartridge/issues/2041`_).
+- Compression suggestion: fix instances freezing. Skip indexes compressing.
+  (`#2041 <https://github.com/tarantool/cartridge/issues/2041>`_).
 
 -------------------------------------------------------------------------------
 [2.7.8] - 2023-01-27
