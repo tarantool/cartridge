@@ -7,13 +7,6 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-local function version(srv)
-    local version = srv:call('require', {'cartridge.VERSION'})
-    local cwd = srv:call('package.loaded.fio.cwd')
-    log.info('Check %s version: %s (from %s)', srv.alias, version, cwd)
-    return version
-end
-
 local function upstream_info(srv)
     local info = srv:call('box.info')
     for _, v in pairs(info.replication) do
@@ -89,14 +82,6 @@ local function change_version(old, new)
     g.cluster.main_server:setup_replicaset(g.cluster.replicasets[1])
     g.cluster:bootstrap_vshard()
     g.cluster:wait_until_healthy()
-
-    if old ~= nil then
-        t.assert_not_equals(version(leader), 'scm-1')
-        t.assert_not_equals(version(replica), 'scm-1')
-    else
-        t.assert_equals(version(leader), 'scm-1')
-        t.assert_equals(version(replica), 'scm-1')
-    end
 
     ----------------------------------------------------------------------------
     -- Setup data model
@@ -174,14 +159,6 @@ local function change_version(old, new)
     g.cluster:retrying({}, function() replica:connect_net_box() end)
     await_state(replica, 'RolesConfigured')
 
-    if old ~= nil then
-        t.assert_not_equals(version(leader), 'scm-1')
-        t.assert_equals(version(replica), 'scm-1')
-    else
-        t.assert_equals(version(leader), 'scm-1')
-        t.assert_not_equals(version(replica), 'scm-1')
-    end
-
     t.assert_equals(upstream_info(replica), {status = 'follow'})
 
     g.cluster:retrying({}, function()
@@ -247,14 +224,6 @@ local function change_version(old, new)
     leader:start()
     g.cluster:retrying({}, function() leader:connect_net_box() end)
     g.cluster:wait_until_healthy()
-
-    if old ~= nil then
-        t.assert_equals(version(leader), 'scm-1')
-        t.assert_equals(version(replica), 'scm-1')
-    else
-        t.assert_not_equals(version(leader), 'scm-1')
-        t.assert_not_equals(version(replica), 'scm-1')
-    end
 
     t.assert_equals(upstream_info(leader), {status = 'follow'})
 

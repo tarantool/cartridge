@@ -18,6 +18,8 @@ Added
 
 - ``cartridge.roles.metrics`` role (`tarantool#7725 <https://github.com/tarantool/tarantool/issues/7725>`_).
 
+- Versioning support (`tarantool/roadmap-internal#204 <https://github.com/tarantool/roadmap-internal/issues/204>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

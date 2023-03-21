@@ -1,3 +1,0 @@
-#!/usr/bin/env tarantool
-
-return "@GIT_DESCRIBE@"
