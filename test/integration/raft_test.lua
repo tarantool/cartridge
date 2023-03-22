@@ -740,14 +740,15 @@ g_expel.test_raft_is_disabled = function()
     end)
 
     g_expel.cluster:retrying({}, function()
-        t.assert(g_expel.cluster.main_server:exec(function(uuid)
+        local ok, err = g_expel.cluster.main_server:exec(function(uuid)
             return require('cartridge.lua-api.topology').edit_topology({
                 servers = {{
                     uuid = uuid,
                     expelled = true,
                 }}
             })
-        end, {storage_3_uuid}))
+        end, {storage_3_uuid})
+        t.assert(ok or (err.err == ('Server "%s" is expelled'):format(storage_3_uuid)), err)
     end)
 
     -- after expelling, we have:
