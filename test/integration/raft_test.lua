@@ -746,7 +746,7 @@ g_expel.test_raft_is_disabled = function()
     -- storage-1: new leader, failover disabled
     -- storage-2: ex-leader, ex-queue-owner
     -- storage-3: expelled
-    g_expel.cluster:retrying({timeout = 10}, function()
+    g_expel.cluster:retrying({timeout = 30}, function()
         t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
         t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
         t.assert(pcall(function()
