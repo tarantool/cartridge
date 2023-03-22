@@ -748,7 +748,7 @@ g_expel.test_raft_is_disabled = function()
                 }}
             })
         end, {storage_3_uuid})
-        t.assert(ok == true or (err.err == ('Seraver "%s" is expelled'):format(storage_3_uuid)), err)
+        t.assert(ok == true or (err.err == ('Server "%s" is expelled'):format(storage_3_uuid)), err)
     end)
 
     -- after expelling, we have:
