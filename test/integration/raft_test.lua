@@ -733,20 +733,28 @@ g_expel.test_raft_is_disabled = function()
     end)
 
     g_expel.cluster:server('storage-3'):stop()
-    g_expel.cluster.main_server:exec(function(uuid)
-        require('cartridge.lua-api.topology').edit_topology({
-            servers = {{
-                uuid = uuid,
-                expelled = true,
-            }}
-        })
-    end, {storage_3_uuid})
+
+    g_expel.cluster:retrying({}, function()
+        g_expel.cluster:server('storage-2'):call('box.ctl.promote')
+        -- here we call box.ctl.promote manually to change queue owner
+    end)
+
+    g_expel.cluster:retrying({}, function()
+        t.assert(g_expel.cluster.main_server:exec(function(uuid)
+            return require('cartridge.lua-api.topology').edit_topology({
+                servers = {{
+                    uuid = uuid,
+                    expelled = true,
+                }}
+            })
+        end, {storage_3_uuid}))
+    end)
 
     -- after expelling, we have:
     -- storage-1: new leader, failover disabled
     -- storage-2: ex-leader, ex-queue-owner
     -- storage-3: expelled
-    g_expel.cluster:retrying({timeout = 30}, function()
+    g_expel.cluster:retrying({timeout = 10}, function()
         t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
         t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
         t.assert(pcall(function()
