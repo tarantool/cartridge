@@ -734,11 +734,7 @@ g_expel.test_raft_is_disabled = function()
 
     g_expel.cluster:server('storage-3'):stop()
 
-
-    g_expel.cluster:retrying({}, function()
-        g_expel.cluster:server('storage-2'):call('box.ctl.promote')
-        -- here we call box.ctl.promote manually to change queue owner
-
+    g_expel.cluster:retrying({timeout = 10}, function()
         local ok, err = g_expel.cluster.main_server:exec(function(uuid)
             return require('cartridge.lua-api.topology').edit_topology({
                 servers = {{

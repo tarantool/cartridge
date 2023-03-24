@@ -149,7 +149,14 @@ local function disable()
     vars.leader_uuid = nil
 
     local box_info = box.info
-    if box_info.synchro.queue.owner == box_info.id then
+    if box_info.synchro.queue.owner ~= 0
+    and box_info.replication[box_info.synchro.queue.owner] == nil then
+        local first_id = box.space._cluster:select({}, {limit=1})[1][1]
+        if first_id == box_info.id then
+            box.ctl.promote()
+            box.ctl.demote()
+        end
+    elseif box_info.synchro.queue.owner == box_info.id then
         box.ctl.demote()
     end
 end
