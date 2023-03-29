@@ -292,10 +292,57 @@ function g.test_push()
     t.assert_equals(res.data, 2)
 
     t.assert_error_msg_contains(
-        'bad argument opts.on_push/opts.on_push_ctx to rpc_call' ..
+        'bad argument opts.on_push/opts.on_push_ctx/opts.is_async to rpc_call' ..
         ' (allowed to be used only with opts.prefer_local=false)',
         rpc_call, B2,
         'myrole', 'push', {1},
         {prefer_local = true}
+    )
+end
+
+function g.test_is_async()
+    local function rpc_call(server, role_name, fn_name, args, kv_args)
+        local res, err = server:eval([[
+            local rpc = require('cartridge.rpc')
+            local future, err = rpc.call(...)
+            if err ~= nil then
+                return nil, err
+            end
+            return future:wait_result()
+        ]], {role_name, fn_name, args, kv_args})
+        return res, err
+    end
+
+    -- Test simple is_async call
+    --------------------------------------------------------------------
+    local B1 = g.cluster:server('B1')
+    local res, err = rpc_call(B1,
+        'myrole', 'dog_goes', nil,
+        {is_async = true, prefer_local = false}
+    )
+    t.assert_not(err)
+    t.assert_equals(res, {'woof'})
+
+    -- Test is_async call that throws
+    --------------------------------------------------------------------
+    local B1 = g.cluster:server('B1')
+    local res, err = rpc_call(B1,
+        'myrole', 'throw', {'test throw'},
+        {is_async = true, prefer_local = false}
+    )
+    t.assert_not(err)
+    t.assert_equals(type(res), 'table')
+    t.assert_equals(res[1], box.NULL)
+    t.assert_equals(type(res[2]), 'table')
+    t.assert_equals(res[2].err, 'test throw')
+
+    -- Test is_async + prefer_local
+    --------------------------------------------------------------------
+    t.assert_error_msg_contains(
+        'bad argument opts.on_push/opts.on_push_ctx/opts.is_async to rpc_call' ..
+        ' (allowed to be used only with opts.prefer_local=false)',
+        rpc_call, B1,
+        'myrole', 'dog_goes', nil,
+        {is_async = true, prefer_local = true}
     )
 end
