@@ -228,6 +228,7 @@ end
 -- @param opts.buffer passed to `net.box` `conn:call` options.
 -- @param opts.on_push passed to `net.box` `conn:call` options.
 -- @param opts.on_push_ctx passed to `net.box` `conn:call` options.
+-- @param opts.is_async passed to `net.box` `conn:call` options.
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
@@ -244,6 +245,7 @@ local function call_remote(role_name, fn_name, args, opts)
         buffer = '?', -- for net.box.call
         on_push = '?function', -- for net.box.call
         on_push_ctx = '?', -- for net.box.call
+        is_async = '?boolean', -- for net.box.call
     })
 
     if opts.uri ~= nil and (opts.leader_only or opts.labels) then
@@ -266,9 +268,10 @@ local function call_remote(role_name, fn_name, args, opts)
         prefer_local = true
     end
 
-    if (opts.on_push ~= nil or opts.on_push_ctx ~= nil) and opts.prefer_local ~= false then
-        local err = "bad argument opts.on_push/opts.on_push_ctx to rpc_call" ..
-            " (allowed to be used only with opts.prefer_local=false)"
+    if (opts.on_push ~= nil or opts.on_push_ctx ~= nil or opts.is_async == true)
+        and opts.prefer_local ~= false then
+        local err = "bad argument opts.on_push/opts.on_push_ctx/opts.is_async" ..
+            " to rpc_call (allowed to be used only with opts.prefer_local=false)"
         error(err, 2)
     end
 
@@ -304,6 +307,7 @@ local function call_remote(role_name, fn_name, args, opts)
                 buffer = opts.buffer,
                 on_push = opts.on_push,
                 on_push_ctx = opts.on_push_ctx,
+                is_async = opts.is_async,
             }
         )
     end
