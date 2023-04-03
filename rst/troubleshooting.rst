@@ -413,3 +413,22 @@ You can remove instance from cluster using ``cartridge repair`` command.
           --verbose \
           --reload \
           <replicaset-uuid> <instance-uuid>
+
+
+Broken failover promote in Cartridge 2.7.7/2.7.8
+------------------------------------------------------
+
+When updating on Cartridge 2.7.7/2.7.8 while trying to promote a replica
+you can see an error like this: ``Cannot appoint non-electable instance``.
+
+This is a known bug in Cartridge 2.7.7/2.7.8, which is fixed in Cartridge 2.7.9.
+
+To fix this issue, you need to update Cartridge to version 2.7.9 or higher.
+
+Or you can use the following workaround:
+
+..  code-block:: lua
+
+    require('cartridge.lua-api.topology').set_electable_servers({uuid1, uuid2, ... uuidN}) -- list all of your uuids here
+
+
