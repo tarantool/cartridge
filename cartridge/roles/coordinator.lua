@@ -379,7 +379,7 @@ local function appoint_leaders(leaders)
 
     local updates = {}
     for replicaset_uuid, leader_uuid in pairs(leaders) do
-        if not servers[leader_uuid].electable then
+        if servers[leader_uuid].electable == false then
             return nil, AppointmentError:new("Cannot appoint non-electable instance")
         end
 
