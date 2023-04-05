@@ -191,3 +191,17 @@ add('test_set_electable', function(g)
     end)
 end)
 
+add('test_last_instance_electable', function(g)
+    g.cluster:server("core-1"):exec(function(uuid)
+        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+        vars.topology_cfg.servers[uuid].electable = nil -- pretend that instance doesn't have electable field
+
+        return vars.topology_cfg.servers[uuid]
+    end, {storage1_2_uuid})
+
+    local _, err = g.cluster.main_server:eval(q_promote, { { [storage1_uuid] = storage1_2_uuid } })
+
+    t.assert_not(err)
+
+    t.assert(g.cluster:server('storage-1-replica-1'):exec(is_leader))
+end)
