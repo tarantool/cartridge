@@ -39,6 +39,8 @@ Added
 
 - New issue about expelled instances that still in ``box.space._cluster``.
 
+- Allow to list several instances (comma-separated) in ``boostrap_from``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
