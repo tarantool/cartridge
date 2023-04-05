@@ -19,6 +19,12 @@ Changed
 - ``fragmentation_threshold_full`` in issues increased up to 100%. The behaviour
   can be changed with ``set_limits`` function.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Allow to promote instances without electable configuration (`#2062 <https://github.com/tarantool/cartridge/issues/2062>`_)
+
 -------------------------------------------------------------------------------
 [2.7.8] - 2023-01-27
 -------------------------------------------------------------------------------
