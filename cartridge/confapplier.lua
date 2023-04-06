@@ -509,8 +509,9 @@ local function boot_instance(clusterwide_config)
 
         -- Set up 'star' replication for the bootstrap
         local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
+        local bootstrap_table = {}
         if bootstrap_from ~= nil then
-            local bootstrap_table = bootstrap_from:split(',')
+            bootstrap_table = bootstrap_from:split(',')
             box_opts.replication = bootstrap_table
         elseif instance_uuid == leader_uuid then
             box_opts.replication = nil
@@ -535,7 +536,9 @@ local function boot_instance(clusterwide_config)
                 }
                 box_opts.replication = {uri}
             else
-                box_opts.replication = {pool.format_uri(leader.uri)}
+                table.insert(bootstrap_table, pool.format_uri(leader.uri))
+                box_opts.replication = bootstrap_table
+                -- box_opts.replication = {pool.format_uri(leader.uri)}
             end
         end
     end
