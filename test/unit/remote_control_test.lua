@@ -152,7 +152,7 @@ end
 function g.test_peer_uuid()
     rc_start(13301)
     local conn = assert(netbox.connect('localhost:13301'))
-    t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000001")
 end
 
 function g.test_fiber_name()
@@ -793,7 +793,7 @@ function g.test_switch_box_to_rc()
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
     t.assert_equals(conn_rc:call('get_local_secret'), secret)
-    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000001")
 end
 
 function g.test_switch_rc_to_box()
@@ -803,7 +803,7 @@ function g.test_switch_rc_to_box()
     local conn_rc = assert(netbox.connect(uri))
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
-    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000001")
 
     -- swap remote control with real iproto
     t.assert_equals(conn_rc:eval([[

@@ -308,7 +308,7 @@ local function rc_handle(s)
 
     local greeting = string.format(
         '%-63s\n%-63s\n',
-        'Tarantool 1.10.0 (Binary) 00000000-0000-0000-0000-000000000000',
+        'Tarantool 1.10.0 (Binary) 00000000-0000-0000-0000-000000000001',
         digest.base64_encode(salt)
     )
 

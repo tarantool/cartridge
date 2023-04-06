@@ -231,7 +231,7 @@ function g.test_peer_uuid()
             transport='ssl',
             ssl_cert_file=CLIENT_CERT_FILE,
             ssl_key_file=CLIENT_KEY_FILE}}))
-    t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000001")
 end
 
 function g.test_fiber_name()
@@ -1130,7 +1130,7 @@ function g.test_switch_box_to_rc()
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
     t.assert_equals(conn_rc:call('get_local_sslsecret'), sslsecret)
-    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000001")
 end
 
 function g.test_switch_rc_to_box()
@@ -1147,7 +1147,7 @@ function g.test_switch_rc_to_box()
     }}))
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
-    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000000")
+    t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000001")
 
     -- swap remote control with real iproto
     t.assert_equals(conn_rc:eval([[

@@ -79,7 +79,7 @@ function g.test_join_server()
         -- g.server isn't bootstrapped yet
         -- remote-control connection can be established
         get_peer_uuid(g.server.advertise_uri),
-        "00000000-0000-0000-0000-000000000000"
+        "00000000-0000-0000-0000-000000000001"
     )
 
     t.assert_error_msg_contains(
