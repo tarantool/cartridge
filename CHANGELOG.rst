@@ -19,7 +19,7 @@ Changed
 - ``fragmentation_threshold_full`` in issues increased up to 100%. The behaviour
   can be changed with ``set_limits`` function.
 
-- Update ``vshard`` dependency to `0.1.22 <https://github.com/tarantool/vshard/releases/tag/0.1.22>`_.
+- Update ``vshard`` dependency to `0.1.23 <https://github.com/tarantool/vshard/releases/tag/0.1.23>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
