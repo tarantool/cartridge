@@ -20,16 +20,7 @@ Added
 
 - Versioning support (`tarantool/roadmap-internal#204 <https://github.com/tarantool/roadmap-internal/issues/204>`_).
 
-- `rpc_call` supports `is_async` net.box option.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Changed
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Update ``vshard`` dependency to `0.1.23 <https://github.com/tarantool/vshard/releases/tag/0.1.23>`_.
-
-- ``fragmentation_threshold_full`` in issues increased up to 100%. The behaviour
-  can be changed with ``set_limits`` function.
+- ``rpc_call`` supports ``is_async`` net.box option.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -39,9 +30,25 @@ Fixed
 
 - Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
 
+-------------------------------------------------------------------------------
+[2.7.9] - 2023-04-06
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``fragmentation_threshold_full`` in issues increased up to 100%. The behaviour
+  can be changed with ``set_limits`` function.
+
+- Update ``vshard`` dependency to `0.1.23 <https://github.com/tarantool/vshard/releases/tag/0.1.23>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Allow to promote instances without electable configuration (`#2062 <https://github.com/tarantool/cartridge/issues/2062>`_).
+
 - Compression suggestion: fix instances freezing. Skip indexes compressing.
   (`#2041 <https://github.com/tarantool/cartridge/issues/2041>`_).
 
