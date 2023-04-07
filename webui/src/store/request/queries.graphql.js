@@ -190,6 +190,7 @@ export const serverDetailsFields = gql`
         election_state
         election_mode
         synchro_queue_owner
+        ro_reason
       }
       replication {
         replication_connect_quorum
