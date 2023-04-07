@@ -129,14 +129,27 @@ function g.test_bootstrap()
     t.assert_equals(topology.servers[1].zone, 'z1')
 
     local pids = {}
-    for _, srv in pairs(topology.servers) do
-        if srv.boxinfo ~= nil then
-            pids[srv.uri] = srv.boxinfo.general.pid
+    helpers.retrying({}, function()
+        local resp = a1:graphql({
+            query = [[
+                {
+                    servers {
+                        uri
+                        boxinfo { general {pid} }
+                    }
+                }
+            ]]
+        })
+        for _, srv in pairs(resp.data.servers) do
+            if srv.boxinfo ~= nil then
+                pids[srv.uri] = srv.boxinfo.general.pid
+            end
         end
-    end
-    t.assert_items_equals(pids, {
-        [a1.advertise_uri] = a1.process.pid,
-        [b2.advertise_uri] = b2.process.pid,
-        [b3.advertise_uri] = b3.process.pid,
-    })
+        t.assert_items_equals(pids, {
+            [a1.advertise_uri] = a1.process.pid,
+            [b2.advertise_uri] = b2.process.pid,
+            [b3.advertise_uri] = b3.process.pid,
+        })
+    end)
+
 end
