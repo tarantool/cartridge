@@ -23,6 +23,7 @@ export const styles = {
   `,
   rightCol: css`
     max-width: 50%;
+    word-wrap: break-word;
   `,
   subColumnContent: css`
     width: 100%;
