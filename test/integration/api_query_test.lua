@@ -378,6 +378,8 @@ function g.test_servers()
         ]]
     })
 
+    table.sort(resp['data']['servers'], function(a, b) return a.uri < b.uri end)
+
     t.assert_items_equals(resp['data']['servers'], {{
             uri = 'localhost:13301',
             uuid = helpers.uuid('a', 'a', 1),
