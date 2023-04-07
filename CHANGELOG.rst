@@ -39,6 +39,14 @@ Fixed
 
 - Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Removed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Previously unused labels validation. You can return logging of invalid labels
+  by setting global ``__cartridge_log_invalid_labels`` to true.
+
 -------------------------------------------------------------------------------
 [2.7.9] - 2023-04-06
 -------------------------------------------------------------------------------

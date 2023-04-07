@@ -258,10 +258,11 @@ local function validate_schema(field, topology)
                 '%s.zone must be a string, got %s', field, type(server.zone)
             )
 
-            local ok, err = label_utils.validate_labels(field, server)
-            if not ok then
-                log.error(("Invalid labels: %s. Usage of invalid labels will be forbidden in next releases")
-                    :format(err.err))
+            if rawget(_G, '__cartridge_log_invalid_labels') == true then
+                local ok, err = label_utils.validate_labels(field, server)
+                if not ok then
+                    log.error(("Invalid labels: %s"):format(err.err))
+                end
             end
 
             local known_keys = {
