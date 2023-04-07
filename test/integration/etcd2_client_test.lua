@@ -179,7 +179,7 @@ function g.test_longpolling()
         return chan
     end
 
-    t.assert_equals(client:longpoll(0), {A = 'a1', B = 'b1'})
+    t.assert_equals(client:longpoll(0.5), {A = 'a1', B = 'b1'})
 
     local chan = async_longpoll()
     t.assert(c1:set_leaders({{'A', 'a2'}}), true)
