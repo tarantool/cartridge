@@ -286,7 +286,7 @@ local function apply_config(clusterwide_config)
     set_state('ConfiguringRoles')
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
-    if failover.is_leader() then
+    if box.info.ro == false then
         for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
             box.space._cluster.index.uuid:delete(uuid)
         end
