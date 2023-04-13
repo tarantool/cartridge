@@ -732,6 +732,7 @@ g_expel.test_raft_is_disabled = function()
         -- here we call box.ctl.promote manually to promote rw instance
     end)
 
+    g_expel.cluster:server('storage-3'):stop()
     g_expel.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').edit_topology({
             servers = {{
