@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React from 'react';
+import { cx } from '@emotion/css';
 import { useEvent, useStore } from 'effector-react';
 // @ts-ignore
 import { Alert, Button, Modal, Text } from '@tarantool.io/ui-kit';
@@ -54,7 +55,7 @@ export const ClusterSuggestionsModal = () => {
         </Button>,
         <Button
           key="Continue"
-          className="meta-test__continueClusterSuggestionsModal"
+          className={cx('meta-test__continueClusterSuggestionsModal', styles.btn)}
           loading={modal.state === 'pending'}
           onClick={modal.state === 'pending' ? undefined : handleContinue}
           intent="primary"
@@ -79,7 +80,13 @@ export const ClusterSuggestionsModal = () => {
     case 'pending': {
       content = (
         <div className={styles.content}>
-          <Text>Searching for suggestions puts additional load on your cluster. Continue or not?</Text>
+          <Text>
+            Next, you can see the amount of space that can be freed up in the cluster by compressing some of the fields.
+            The algorithm calculates it based on the cluster data. The procedure might temporarily switch some nodes to
+            the <b>Unreachable</b> state, from a few seconds to several minutes. Also, the procedure might create an
+            auto-incident in your alert system. To prevent this, it is recommended to run the procedure during scheduled
+            maintenance time (or <b>during the change window</b>).
+          </Text>
         </div>
       );
       break;
