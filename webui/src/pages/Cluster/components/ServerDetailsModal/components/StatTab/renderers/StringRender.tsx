@@ -18,7 +18,7 @@ export const StringRender = ({ value }: StringRenderProps) => {
   }
   return (
     <div className={styles.rightCol}>
-      <Text variant="basic">{`${checkValue}`}</Text>
+      <Text variant="basic">{checkValue}</Text>
     </div>
   );
 };
