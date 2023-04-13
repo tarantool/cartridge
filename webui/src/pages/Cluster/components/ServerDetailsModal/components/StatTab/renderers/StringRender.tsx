@@ -9,6 +9,6 @@ export interface StringRenderProps {
 
 export const StringRender = ({ value }: StringRenderProps) => (
   <div className={styles.rightCol}>
-    <Text variant="basic">{Array.isArray(value) ? `[${value.join(', ')}]` : `${value ?? ''}`}</Text>
+    <Text variant="basic">{Array.isArray(value) ? `[${value.join(', ')}]` : JSON.stringify(value)}</Text>
   </div>
 );
