@@ -740,10 +740,15 @@ g_expel.test_raft_is_disabled = function()
             }}
         })
     end, {storage_3_uuid})
-
-    g_expel.cluster:retrying({}, function()
+    g_expel.cluster:retrying({timeout = 10}, function()
         t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
         t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
+        t.assert(pcall(function()
+            g_expel.cluster:server('storage-1'):exec(function()
+                assert(box.info.ro == false)
+                assert(box.space._cluster:count() == 2)
+            end)
+        end))
     end)
 
 end
