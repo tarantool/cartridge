@@ -438,6 +438,32 @@ local function list_on_instance(opts)
         })
     end
 
+    if failover.is_leader() then
+        if rawget(_G, '__cartridge_expelled_nodes') == 'issue' then
+            for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+                if box.space._cluster.index.uuid:get(uuid) ~= nil then
+
+                    table.insert(ret, {
+                        level = 'warning',
+                        topic = 'expelled',
+                        instance_uuid = uuid,
+                        replicaset_uuid = replicaset_uuid,
+                        message = string.format(
+                            'Replicaset %s has expelled instance %s in box.space._cluster',
+                            uuid, replicaset_uuid
+                        ),
+                    })
+                end
+            end
+        elseif rawget(_G, '__cartridge_expelled_nodes') == 'delete' then
+            box.begin()
+            for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+                box.space._cluster.index.uuid:delete(uuid)
+            end
+            box.commit()
+        end
+    end
+
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
     for role_name, M in pairs(registry.list()) do
