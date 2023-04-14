@@ -456,11 +456,9 @@ local function list_on_instance(opts)
                 end
             end
         elseif rawget(_G, '__cartridge_expelled_nodes') == 'delete' then
-            box.begin()
             for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
                 box.space._cluster.index.uuid:delete(uuid)
             end
-            box.commit()
         end
     end
 
