@@ -747,12 +747,22 @@ g_expel.test_raft_is_disabled = function()
         t.assert(pcall(function()
             g_expel.cluster:server('storage-1'):exec(function()
                 assert(box.info.ro == false)
-                assert(box.space._cluster:count() == 2)
             end)
         end))
     end)
-
 end
+
+g_expel.after_test('test_raft_is_disabled', function()
+    g_expel.cluster:server('storage-1'):exec(function()
+        local confapplier = require('cartridge.confapplier')
+        local topology = require('cartridge.topology')
+        local topology_cfg = confapplier.get_readonly('topology')
+        local fun = require('fun')
+        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+            box.space._cluster.index.uuid:delete(uuid)
+        end
+    end)
+end)
 
 ----------------------------------------------------------------
 

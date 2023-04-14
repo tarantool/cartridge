@@ -439,7 +439,7 @@ local function list_on_instance(opts)
     end
 
     if failover.is_leader() then
-        if rawget(_G, '__cartridge_expelled_nodes') == 'issue' then
+        if rawget(_G, '__cartridge_expelled_nodes_spawn_issue') == true then
             for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
                 if box.space._cluster.index.uuid:get(uuid) ~= nil then
 
@@ -454,10 +454,6 @@ local function list_on_instance(opts)
                         ),
                     })
                 end
-            end
-        elseif rawget(_G, '__cartridge_expelled_nodes') == 'delete' then
-            for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
-                box.space._cluster.index.uuid:delete(uuid)
             end
         end
     end
