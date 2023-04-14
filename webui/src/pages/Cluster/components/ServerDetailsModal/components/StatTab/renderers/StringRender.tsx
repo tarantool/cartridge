@@ -7,8 +7,18 @@ export interface StringRenderProps {
   value: unknown;
 }
 
-export const StringRender = ({ value }: StringRenderProps) => (
-  <div className={styles.rightCol}>
-    <Text variant="basic">{Array.isArray(value) ? `[${value.join(', ')}]` : `${value ?? ''}`}</Text>
-  </div>
-);
+export const StringRender = ({ value }: StringRenderProps) => {
+  let checkValue = '';
+  if (Array.isArray(value)) {
+    checkValue = `[${value.join(', ')}]`;
+  } else if (typeof value === 'string') {
+    checkValue = value;
+  } else {
+    checkValue = JSON.stringify(value);
+  }
+  return (
+    <div className={styles.rightCol}>
+      <Text variant="basic">{checkValue}</Text>
+    </div>
+  );
+};
