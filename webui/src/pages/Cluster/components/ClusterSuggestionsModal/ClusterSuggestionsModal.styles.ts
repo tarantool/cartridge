@@ -2,6 +2,14 @@ import { css } from '@emotion/css';
 import { colors } from '@tarantool.io/ui-kit';
 
 export const styles = {
+  btn: css`
+    background: ${colors.intentDanger};
+    color: ${colors.intentBaseActive};
+    &:hover {
+      background: ${colors.intentDanger};
+    }
+  `,
+
   content: css`
     padding: 0;
   `,
