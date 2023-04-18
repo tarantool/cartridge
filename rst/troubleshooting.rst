@@ -432,3 +432,16 @@ Or you can use the following workaround:
     require('cartridge.lua-api.topology').set_electable_servers({uuid1, uuid2, ... uuidN}) -- list all of your uuids here
 
 
+`Connection refused` error to unconfigured instance since 2.7.4
+---------------------------------------------------------------
+
+Unconfigured instance binds to `0.0.0.0` interface before 2.7.4 .
+
+Since 2.7.4 unconfigure instance resolves advertise uri host and binds to it.
+
+Check that instance advertise uri resolved to network interface (not loopback).
+
+.. code-block:: bash
+
+    dig +short place_advertise_uri_here
+
