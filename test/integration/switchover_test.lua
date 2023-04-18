@@ -1,5 +1,4 @@
 local fio = require('fio')
-local fun = require('fun')
 local t = require('luatest')
 local helpers = require('test.helper')
 
