@@ -436,6 +436,21 @@ local function synchro_promote()
     end
 end
 
+local function synchro_demote()
+    local box_info = box.info
+    if box_info.synchro ~= nil
+    and box_info.synchro.queue ~= nil
+    and box_info.synchro.queue.owner ~= 0
+    and box_info.synchro.queue.owner == box_info.id then
+        local err = box.ctl.demote()
+        if err ~= nil then
+            return log.error(err)
+        end
+    end
+end
+
+
+
 local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
@@ -767,16 +782,7 @@ local function cfg(clusterwide_config, opts)
     end
 
     if vars.mode == 'stateful' and failover_cfg.mode ~= 'stateful' and failover_cfg.mode ~= 'raft' then
-        local box_info = box.info
-        if box_info.synchro ~= nil
-        and box_info.synchro.queue ~= nil
-        and box_info.synchro.queue.owner ~= 0
-        and box_info.synchro.queue.owner == box_info.id then
-            local err = box.ctl.demote()
-            if err ~= nil then
-                return log.error(err)
-            end
-        end
+        synchro_demote()
     end
 
     if failover_cfg.mode == 'disabled' then
@@ -805,6 +811,7 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            synchro_demote()
         elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil, {only_enabled = true}) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary

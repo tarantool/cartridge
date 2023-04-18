@@ -722,7 +722,11 @@ add('test_api', function(g)
         t.assert_equals(B2:eval(q_is_vclockkeeper), true)
     end)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
-    t.assert_equals(g.session:get_vclockkeeper(uB), {
+    local vclockkeeper_data = g.session:get_vclockkeeper(uB)
+    vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] + 1
+    vclockkeeper_data.vclock[2] = vclockkeeper_data.vclock[2] + 1
+
+    t.assert_equals(vclockkeeper_data, {
         replicaset_uuid = uB,
         instance_uuid = uB2,
         vclock = B2:eval('return box.info.vclock'),
