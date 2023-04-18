@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fun = require('fun')
 local t = require('luatest')
 local helpers = require('test.helper')
 
@@ -487,6 +488,14 @@ add('test_vclockkeeper_caching', function(g)
     ]])
 end)
 
+local function transform_vclock(vclock)
+    local vclock_data = {}
+    for k, v in pairs(vclock) do
+        vclock_data[tonumber(k)] = v
+    end
+    return vclock_data
+end
+
 add('test_enabling', function(g)
     -- Scenario:
     -- 1. State provider goes down
@@ -573,12 +582,18 @@ add('test_enabling', function(g)
     end)
 
     t.assert_equals(g.session:get_leaders(), {})
-    t.assert_equals(g.session:get_vclockkeeper(uB), {
+    local vclockkeeper_data = g.session:get_vclockkeeper(uB)
+    local vclock = B1:eval('return box.info.vclock')
+
+    t.assert_equals({
+        replicaset_uuid = vclockkeeper_data.replicaset_uuid,
+        instance_uuid = vclockkeeper_data.instance_uuid,
+    }, {
         replicaset_uuid = uB,
         instance_uuid = uB1,
-        vclock = B1:eval('return box.info.vclock'),
     })
 
+    t.assert_equals(vclock, transform_vclock(vclockkeeper_data.vclock))
 
     -- Enable coordinator
     A1:eval(
@@ -590,12 +605,18 @@ add('test_enabling', function(g)
     helpers.retrying({}, function()
         t.assert_covers(g.session:get_leaders(), {[uB] = uB1})
     end)
-    t.assert_equals(g.session:get_vclockkeeper(uB), {
+
+    local vclockkeeper_data = g.session:get_vclockkeeper(uB)
+    local vclock = B1:eval('return box.info.vclock')
+    t.assert_equals({
+        replicaset_uuid = vclockkeeper_data.replicaset_uuid,
+        instance_uuid = vclockkeeper_data.instance_uuid,
+    }, {
         replicaset_uuid = uB,
         instance_uuid = uB1,
-        vclock = B1:eval('return box.info.vclock'),
     })
 
+    t.assert_equals(vclock, transform_vclock(vclockkeeper_data.vclock))
     -- Everything is fine now
     helpers.retrying({}, function()
         t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
@@ -723,8 +744,13 @@ add('test_api', function(g)
     end)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
     local vclockkeeper_data = g.session:get_vclockkeeper(uB)
-    vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] + 1
-    vclockkeeper_data.vclock[2] = vclockkeeper_data.vclock[2] + 1
+    if helpers.tarantool_version_ge('2.6.1') then
+        -- promote adds 1 to vclocks
+
+        vclockkeeper_data.vclock = transform_vclock(vclockkeeper_data.vclock)
+        vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] + 1
+        vclockkeeper_data.vclock[2] = vclockkeeper_data.vclock[2] + 1
+    end
 
     t.assert_equals(vclockkeeper_data, {
         replicaset_uuid = uB,

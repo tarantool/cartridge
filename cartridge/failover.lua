@@ -52,6 +52,7 @@ local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
 
 vars:new('mode')
+vars:new('single_mode', false)
 vars:new('all_roles')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
@@ -422,6 +423,7 @@ end
 
 local function synchro_promote()
     if vars.mode == 'stateful'
+    and not vars.single_mode
     and vars.consistency_needed
     and vars.cache.is_leader
     and vars.cache.is_rw
@@ -816,6 +818,8 @@ local function cfg(clusterwide_config, opts)
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            vars.single_mode = true
+            synchro_demote()
         else
             vars.consistency_needed = true
         end
