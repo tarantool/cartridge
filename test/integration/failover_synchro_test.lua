@@ -93,7 +93,7 @@ local function get_master(cluster, uuid)
     return {replicaset.master.uuid, replicaset.active_master.uuid}
 end
 
-local function before_each()
+local function before_each(g)
     h.retrying({timeout = 30}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
     end)
