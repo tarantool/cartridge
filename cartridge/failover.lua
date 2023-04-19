@@ -440,7 +440,8 @@ local function synchro_demote()
     if box_info.synchro ~= nil
     and box_info.synchro.queue ~= nil
     and box_info.synchro.queue.owner ~= 0
-    and box_info.synchro.queue.owner == box_info.id then
+    and box_info.synchro.queue.owner == box_info.id
+    and box.ctl.demote ~= nil then
         local err = box.ctl.demote()
         if err ~= nil then
             log.error('Failed to demote: %s', err)
