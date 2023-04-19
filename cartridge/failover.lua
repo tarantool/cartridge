@@ -449,8 +449,6 @@ local function synchro_demote()
     end
 end
 
-
-
 local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
