@@ -1,7 +1,10 @@
 local fio = require('fio')
 
 local t = require('luatest')
-local g = t.group()
+
+local g_etcd2 = t.group('integration.failover_synchro.etcd2')
+local g_stateboard = t.group('integration.failover_synchro.stateboard')
+
 local h = require('test.helper')
 
 local stateboard_client = require('cartridge.stateboard-client')
@@ -12,8 +15,7 @@ local storage_1_uuid = h.uuid('b', 'b', 1)
 local storage_2_uuid = h.uuid('b', 'b', 2)
 local storage_3_uuid = h.uuid('b', 'b', 3)
 
-g.before_all = function()
-    t.skip_if(not h.tarantool_version_ge('2.6.1'))
+local function setup_cluster(g)
     g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = true,
@@ -63,16 +65,11 @@ g.before_all = function()
     end)
 end
 
-g.after_all = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end
-
-local function kill_server(alias)
+local function kill_server(g, alias)
     g.cluster:server(alias):stop()
 end
 
-local function start_server(alias)
+local function start_server(g, alias)
     g.cluster:server(alias):start()
 end
 
@@ -96,58 +93,7 @@ local function get_master(cluster, uuid)
     return {replicaset.master.uuid, replicaset.active_master.uuid}
 end
 
-local function set_failover_params(cluster, vars)
-    local response = cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $mode: String
-                $state_provider: String
-                $failover_timeout: Float
-                $tarantool_params: FailoverStateProviderCfgInputTarantool
-                $etcd2_params: FailoverStateProviderCfgInputEtcd2
-                $fencing_enabled: Boolean
-                $fencing_timeout: Float
-                $fencing_pause: Float
-            ) {
-                cluster {
-                    failover_params(
-                        mode: $mode
-                        state_provider: $state_provider
-                        failover_timeout: $failover_timeout
-                        tarantool_params: $tarantool_params
-                        etcd2_params: $etcd2_params
-                        fencing_enabled: $fencing_enabled
-                        fencing_timeout: $fencing_timeout
-                        fencing_pause: $fencing_pause
-                    ) {
-                        mode
-                        state_provider
-                        failover_timeout
-                        tarantool_params {uri password}
-                        etcd2_params {
-                            prefix
-                            lock_delay
-                            endpoints
-                            username
-                            password
-                        }
-                        fencing_enabled
-                        fencing_timeout
-                        fencing_pause
-                    }
-                }
-            }
-        ]],
-        variables = vars,
-        raise = false,
-    })
-    if response.errors then
-        error(response.errors[1].message, 2)
-    end
-    return response.data.cluster.failover_params
-end
-
-g.before_each(function()
+local function before_each()
     h.retrying({timeout = 30}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
     end)
@@ -160,14 +106,10 @@ g.before_each(function()
             end
         end)
     end)
-end)
+end
 
-g.after_each(function()
-    -- require'fiber'.sleep(math.huge)
-    h.retrying({timeout = 20}, function()
-        t.assert_covers(set_failover_params(g.cluster, { mode = 'disabled' }), { mode = 'disabled' })
-    end)
-end)
+g_etcd2.before_each = before_each
+g_stateboard.before_each = before_each
 
 local function find_alias_by_uuid(uuid)
     return ({
@@ -177,7 +119,30 @@ local function find_alias_by_uuid(uuid)
     })[uuid]
 end
 
-local function stateful_test()
+local function promote(cluster, storage_uuid)
+    local resp = cluster.main_server:graphql({
+        query = [[
+        mutation(
+                $replicaset_uuid: String!
+                $instance_uuid: String!
+            ) {
+            cluster {
+                failover_promote(
+                    replicaset_uuid: $replicaset_uuid
+                    instance_uuid: $instance_uuid
+                )
+            }
+        }]],
+        variables = {
+            replicaset_uuid = replicaset_uuid,
+            instance_uuid = storage_uuid,
+        }
+    })
+    t.assert_type(resp['data'], 'table')
+    t.assert_equals(resp['data']['cluster']['failover_promote'], true)
+end
+
+local function stateful_test(g)
     local res
 
     -- insert and get sharded data
@@ -186,15 +151,26 @@ local function stateful_test()
     res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
     t.assert_equals(res.json, {})
 
-    kill_server('storage-1')
+    h.retrying({timeout = 20}, function()
+        promote(g.cluster, storage_2_uuid)
+    end)
+    h.retrying({timeout = 20}, function()
+        g.cluster:server(find_alias_by_uuid(storage_2_uuid)):exec(function()
+            assert(box.info.ro == false)
+            assert(box.info.synchro.queue.owner == box.info.id)
+        end)
+    end)
+
+    kill_server(g, 'storage-2')
 
     local current_master
     h.retrying({timeout = 20}, function()
         -- wait until leadeship
         current_master = get_master(g.cluster, replicaset_uuid)[2]
-        t.assert_not_equals(current_master, storage_1_uuid)
+        t.assert_not_equals(current_master, storage_2_uuid)
         g.cluster:server(find_alias_by_uuid(current_master)):exec(function()
             assert(box.info.ro == false)
+            assert(box.info.synchro.queue.owner == box.info.id)
         end)
     end)
 
@@ -206,17 +182,17 @@ local function stateful_test()
     t.assert_equals(res.json, {})
 
     -- restart previous leader
-    start_server('storage-1')
+    start_server(g, 'storage-2')
     g.cluster:wait_until_healthy()
 
     local new_master = get_master(g.cluster, replicaset_uuid)[2]
     t.assert_equals(current_master, new_master)
 
-    kill_server('storage-1')
-    kill_server('storage-3')
+    kill_server(g, 'storage-2')
+    kill_server(g, 'storage-3')
     -- syncro quorum is broken now
     h.retrying({timeout = 20}, function()
-        t.assert_equals(get_master(g.cluster, replicaset_uuid), {storage_2_uuid, storage_2_uuid})
+        t.assert_equals(get_master(g.cluster, replicaset_uuid), {storage_1_uuid, storage_1_uuid})
     end)
 
     -- we can't write to storage
@@ -228,9 +204,8 @@ local function stateful_test()
     t.assert_equals(res.status, 200)
     t.assert_equals(res.json, {})
 
-
-    start_server('storage-3')
-    kill_server('storage-2')
+    start_server(g, 'storage-2')
+    kill_server(g, 'storage-1')
 
     -- syncro quorum is broken now
     -- we can't write
@@ -241,11 +216,13 @@ local function stateful_test()
     res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
     t.assert_equals(res.status, 500)
 
-    start_server('storage-1')
-    start_server('storage-2')
+    start_server(g, 'storage-1')
+    start_server(g, 'storage-3')
 end
 
-g.before_test('test_kill_master_stateboard', function()
+g_stateboard.before_all(function()
+    t.skip_if(not h.tarantool_version_ge('2.6.1'))
+    local g = g_stateboard
     g.datadir = fio.tempdir()
 
     g.kvpassword = h.random_cookie()
@@ -270,6 +247,8 @@ g.before_test('test_kill_master_stateboard', function()
         call_timeout = 1,
     })
 
+    setup_cluster(g)
+
     t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
@@ -283,14 +262,18 @@ g.before_test('test_kill_master_stateboard', function()
     ))
 end)
 
-g.test_kill_master_stateboard = stateful_test
+g_stateboard.test_kill_master_stateboard = stateful_test
 
-g.after_test('test_kill_master_stateboard', function()
+g_stateboard.after_all(function(g)
     g.state_provider:stop()
     fio.rmtree(g.state_provider.workdir)
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
 end)
 
-g.before_test('test_kill_master_etcd', function()
+g_etcd2.before_all(function()
+    t.skip_if(not h.tarantool_version_ge('2.6.1'))
+    local g = g_etcd2
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
@@ -313,6 +296,8 @@ g.before_test('test_kill_master_etcd', function()
         request_timeout = 1,
     })
 
+    setup_cluster(g)
+
     t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
@@ -327,9 +312,11 @@ g.before_test('test_kill_master_etcd', function()
     ))
 end)
 
-g.test_kill_master_etcd = stateful_test
+g_etcd2.test_kill_master = stateful_test
 
-g.after_test('test_kill_master_etcd', function()
+g_etcd2.after_all(function(g)
     g.state_provider:stop()
     fio.rmtree(g.state_provider.workdir)
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
 end)
