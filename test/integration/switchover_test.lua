@@ -744,7 +744,10 @@ add('test_api', function(g)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
     local vclockkeeper_data = g.session:get_vclockkeeper(uB)
     if helpers.tarantool_version_ge('2.6.1') then
-        -- promote adds 1 to vclocks
+        -- box.ctl.promote makes a transaction in Tarantool
+        -- after switchover and promote call, there will be 
+        -- additional transactions in Tarantool, so we need to
+        -- add 1 to vclock here 
 
         vclockkeeper_data.vclock = transform_vclock(vclockkeeper_data.vclock)
         vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] + 1
