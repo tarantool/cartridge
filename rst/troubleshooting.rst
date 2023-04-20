@@ -439,7 +439,7 @@ Before `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst
 Given that `0.0.0.0` accepts connections on any IP address assigned to the machine,
 this might impose additional security risks.
 
-With `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#274---2022-04-11>`_ version, an unconfigured instance resolves the `advertise_uri` host and binds to it.
+With `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#274---2022-04-11>`_ version, an unconfigured instance resolves the `advertise_uri <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#configuration-basics>`_ host and binds to it.
 You can check that the instance's `advertise_uri <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#configuration-basics>`_ is resolved to a network interface (not loopback) as follows:
 
 .. code-block:: bash
