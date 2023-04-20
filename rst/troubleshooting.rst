@@ -435,12 +435,12 @@ Or you can use the following workaround:
 A `Connection refused` error in unconfigured instance since 2.7.4
 -----------------------------------------------------------------
 
-Before v2.7.4, an unconfigured instance was bound to the `0.0.0.0` interface.
+Before `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#274---2022-04-11>`_, an unconfigured instance was bound to the `0.0.0.0` interface.
 Given that `0.0.0.0` accepts connections on any IP address assigned to the machine,
 this might impose additional security risks.
 
-With v2.7.4 version, an unconfigured instance resolves the `advertise_uri` host and binds to it.
-You can check that the instance's `advertise_uri` is resolved to a network interface (not loopback) as follows:
+With `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#274---2022-04-11>`_ version, an unconfigured instance resolves the `advertise_uri` host and binds to it.
+You can check that the instance's `advertise_uri <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#configuration-basics>`_ is resolved to a network interface (not loopback) as follows:
 
 .. code-block:: bash
     dig +short place_advertise_uri_here
