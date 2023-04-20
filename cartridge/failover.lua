@@ -420,6 +420,35 @@ local function fencing_start()
     vars.fencing_fiber:name('cartridge.fencing')
 end
 
+local function synchro_promote()
+    if vars.mode == 'stateful'
+    and vars.consistency_needed
+    and vars.cache.is_leader
+    and not vars.failover_paused
+    and not vars.failover_suppressed
+    and box.ctl.promote ~= nil
+    then
+        local err = box.ctl.promote()
+        if err ~= nil then
+            log.error('Failed to promote: %s', err)
+        end
+    end
+end
+
+local function synchro_demote()
+    local box_info = box.info
+    if box_info.synchro ~= nil
+    and box_info.synchro.queue ~= nil
+    and box_info.synchro.queue.owner ~= 0
+    and box_info.synchro.queue.owner == box_info.id
+    and box.ctl.demote ~= nil then
+        local err = box.ctl.demote()
+        if err ~= nil then
+            log.error('Failed to demote: %s', err)
+        end
+    end
+end
+
 local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
@@ -584,6 +613,7 @@ function reconfigure_all(active_leaders)
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
+        synchro_promote()
 
         local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
@@ -749,6 +779,10 @@ local function cfg(clusterwide_config, opts)
         raft_failover.disable()
     end
 
+    if vars.mode == 'stateful' and failover_cfg.mode ~= 'stateful' and failover_cfg.mode ~= 'raft' then
+        synchro_demote()
+    end
+
     if failover_cfg.mode == 'disabled' then
         log.info('Failover disabled')
         vars.fencing_enabled = false
@@ -775,10 +809,12 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            synchro_demote()
         elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil, {only_enabled = true}) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            synchro_demote()
         else
             vars.consistency_needed = true
         end
@@ -928,6 +964,7 @@ local function cfg(clusterwide_config, opts)
     })
 
     vars.mode = failover_cfg.mode
+    synchro_promote()
 
     return true
 end
