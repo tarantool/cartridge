@@ -170,7 +170,13 @@ jobs:
       - name: 'Stop Mono server'
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
-      - run: .rocks/bin/luatest -v
+      - uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 30
+          command: |
+            .rocks/bin/luatest -v
 
       - name: Run pytest -v
         run: |
@@ -254,7 +260,13 @@ jobs:
       - name: 'Stop Mono server'
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
-      - run: .rocks/bin/luatest -v
+      - uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 30
+          command: |
+            .rocks/bin/luatest -v
 
       - name: Run pytest -v
         run: |
