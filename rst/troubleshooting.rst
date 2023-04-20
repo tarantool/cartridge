@@ -443,7 +443,6 @@ With `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#2
 You can check that the instance's `advertise_uri <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#configuration-basics>`_ is resolved to a network interface (not loopback) as follows:
 
 .. code-block:: bash
+
     dig +short place_advertise_uri_here
-
-
 
