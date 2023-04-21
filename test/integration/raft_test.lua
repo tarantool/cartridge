@@ -290,7 +290,7 @@ g.test_kill_master = function()
 
     kill_server('storage-1')
     kill_server('storage-3')
-    -- syncro quorom is broken now
+    -- syncro quorum is broken now
     h.retrying({}, function()
         -- vshard doesn't know that replicaset has no leader
         t.assert_covers(get_sharding_config(), {
@@ -315,7 +315,7 @@ g.test_kill_master = function()
     start_server('storage-3')
     kill_server('storage-2')
 
-    -- syncro qourom is broken now
+    -- syncro qourum is broken now
     h.retrying({}, function()
         -- raft doesn't know that replicaset has no leader
         t.assert_equals(get_raft_info('storage-3').state, 'follower')
