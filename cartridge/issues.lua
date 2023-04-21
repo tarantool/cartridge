@@ -50,6 +50,11 @@
 -- * warning: "Instance ... with alien uuid is in the membership" -
 --   when two separate clusters share the same cluster cookie;
 --
+-- Expelled instances:
+--
+-- * warning: "Replicaset ... has expelled instance ... in box.space._cluster" -
+--   when instance was expelled from replicaset, but still remains in box.space._cluster;
+--
 -- Deprecated space format:
 --
 -- * warning: "Instance ... has spaces with deprecated format: space1, ..."
@@ -436,6 +441,23 @@ local function list_on_instance(opts)
                 describe(self_uri), invalid_spaces
             ),
         })
+    end
+
+    if failover.is_leader() then
+        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+            if box.space._cluster.index.uuid:get(uuid) ~= nil then
+                table.insert(ret, {
+                    level = 'warning',
+                    topic = 'expelled',
+                    instance_uuid = instance_uuid,
+                    replicaset_uuid = replicaset_uuid,
+                    message = string.format(
+                        'Replicaset %s has expelled instance %s in box.space._cluster',
+                        replicaset_uuid, uuid
+                    ),
+                })
+            end
+        end
     end
 
     -- add custom issues from each role

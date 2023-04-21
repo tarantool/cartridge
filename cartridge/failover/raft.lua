@@ -141,6 +141,17 @@ local function disable()
     end
     box.cfg{ election_mode = 'off' }
     vars.leader_uuid = nil
+
+    local box_info = box.info
+    if box_info.synchro ~= nil
+    and box_info.synchro.queue ~= nil
+    and box_info.synchro.queue.owner ~= 0
+    and box_info.synchro.queue.owner == box_info.id then
+        local err = box.ctl.demote()
+        if err ~= nil then
+            log.error('Failed to demote: %s', err)
+        end
+    end
 end
 
 local function promote(replicaset_leaders)

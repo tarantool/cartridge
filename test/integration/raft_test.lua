@@ -732,6 +732,7 @@ g_expel.test_raft_is_disabled = function()
         -- here we call box.ctl.promote manually to promote rw instance
     end)
 
+    g_expel.cluster:server('storage-3'):stop()
     g_expel.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').edit_topology({
             servers = {{
@@ -740,13 +741,28 @@ g_expel.test_raft_is_disabled = function()
             }}
         })
     end, {storage_3_uuid})
-
-    g_expel.cluster:retrying({}, function()
+    g_expel.cluster:retrying({timeout = 10}, function()
         t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
         t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
+        t.assert(pcall(function()
+            g_expel.cluster:server('storage-1'):exec(function()
+                assert(box.info.ro == false)
+            end)
+        end))
     end)
-
 end
+
+g_expel.after_test('test_raft_is_disabled', function()
+    g_expel.cluster:server('storage-1'):exec(function()
+        local confapplier = require('cartridge.confapplier')
+        local topology = require('cartridge.topology')
+        local topology_cfg = confapplier.get_readonly('topology')
+        local fun = require('fun')
+        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+            box.space._cluster.index.uuid:delete(uuid)
+        end
+    end)
+end)
 
 ----------------------------------------------------------------
 
