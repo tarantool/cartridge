@@ -20,6 +20,8 @@ Changed
 
 - Update ``graphql`` dependency to `0.3.0 <https://github.com/tarantool/graphql/releases/tag/0.3.0>`_.
 
+- Update ``checks`` dependency to `3.3.0 <https://github.com/tarantool/checks/releases/tag/3.3.0>`_.
+
 - Call ``box.ctl.promote`` in stateful failover (`#1372 <https://github.com/tarantool/cartridge/issues/1372>`_).
 
 - Call ``box.ctl.demote`` when raft failover is disabled.
