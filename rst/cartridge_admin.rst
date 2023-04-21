@@ -547,6 +547,28 @@ To expel an instance, stop it, then click **...** next to it, then click **Expel
     *   You can't expel a vshard-storage if it has buckets. Set the weight to zero
         and wait until rebalancing is completed.
 
+Since Cartridge 2.8.0 you will see an issue if you had a replica set with an
+expelled instance in ``box.space._cluster``. You can fix it by manually remove expelled
+instance from ``box.space._cluster``:
+
+..  code-block:: lua
+
+    -- call thin on leader:
+    local confapplier = require('cartridge.confapplier')
+    local topology = require('cartridge.topology')
+    local topology_cfg = confapplier.get_readonly('topology')
+    local fun = require('fun')
+    for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+        box.space._cluster.index.uuid:delete(uuid)
+    end
+
+..  note::
+
+    * Do not expel instances until they're stopped.
+    * Do not forget to clean expelled instence's data directory and remove it from
+      your pipelines.
+    * You can not return expelled instance to the cluster.
+
 .. _cartridge-node-failure:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
