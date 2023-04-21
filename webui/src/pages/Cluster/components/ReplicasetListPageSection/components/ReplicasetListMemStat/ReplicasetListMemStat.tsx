@@ -15,6 +15,8 @@ const { getReadableBytes } = app.utils;
 export interface ReplicasetListStatistics {
   arenaUsed: number;
   quotaSize: number;
+  quotaUsed: number;
+  arenaSize: number;
   bucketsCount?: Maybe<number>;
   arena_used_ratio: string;
   quota_used_ratio: string;
@@ -27,23 +29,28 @@ export interface ReplicasetListMemStatProps {
   items_used_ratio: string;
   arenaUsed: number;
   quotaSize: number;
+  quotaUsed: number;
+  arenaSize: number;
   className?: string;
 }
 
 const ReplicasetListMemStat = ({
   arenaUsed,
   quotaSize,
+  quotaUsed,
+  arenaSize,
   arena_used_ratio,
   quota_used_ratio,
   items_used_ratio,
   className,
 }: ReplicasetListMemStatProps) => {
   const [usageText, percentage] = useMemo((): [string, number] => {
+    const used = arenaUsed + quotaUsed - arenaSize;
     return [
-      `Memory usage: ${getReadableBytes(arenaUsed)} / ${getReadableBytes(quotaSize)}`,
-      Math.max(1, (arenaUsed / quotaSize) * 100),
+      `Memory usage: ${getReadableBytes(used)} / ${getReadableBytes(quotaSize)}`,
+      Math.max(1, (used / quotaSize) * 100),
     ];
-  }, [arenaUsed, quotaSize]);
+  }, [arenaUsed, quotaUsed, arenaSize, quotaSize]);
 
   return (
     <div
