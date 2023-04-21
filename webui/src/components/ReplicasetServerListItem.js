@@ -209,7 +209,7 @@ class ReplicasetServerListItem extends React.PureComponent<
       ro,
     } = this.props;
 
-    const used = statistics.arena_used + statistics.quota_used - statistics.arena_size
+    const used = statistics.arena_used + statistics.quota_used - statistics.arena_size;
 
     const usageText = statistics
       ? `Memory usage: ${getReadableBytes(used)} / ${getReadableBytes(statistics.quotaSize)}`
