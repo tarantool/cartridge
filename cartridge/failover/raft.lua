@@ -149,7 +149,7 @@ local function disable()
     and box_info.synchro.queue.owner == box_info.id then
         local err = box.ctl.demote()
         if err ~= nil then
-            return log.error(err)
+            log.error('Failed to demote: %s', err)
         end
     end
 end

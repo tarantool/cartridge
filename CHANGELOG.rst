@@ -20,6 +20,12 @@ Changed
 
 - Update ``graphql`` dependency to `0.3.0 <https://github.com/tarantool/graphql/releases/tag/0.3.0>`_.
 
+- Call ``box.ctl.promote`` in stateful failover (`#1372 <https://github.com/tarantool/cartridge/issues/1372>`_).
+
+- Call ``box.ctl.demote`` when raft failover is disabled.
+
+- Remove expelled instances from ``box.space._cluster`` before replication changes
+  (`#1948 <https://github.com/tarantool/cartridge/issues/1948>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
@@ -31,6 +37,8 @@ Added
 
 - ``rpc_call`` supports ``is_async`` net.box option.
 
+- New issue about expelled instances that still in ``box.space._cluster``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,13 +46,6 @@ Fixed
 - Compatibility with metrics in feedback (`#2033 <https://github.com/tarantool/cartridge/issues/2033>`_).
 
 - Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Changed
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Call ``box.ctl.promote`` in stateful failover (`#1372 <https://github.com/tarantool/cartridge/issues/1372>`_).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Removed

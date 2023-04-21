@@ -29,13 +29,24 @@ g.before_all(function()
             TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 1,
             TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 1,
             TARANTOOL_FRAGMENTATION_THRESHOLD_FULL = 1,
-        }
+        },
     })
     g.cluster:start()
 
     g.master = g.cluster:server('master')
     g.replica1 = g.cluster:server('replica1')
     g.replica2 = g.cluster:server('replica2')
+
+    g.to_be_expelled = helpers.Server:new({
+        alias = 'to_be_expelled',
+        workdir = fio.pathjoin(g.cluster.datadir, 'to_be_expelled'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13304,
+        http_port = 8084,
+        replicaset_uuid = helpers.uuid('a'),
+        instance_uuid = helpers.uuid('a', 'a', 4),
+    })
 
     g.alien = helpers.Server:new({
         alias = 'alien',
@@ -178,7 +189,7 @@ function g.test_broken_replica()
         variables = {uuids = {
             g.master.instance_uuid,
             g.replica1.instance_uuid,
-            g.replica2.instance_uuid
+            g.replica2.instance_uuid,
         }}
     })
 
@@ -553,3 +564,50 @@ g.after_test('test_custom_issues', function()
     end)
 end)
 
+local function set_master(uuid, master_uuid)
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation(
+                $uuid: String!
+                $master_uuid: [String!]!
+            ) {
+                edit_replicaset(
+                    uuid: $uuid
+                    master: $master_uuid
+                )
+            }
+        ]],
+        variables = {uuid = uuid, master_uuid = {master_uuid}}
+    })
+end
+
+function g.test_expelled()
+    g.to_be_expelled:start()
+    g.to_be_expelled:join_cluster(g.cluster.main_server)
+
+    set_master(g.cluster.replicasets[1].uuid, g.to_be_expelled.instance_uuid)
+
+    g.to_be_expelled:stop()
+
+    g.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').edit_topology({
+            servers = {{
+                uuid = uuid,
+                expelled = true,
+            }}
+        })
+    end, {g.to_be_expelled.instance_uuid})
+
+    set_master(g.cluster.replicasets[1].uuid, g.master.instance_uuid)
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'warning',
+            topic = 'expelled',
+            message = ('Replicaset %s has expelled instance %s in box.space._cluster'):format(
+                g.cluster.replicasets[1].uuid, g.to_be_expelled.instance_uuid),
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end

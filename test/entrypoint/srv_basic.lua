@@ -210,5 +210,3 @@ function _G.get_uuid()
     -- to check vshard routing
     return box.info().uuid
 end
-
-_G.__cartridge_expelled_nodes = 'delete'
