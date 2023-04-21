@@ -209,10 +209,12 @@ class ReplicasetServerListItem extends React.PureComponent<
       ro,
     } = this.props;
 
+    const used = (statistics.arena_used + statistics.quota_used - statistics.arena_size)
+
     const usageText = statistics
-      ? `Memory usage: ${getReadableBytes(statistics.arenaUsed)} / ${getReadableBytes(statistics.quotaSize)}`
+      ? `Memory usage: ${getReadableBytes(used)} / ${getReadableBytes(statistics.quotaSize)}`
       : '';
-    const percentage = statistics ? Math.max(1, (statistics.arenaUsed / statistics.quotaSize) * 100) : 1;
+    const percentage = statistics ? Math.max(1, (used / statistics.quotaSize) * 100) : 1;
 
     return (
       <FlatListItem

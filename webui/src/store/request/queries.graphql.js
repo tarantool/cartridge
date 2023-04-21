@@ -10,6 +10,8 @@ export const serverStatFields = gql`
     statistics {
       quotaSize: quota_size
       arenaUsed: arena_used
+      quotaUsed: quota_used
+      arenaSize: arena_size
       bucketsCount: vshard_buckets_count
       quota_used_ratio
       arena_used_ratio

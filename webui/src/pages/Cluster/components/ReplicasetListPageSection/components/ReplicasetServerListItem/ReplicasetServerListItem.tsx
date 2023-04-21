@@ -22,6 +22,8 @@ import { styles } from './ReplicasetServerListItem.styles';
 export interface ReplicasetServerListItemStatistic {
   arenaUsed: number;
   quotaSize: number;
+  quotaUsed: number;
+  arenaSize: number;
   bucketsCount?: Maybe<number>;
   arena_used_ratio: string;
   quota_used_ratio: string;
