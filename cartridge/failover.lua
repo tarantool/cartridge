@@ -68,6 +68,7 @@ vars:new('cache', {
     is_vclockkeeper = false,
     is_leader = false,
     is_rw = false,
+    is_electable = true,
 })
 vars:new('fencing_fiber')
 do
@@ -305,7 +306,7 @@ local function apply_config(mod)
     end
 
     return ApplyConfigError:pcall(
-        mod.apply_config, conf, {is_master = vars.cache.is_leader}
+        mod.apply_config, conf, {is_master = vars.cache.is_leader and vars.cache.is_electable}
     )
 end
 
@@ -461,14 +462,15 @@ local function constitute_oneself(active_leaders, opts)
         vars.cache.is_vclockkeeper = false
         vars.cache.is_leader = false
         vars.cache.is_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw
+            and vars.cache.is_electable
         return true
     end
 
     -- Get ready to become a leader
     if not vars.consistency_needed then
         vars.cache.is_vclockkeeper = false
-        vars.cache.is_leader = true
-        vars.cache.is_rw = true
+        vars.cache.is_leader = true and vars.cache.is_electable
+        vars.cache.is_rw = true and vars.cache.is_electable
         return true
     elseif vars.cache.is_vclockkeeper then
         -- I'm already a vclockkeeper
@@ -559,8 +561,8 @@ local function constitute_oneself(active_leaders, opts)
 
     -- Hooray, instance is a legal vclockkeeper now.
     vars.cache.is_vclockkeeper = true
-    vars.cache.is_leader = true
-    vars.cache.is_rw = true
+    vars.cache.is_leader = true and vars.cache.is_electable
+    vars.cache.is_rw = true and vars.cache.is_electable
 
     log.info('Vclock persisted: %s. Consistent switchover succeeded',
         json.encode(setmetatable(vclock, {_serialize = 'sequence'}))
@@ -611,7 +613,7 @@ function reconfigure_all(active_leaders)
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         box.cfg({
-            read_only = not vars.cache.is_rw,
+            read_only = not (vars.cache.is_rw and vars.cache.is_electable),
         })
         synchro_promote()
 
@@ -771,6 +773,10 @@ local function cfg(clusterwide_config, opts)
 
     vars.clusterwide_config = clusterwide_config
     local topology_cfg = clusterwide_config:get_readonly('topology')
+    if topology_cfg ~= nil and topology_cfg.servers[vars.instance_uuid].electable == false then
+        vars.cache.is_electable = false
+    end
+
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
@@ -960,7 +966,7 @@ local function cfg(clusterwide_config, opts)
     end
 
     box.cfg({
-        read_only = not vars.cache.is_rw,
+        read_only = not (vars.cache.is_rw and vars.cache.is_electable),
     })
 
     vars.mode = failover_cfg.mode
@@ -982,7 +988,7 @@ end
 -- @local
 -- @treturn boolean true / false
 local function is_leader()
-    return vars.cache.is_leader
+    return vars.cache.is_leader and vars.cache.is_electable
 end
 
 --- Check current instance writability.
@@ -990,7 +996,7 @@ end
 -- @local
 -- @treturn boolean true / false
 local function is_rw()
-    return vars.cache.is_rw
+    return vars.cache.is_rw and vars.cache.is_electable
 end
 
 --- Check if current instance has persisted his vclock.
