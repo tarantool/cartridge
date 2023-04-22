@@ -74,11 +74,11 @@ g.before_all = function()
                 servers = {
                     {
                         instance_uuid = storage_3_uuid,
-                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
+                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302,admin:cookieA@localhost:3303' }
                     },
                     {
                         instance_uuid = storage_4_uuid,
-                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
+                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302,admin:cookieA@localhost:3303' }
                     },
                 },
             },
@@ -106,11 +106,11 @@ g.test_bootstrap_from = function()
 
     g.cluster2:server('storage-B-1'):exec(function()
         box.space.test:insert{2}
-        assert(#box.space.test:select() == 2)
+        assert(#box.space.test:select(nil, {limit = 10}) == 2)
     end)
 
     g.cluster1:server('storage-A-1'):exec(function()
-        assert(#box.space.test:select() == 1)
+        assert(#box.space.test:select(nil, {limit = 10}) == 1)
     end)
 
 

@@ -54,11 +54,12 @@ Bootstrapping from an existing cluster (optional)
 You can bootstrap a cluster from an existing cluster (*original* cluster in the example
 below) via the argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``
 in the following form:
-``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
+``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT,...``.
 That option should be present on each instance in replicasets of the target cluster.
 Make sure that you've prepared a valid configuration for the target cluster.
 A valid topology should contain the **same** *replicaset uuids* for each replicaset
-and *instance uuids* that **differ** from original cluster.
+and *instance uuids* that **differ** from original cluster. You can list several instances in this option.
+This is required for the latests Tarantool bootstrap policy.
 
 Several notes:
 
