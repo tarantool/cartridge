@@ -538,7 +538,6 @@ local function boot_instance(clusterwide_config)
             else
                 table.insert(bootstrap_table, pool.format_uri(leader.uri))
                 box_opts.replication = bootstrap_table
-                -- box_opts.replication = {pool.format_uri(leader.uri)}
             end
         end
     end
