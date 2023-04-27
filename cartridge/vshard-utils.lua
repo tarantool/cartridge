@@ -3,6 +3,7 @@
 local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
+local log = require('log')
 
 local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
@@ -270,10 +271,9 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['sched_move_quota'] = true,
     }
     for k, _ in pairs(vsgroup_new) do
-        ValidateConfigError:assert(
-            known_keys[k],
-            'section %s has unknown parameter %q', field, k
-        )
+        if known_keys[k] == nil then
+            log.warn('ValidateConfigError: section %s has unknown parameter %q', field, k)
+        end
     end
 end
 
