@@ -446,3 +446,57 @@ You can check that the instance's `advertise_uri <https://www.tarantool.io/en/do
 
     dig +short place_advertise_uri_here
 
+
+'Address already in use' errors
+-------------------------------
+
+There are the following known 'Address already in use' errors:
+
+*   ``CartridgeCfgError``: Socket bind error (<port>/udp): Address already in use
+
+*   ``HttpInitError``: <...> Can't create tcp_server: Address already in use
+
+*   ``RemoteControlError``: Can't start server on <host>:<port>: Address already in use
+
+You can see these errors in Tarantool logs only.
+The reason causing these errors is that Tarantool cannot use the binary (for example, ``3301``)
+or HTTP (for example, ``8081``) port.
+As a result, the instance cannot be configured and fails with an error.
+
+To fix an error, follow the steps below:
+
+1.  Determine which port is busy.
+
+2.  Use the ``lsof`` command to determine the application that uses this port:
+
+    .. code-block:: bash
+
+        sudo lsof -i :<port>
+
+    Note that without ``sudo`` you can see only the current user's processes.
+
+3.  Determine the connection type, for example:
+
+    .. code-block:: bash
+
+        # An outgoing connection on the 50858 port
+        TCP 192.168.100.17:50858->google.com:https (ESTABLISHED)
+
+        # Waiting for incoming requests on the 3301 port.
+        TCP localhost:3301 (LISTEN)
+
+4.  For an outgoing connection, you need to adjust the port range used to choose the local port, for example:
+
+    .. code-block:: bash
+
+        echo "32768 61000" > /proc/sys/net/ipv4/ip_local_port_range
+        /etc/rc.d/init.d/network restart
+
+5.  For an incoming connection, do one of the following:
+
+    *   For Google Chrome, etcd, nginx, or other application, you need to adjust
+        settings to release a busy port.
+
+    *   For Tarantool, you might have an incorrect cluster topology or
+        there might be several clusters running simultaneously.
+        In this case, please contact Tarantool support.
