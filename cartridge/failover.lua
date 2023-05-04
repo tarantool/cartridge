@@ -275,7 +275,7 @@ local function accept_appointments(appointments)
 
     if changed then
         vars.cache.active_leaders = active_leaders
-        membership.set_payload('leader_uuid', active_leaders[vars.replicaset_uuid])
+        membership.set_payload('failover', {leader_uuid = active_leaders[vars.replicaset_uuid]})
     end
 
     return changed
@@ -921,7 +921,9 @@ local function cfg(clusterwide_config, opts)
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
-                vars.membership_notification:wait()
+                if not raft_failover.term_changed(topology_cfg) then
+                    vars.membership_notification:wait()
+                end
                 return raft_failover.get_appointments(topology_cfg)
             end,
         })

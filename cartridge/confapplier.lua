@@ -494,9 +494,10 @@ local function boot_instance(clusterwide_config)
             if not server.disabled then
                 local member = membership.get_member(server.uri)
                 if member.status == 'alive'
-                and member.payload.leader_uuid ~= nil
+                and member.payload.failover ~= nil
+                and member.payload.failover.leader_uuid ~= nil
                 then
-                    leader_uuid = member.payload.leader_uuid
+                    leader_uuid = member.payload.failover.leader_uuid
                     break
                 end
             end

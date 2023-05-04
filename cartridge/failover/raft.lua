@@ -15,7 +15,13 @@ local PromoteLeaderError = errors.new_class('PromoteLeaderError')
 local UnsupportedError = errors.new_class('UnsupportedError')
 
 vars:new('leader_uuid')
+vars:new('latest_term', 0)
 vars:new('raft_trigger')
+
+local function save_term(term)
+    vars.latest_term = term
+    membership.set_payload('failover', {leader_uuid = vars.leader_uuid, term = term })
+end
 
 --- Generate appointments according to raft status.
 -- Used in 'raft' failover mode.
@@ -47,11 +53,12 @@ local function get_appointments(topology_cfg)
             local member = membership.get_member(server.uri)
 
             if member ~= nil
-            and member.payload.leader_uuid ~= nil
-            and member.payload.raft_term or 0 >= latest_term
+            and member.payload.failover ~= nil
+            and member.payload.failover.leader_uuid ~= nil
+            and (member.payload.failover.term or 0) >= latest_term
             then
-                latest_leader = member.payload.leader_uuid
-                latest_term = member.payload.raft_term or 0
+                latest_leader = member.payload.failover.leader_uuid
+                latest_term = member.payload.failover.term or 0
             end
         end
         appointments[replicaset_uuid] = latest_leader
@@ -59,7 +66,13 @@ local function get_appointments(topology_cfg)
     end
 
     appointments[vars.replicaset_uuid] = vars.leader_uuid
+
+    save_term(box.info.election.term)
     return appointments
+end
+
+local function term_changed()
+    return box.info.election.term > vars.latest_term
 end
 
 local function on_election_trigger()
@@ -71,9 +84,9 @@ local function on_election_trigger()
     if vars.leader_uuid ~= leader.uuid then
         vars.leader_uuid = leader.uuid
         vars.cache.is_leader = vars.leader_uuid == vars.instance_uuid
-        membership.set_payload('leader_uuid', vars.leader_uuid)
     end
-    membership.set_payload('raft_term', election.term)
+
+    save_term(election.term)
 end
 
 _G.__cartridge_on_election_trigger = on_election_trigger
@@ -128,8 +141,7 @@ local function cfg()
         vars.raft_trigger = box.ctl.on_election(on_election_trigger)
     end
 
-    membership.set_payload('raft_term', box.info.election.term)
-
+    save_term(box.info.election.term)
     return true
 end
 
@@ -183,5 +195,6 @@ return {
     check_version = check_version,
     disable = disable,
     get_appointments = get_appointments,
+    term_changed = term_changed,
     promote = promote,
 }
