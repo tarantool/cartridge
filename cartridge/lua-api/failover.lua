@@ -250,17 +250,9 @@ local function promote(replicaset_leaders, opts)
     })
 
     local mode = get_params().mode
-    if mode ~= 'stateful' and mode ~= 'raft' then
-        return nil, PromoteLeaderError:new(
-            'Promotion only works with stateful or raft failover,' ..
-            ' not in %q mode', mode
-        )
-    end
 
     local coordinator, ok, err
-    if mode == 'raft' then
-        return raft_failover.promote(replicaset_leaders, opts)
-    elseif mode == 'stateful' then
+    if mode == 'stateful' then
         coordinator, err = failover.get_coordinator()
         if err ~= nil then
             return nil, err
@@ -276,6 +268,8 @@ local function promote(replicaset_leaders, opts)
             {replicaset_leaders},
             { uri = coordinator.uri }
         )
+    else
+        return raft_failover.promote(replicaset_leaders, opts)
     end
     if ok == nil then
         return nil, err
