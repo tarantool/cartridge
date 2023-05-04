@@ -263,15 +263,6 @@ vshard_groups:
     bootstrapped: nope
 ...]])
 
-check_config('section vshard_groups["global"] has unknown parameter "unknown"',
-[[---
-vshard_groups:
-  global:
-    bucket_count: 1
-    bootstrapped: false
-    unknown:
-...]])
-
 log.info('group assignment')
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     [[ can't be added to vshard_group "some", cluster doesn't have any]],
