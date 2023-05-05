@@ -921,7 +921,7 @@ local function cfg(clusterwide_config, opts)
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
-                if not raft_failover.term_changed(topology_cfg) then
+                if not raft_failover.term_changed() then
                     vars.membership_notification:wait()
                 end
                 return raft_failover.get_appointments(topology_cfg)

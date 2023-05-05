@@ -29,6 +29,8 @@ Changed
 - Remove expelled instances from ``box.space._cluster`` before replication changes
   (`#1948 <https://github.com/tarantool/cartridge/issues/1948>`_).
 
+- Store failover information as a single table in membership (`#1900 <https://github.com/tarantool/cartridge/issues/1900>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,6 +56,8 @@ Fixed
 - Incorrect memory statistics in WebUI when using large tuples.
 
 - Compatibility with metrics package.
+
+- Check that raft term has been changed before waiting the next membership event (`#1944 <https://github.com/tarantool/cartridge/issues/1944>`_)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Removed
