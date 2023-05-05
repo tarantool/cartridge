@@ -29,6 +29,9 @@ Changed
 - Remove expelled instances from ``box.space._cluster`` before replication changes
   (`#1948 <https://github.com/tarantool/cartridge/issues/1948>`_).
 
+- Allow to call ``box.ctl.promote`` on any instance
+  (`#2079 <https://github.com/tarantool/cartridge/issues/2079>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
