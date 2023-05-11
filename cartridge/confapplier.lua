@@ -58,6 +58,7 @@ vars:new('box_opts', nil)
 vars:new('upgrade_schema', nil)
 
 vars:new('enable_failover_suppressing', nil)
+vars:new('enable_failover_synchro_promote', nil)
 
 vars:new('transport', nil)
 vars:new('ssl_options', {
@@ -309,7 +310,10 @@ local function apply_config(clusterwide_config)
 
     local ok, err = OperationError:pcall(failover.cfg,
         clusterwide_config,
-        {enable_failover_suppressing = vars.enable_failover_suppressing}
+        {
+            enable_failover_suppressing = vars.enable_failover_suppressing,
+            enable_failover_synchro_promote = vars.enable_failover_synchro_promote,
+        }
     )
     if not ok then
         set_state('OperationError', err)
@@ -772,6 +776,7 @@ local function init(opts)
         advertise_uri = 'string',
         upgrade_schema = '?boolean',
         enable_failover_suppressing = '?boolean',
+        enable_failover_synchro_promote = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -793,6 +798,7 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
+    vars.enable_failover_synchro_promote= opts.enable_failover_synchro_promote
     vars.transport = opts.transport
     vars.ssl_ciphers = opts.ssl_ciphers
     vars.ssl_server_ca_file = opts.ssl_server_ca_file

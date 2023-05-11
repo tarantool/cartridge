@@ -23,6 +23,7 @@ Changed
 - Update ``checks`` dependency to `3.3.0 <https://github.com/tarantool/checks/releases/tag/3.3.0>`_.
 
 - Call ``box.ctl.promote`` in stateful failover (`#1372 <https://github.com/tarantool/cartridge/issues/1372>`_).
+  Can be enabled by ``cartridge.cfg`` option ``enable_failover_synchro_promote``.
 
 - Call ``box.ctl.demote`` when raft failover is disabled.
 

@@ -61,6 +61,7 @@ vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
 vars:new('cookie_check_err', nil)
+vars:new('enable_failover_synchro_promote', false)
 vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
@@ -421,7 +422,8 @@ local function fencing_start()
 end
 
 local function synchro_promote()
-    if vars.mode == 'stateful'
+    if vars.enable_failover_synchro_promote == true
+    and vars.mode == 'stateful'
     and vars.consistency_needed
     and vars.cache.is_leader
     and not vars.failover_paused
@@ -732,6 +734,9 @@ end
 -- @local
 local function cfg(clusterwide_config, opts)
     checks('ClusterwideConfig', '?table')
+    if opts == nil then
+        opts = {}
+    end
 
     if vars.client then
         vars.client:drop_session()
@@ -739,7 +744,7 @@ local function cfg(clusterwide_config, opts)
     end
 
     suppressing_cancel()
-    if opts and opts.enable_failover_suppressing then
+    if opts.enable_failover_suppressing then
         local opts = argparse.get_opts{
             failover_suppress_threshold = 'number',
             failover_suppress_timeout = 'number',
@@ -749,6 +754,8 @@ local function cfg(clusterwide_config, opts)
         vars.suppress_fiber = fiber.new(check_suppressing_lock)
         vars.suppress_fiber:name('cartridge.suppress_failover')
     end
+
+    vars.enable_failover_synchro_promote = opts.enable_failover_synchro_promote
 
     fencing_cancel()
     leader_autoreturn.cancel()
