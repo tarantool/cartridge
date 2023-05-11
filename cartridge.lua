@@ -299,6 +299,7 @@ local function cfg(opts, box_opts)
         roles_reload_allowed = '?boolean',
         upload_prefix = '?string',
         enable_failover_suppressing = '?boolean',
+        enable_failover_synchro_promote = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',

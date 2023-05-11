@@ -798,7 +798,7 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
-    vars.enable_failover_synchro_promote= opts.enable_failover_synchro_promote
+    vars.enable_failover_synchro_promote = opts.enable_failover_synchro_promote
     vars.transport = opts.transport
     vars.ssl_ciphers = opts.ssl_ciphers
     vars.ssl_server_ca_file = opts.ssl_server_ca_file

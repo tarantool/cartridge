@@ -178,7 +178,10 @@ functionality, you should enable it in your ``init.lua`` file:
 
 .. code-block:: lua
 
-   cartridge.cfg({enable_failover_synchro_promote = true})
+   cartridge.cfg({
+      ...
+      enable_failover_synchro_promote = true,
+  })
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
