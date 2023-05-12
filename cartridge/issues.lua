@@ -579,7 +579,7 @@ local function list_on_cluster()
                 level = 'error',
                 topic = 'failover',
                 message = string.format(
-                    'Cookie hash check errored: %s',
+                    'Last cookie hash check errored: %s. This issue stays until apply config or restart',
                     check_cookie_error.err
                 ),
             })
