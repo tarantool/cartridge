@@ -50,7 +50,10 @@ local function change_version(old, new)
         server_command = fio.abspath(helpers.entrypoint('srv_basic')),
         cookie = helpers.random_cookie(),
         use_vshard = true,
-        env = {TARANTOOL_FORBID_HOTRELOAD = 'true'},
+        env = {
+            TARANTOOL_FORBID_HOTRELOAD = 'true',
+            TARANTOOL_DISABLE_SYNCHRO_MODE = 'true',
+        },
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {'vshard-router', 'vshard-storage'},
