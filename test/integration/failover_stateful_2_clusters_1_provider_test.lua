@@ -170,9 +170,10 @@ add('test_same_state_provider', function(g)
     t.assert_items_include(helpers.list_cluster_issues(g.clusters[2].main_server), {{
         level = 'error',
         topic = 'failover',
-        message = "Cookie hash check errored: " ..
+        message = "Last cookie hash check errored: " ..
             (g.type == 'etcd' and 'Prefix failover_stateful_test already used by another Cartridge cluster'
-            or '"localhost:14401": Someone else already uses this stateboard'),
+            or '"localhost:14401": Someone else already uses this stateboard') ..
+            '. This issue stays until apply config or restart',
         instance_uuid = box.NULL,
         replicaset_uuid = box.NULL,
     }})
