@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          token: "${{ secrets.TARANTOOLBOT_TOKEN }}"
+          token: "${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}"
 
       - name: Set branch name from source branch
         run: echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
