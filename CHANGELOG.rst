@@ -38,6 +38,11 @@ Added
 
 - ``cartridge.roles.metrics`` role (`tarantool#7725 <https://github.com/tarantool/tarantool/issues/7725>`_).
 
+- Function ``set_is_health_handler`` has been added to role ``cartridge.roles.metrics``,
+  allowing you to set your own handle to check health
+  (`tarantool/cartridge#2097 <https://github.com/tarantool/cartridge/issues/2097>`_).
+  Main case - customizing the response format.
+
 - Versioning support (`tarantool/roadmap-internal#204 <https://github.com/tarantool/roadmap-internal/issues/204>`_).
 
 - ``rpc_call`` supports ``is_async`` net.box option.

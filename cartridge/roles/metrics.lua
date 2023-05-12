@@ -8,6 +8,7 @@ local metrics = require('metrics')
 -- Backward compatibility with metrics 0.16.0 or older.
 local metrics_stash_supported, metrics_stash = pcall(require, 'metrics.stash')
 local log = require('log')
+local health = require('cartridge.health')
 
 local metrics_vars = require('cartridge.vars').new('metrics_vars')
 metrics_vars:new('current_paths', {})
@@ -25,10 +26,7 @@ local handlers = {
         local http_handler = require('metrics.plugins.prometheus').collect_http
         return http_handler(...)
     end,
-    ['health'] = function(...)
-        local http_handler = require('cartridge.health').is_healthy
-        return http_handler(...)
-    end,
+    ['health'] = health.default_is_healthy_handler,
 }
 
 local function set_labels(custom_labels)
@@ -246,6 +244,17 @@ local function stop()
     metrics_vars.custom_labels = {}
 end
 
+local function set_is_health_handler(new_handler)
+    handlers['health'] = new_handler or health.default_is_healthy_handler
+
+    local paths = table.copy(metrics_vars.current_paths)
+    for path, _ in pairs(metrics_vars.current_paths) do
+        metrics_vars.current_paths[path] = ''
+    end
+
+    apply_routes(paths)
+end
+
 return setmetatable({
     role_name = 'metrics',
     permanent = true,
@@ -255,4 +264,5 @@ return setmetatable({
     apply_config = apply_config,
     set_export = set_export,
     set_default_labels = set_default_labels,
+    set_is_health_handler = set_is_health_handler,
 }, { __index = metrics })

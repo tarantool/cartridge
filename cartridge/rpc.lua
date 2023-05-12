@@ -51,6 +51,12 @@ local function call_local(role_name, fn_name, args)
     end
 end
 
+-- TODO
+-- During the transfer of the metrics module to Tarantool, the same implementation of this function will occur
+-- several times:
+-- * https://github.com/tarantool/metrics/blob/master/cartridge/health.lua
+-- * https://github.com/tarantool/cartridge/blob/master/cartridge/health.lua
+-- * https://github.com/tarantool/cartridge/blob/master/cartridge/rpc.lua
 local function member_is_healthy(uri, instance_uuid)
     local member = membership.get_member(uri)
     return (
