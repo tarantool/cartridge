@@ -58,7 +58,7 @@ vars:new('box_opts', nil)
 vars:new('upgrade_schema', nil)
 
 vars:new('enable_failover_suppressing', nil)
-vars:new('enable_failover_synchro_promote', nil)
+vars:new('enable_sychro_mode', nil)
 
 vars:new('transport', nil)
 vars:new('ssl_options', {
@@ -312,7 +312,7 @@ local function apply_config(clusterwide_config)
         clusterwide_config,
         {
             enable_failover_suppressing = vars.enable_failover_suppressing,
-            enable_failover_synchro_promote = vars.enable_failover_synchro_promote,
+            enable_sychro_mode = vars.enable_sychro_mode,
         }
     )
     if not ok then
@@ -776,7 +776,7 @@ local function init(opts)
         advertise_uri = 'string',
         upgrade_schema = '?boolean',
         enable_failover_suppressing = '?boolean',
-        enable_failover_synchro_promote = '?boolean',
+        enable_sychro_mode = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -798,7 +798,7 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
-    vars.enable_failover_synchro_promote = opts.enable_failover_synchro_promote
+    vars.enable_sychro_mode = opts.enable_sychro_mode
     vars.transport = opts.transport
     vars.ssl_ciphers = opts.ssl_ciphers
     vars.ssl_server_ca_file = opts.ssl_server_ca_file

@@ -23,7 +23,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'test.roles.api',
         'test.roles.storage',
     },
-    enable_failover_synchro_promote = true,
+    enable_sychro_mode = true,
 })
 if not ok then
     log.error('%s', err)
