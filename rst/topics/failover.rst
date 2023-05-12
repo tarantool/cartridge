@@ -169,18 +169,20 @@ in a state provider. Check is performed on a first stateful failover
 configuration and every time when cluster is restarted. You can disable that
 option by using ``check_cookie_hash = false`` in failover configuration.
 
-Stateful failover calls ``box.ctl.promote`` on the leader instance.
+Stateful failover may call ``box.ctl.promote`` on the leader instance.
 It doesn't work with ``ALL_RW`` replicasets and replicasets with
 one existing or enabled node. It works on any Tarantool versions where
 ``box.ctl.promote`` is available. If you face any issue with promoting,
-you can try call it manually on ``leader``. If you don't want to failover
-to call ``box.ctl.promote`` at all, you can disable those functions in
-your ``init.lua`` file:
+you can try call it manually on ``leader``. If you want to enable this
+functionality, you should enable it in your ``init.lua`` file:
 
 .. code-block:: lua
 
-   box.ctl.promote = nil
-   box.ctl.demote = nil
+   cartridge.cfg({
+      ...
+      enable_sychro_mode = true,
+  })
+
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage

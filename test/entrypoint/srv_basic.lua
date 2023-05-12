@@ -173,6 +173,11 @@ if os.getenv('TARANTOOL_SUPPRESS_FAILOVER') then
     enable_failover_suppressing = true
 end
 
+local enable_synchro_mode = true
+if os.getenv('TARANTOOL_DISABLE_SYNCHRO_MODE') then
+    enable_synchro_mode = nil
+end
+
 local disable_errstack = nil
 if os.getenv('TARANTOOL_DISABLE_ERRSTACK') then
     disable_errstack = true
@@ -193,6 +198,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     webui_blacklist = webui_blacklist,
     roles_reload_allowed = roles_reload_allowed,
     enable_failover_suppressing = enable_failover_suppressing,
+    enable_sychro_mode = enable_synchro_mode,
     -- Compatibility tests run on cartridge 1.2.0
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',

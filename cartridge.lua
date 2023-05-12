@@ -299,6 +299,7 @@ local function cfg(opts, box_opts)
         roles_reload_allowed = '?boolean',
         upload_prefix = '?string',
         enable_failover_suppressing = '?boolean',
+        enable_sychro_mode = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -867,6 +868,7 @@ local function cfg(opts, box_opts)
         advertise_uri = advertise_uri,
         upgrade_schema = opts.upgrade_schema,
         enable_failover_suppressing = opts.enable_failover_suppressing,
+        enable_sychro_mode = opts.enable_sychro_mode,
 
         transport = opts.transport,
         ssl_ciphers = opts.ssl_ciphers,
