@@ -95,19 +95,7 @@ jobs:
             metrics: ''
           - tarantool: '2.10'
             etcd: 'v2.3.8'
-            metrics: '0.9.0'
-          - tarantool: '2.10'
-            etcd: 'v2.3.8'
-            metrics: '0.13.0'
-          - tarantool: '2.10'
-            etcd: 'v2.3.8'
-            metrics: '0.14.0'
-          - tarantool: '2.10'
-            etcd: 'v2.3.8'
-            metrics: '0.15.1'
-          - tarantool: '2.10'
-            etcd: 'v2.3.8'
-            metrics: '0.16.0'
+            metrics: '1.0.0'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-python@v4
