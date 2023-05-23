@@ -45,6 +45,7 @@
 
 local fio = require('fio')
 local yaml = require('yaml')
+local json = require('json')
 local checks = require('checks')
 local errors = require('errors')
 -- local base_dir = fio.abspath(fio.dirname(arg[0]))
@@ -143,12 +144,24 @@ local box_opts = {
     log                      = 'string', -- **string**
     log_nonblock             = 'boolean', -- **boolean**
     log_level                = 'string|number', -- **string|number**
+    log_modules              = 'json', -- **json**
     log_format               = 'string', -- **string**
 
     audit_log                = 'string', -- **string**
     audit_nonblock           = 'boolean', -- **boolean**
     audit_format             = 'string', -- **string**
     audit_filter             = 'string', -- **string**
+
+    auth_type                       = 'string', -- **string**
+    auth_delay                      = 'number', -- **number**
+    disable_guest                   = 'boolean', -- **boolean**
+    password_lifetime_days          = 'number', -- **number**
+    password_min_length             = 'number', -- **number**
+    password_enforce_uppercase      = 'boolean', -- **boolean**
+    password_enforce_lowercase      = 'boolean', -- **boolean**
+    password_enforce_digits         = 'boolean', -- **boolean**
+    password_enforce_specialchars   = 'boolean', -- **boolean**
+    password_history_length         = 'number', -- **number**
 
     flightrec_enabled        = 'boolean', -- **boolean**
     flightrec_logs_size      = 'number', -- **number**
@@ -170,6 +183,7 @@ local box_opts = {
     wal_queue_max_size       = 'number', -- **number**
     wal_dir_rescan_delay     = 'number', -- **number**
     wal_cleanup_delay        = 'number', -- **number**
+    wal_ext                  = 'json',   -- **json**
     force_recovery           = 'boolean', -- **boolean**
     replication              = 'string', -- **string**
     instance_uuid            = 'string', -- **string**
@@ -198,6 +212,9 @@ local box_opts = {
     feedback_host            = 'string', -- **string**
     feedback_interval        = 'number', -- **number**
     feedback_crashinfo       = 'boolean', -- **boolean**
+    feedback_send_metrics    = 'boolean', -- **boolean**
+    feedback_metrics_collect_interval = 'number', -- **number**
+    feedback_metrics_limit   = 'number', -- **number**
     net_msg_max              = 'number', -- **number**
     iproto_threads           = 'number', -- **number**
     sql_cache_size           = 'number', -- **number**
@@ -205,6 +222,7 @@ local box_opts = {
     election_mode            = 'string', -- **string**
     election_timeout         = 'number', -- **number**
     election_fencing_mode    = 'string', -- **string**
+    metrics                  = 'json', -- **json**
 }
 
 local function load_file(filename)
@@ -454,6 +472,7 @@ local function get_opts(opts)
         local opttype_str = false
         local opttype_num = false
         local opttype_bool = false
+        local opttype_json = false
         for _, _opttype in pairs(string.split(opttype, '|')) do
             if _opttype == 'string' then
                 opttype_str = true
@@ -461,6 +480,8 @@ local function get_opts(opts)
                 opttype_num = true
             elseif _opttype == 'boolean' then
                 opttype_bool = true
+            elseif _opttype == 'json' then
+                opttype_json = true
             else
                 return nil, TypeCastError:new(
                     "can't typecast %s to %s (unsupported type)",
@@ -487,9 +508,18 @@ local function get_opts(opts)
             end
             if _value == nil and opttype_str then
                 _value = value
+            elseif _value == nil and opttype_json then
+                local ok, res = pcall(json.decode, value)
+                if ok then
+                    _value = res
+                else
+                    return nil, TypeCastError:new(
+                        "invalid json parameter %s: %q",
+                        optname, value
+                    )
+                end
             end
-
-            if not opttype_num and not opttype_bool and not opttype_str then
+            if not opttype_num and not opttype_bool and not opttype_str and not opttype_json then
                 return nil, TypeCastError:new(
                     "can't typecast %s to %s (unsupported type)",
                     optname, opttype
