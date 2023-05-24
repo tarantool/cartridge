@@ -312,6 +312,7 @@ g.test_box_opts = function()
                 memtx_memory = 100,        -- number -> number
                 listen = 13301,            -- number -> number
                 read_only = true,          -- bool -> bool
+                wal_ext = '{"old": true, "new": true}', -- json -> table
             },
             boolean_to_string = {
                 feedback_host = false,
@@ -325,6 +326,9 @@ g.test_box_opts = function()
             boolean_to_number = {
                 readahead = false,
             },
+            json_to_invalid = {
+                wal_ext = 'error',
+            }
         })
     )
 
@@ -337,6 +341,7 @@ g.test_box_opts = function()
         memtx_memory = 100,
         listen = 13301,
         read_only = true,
+        wal_ext = {old = true, new = true},
     })
 
     local function check_err(cmd_args, expected)
@@ -375,6 +380,10 @@ g.test_box_opts = function()
 
     check_err('--cfg ./cfg.yml --instance-name boolean_to_number',
         [[TypeCastError: invalid configuration parameter readahead (number expected, got boolean)]]
+    )
+
+    check_err('--cfg ./cfg.yml --instance-name json_to_invalid',
+        [[TypeCastError: invalid json parameter wal_ext: "error"]]
     )
 end
 

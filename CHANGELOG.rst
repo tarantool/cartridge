@@ -47,6 +47,9 @@ Added
 
 - Allow to list several instances (comma-separated) in ``bootstrap_from``.
 
+- New argparse type ``json`` and several new parameters from Tarantool 2.11
+  (`#2102 <https://github.com/tarantool/cartridge/issues/2102>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
