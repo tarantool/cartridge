@@ -38,7 +38,7 @@ Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``cartridge.roles.metrics`` role (`tarantool#7725 <https://github.com/tarantool/tarantool/issues/7725>`_)
-  added as an external dependency ``cartridge-metrics-role 0.1.0``.
+  added as an external dependency ``cartridge-metrics-role`` `0.1.0 <https://github.com/tarantool/cartridge-metrics-role>`_.
 
 - Versioning support (`tarantool/roadmap-internal#204 <https://github.com/tarantool/roadmap-internal/issues/204>`_).
 
@@ -55,11 +55,11 @@ Added
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Compatibility with metrics in feedback (`#2033 <https://github.com/tarantool/cartridge/issues/2033>`_).
+
 - Display correct ``listen`` in WebUI when using iproto ssl (`#2051 <https://github.com/tarantool/cartridge/issues/2051>`_).
 
 - Incorrect memory statistics in WebUI when using large tuples.
-
-- Compatibility with metrics package.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Removed
