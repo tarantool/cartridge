@@ -22,6 +22,8 @@ Changed
 
 - Update ``checks`` dependency to `3.3.0 <https://github.com/tarantool/checks/releases/tag/3.3.0>`_.
 
+- Update ``vshard`` dependency to `0.1.24 <https://github.com/tarantool/vshard/releases/tag/0.1.24>`_.
+
 - Call ``box.ctl.promote`` in stateful failover (`#1372 <https://github.com/tarantool/cartridge/issues/1372>`_).
   Can be enabled by ``cartridge.cfg`` option ``enable_sychro_mode``.
 
