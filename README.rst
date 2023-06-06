@@ -25,14 +25,14 @@ A framework for distributed applications development.
     </a>
   </div>
 
-.. raw:: html
+..  raw:: html
 
-  <p align="center">
-    <img
-      src="https://github.com/tarantool/cartridge/raw/master/cartridge.png"
-      height="400px"
-    >
-  </p>
+    <p align="center">
+      <img
+        src="https://github.com/tarantool/cartridge/raw/master/cartridge.png"
+        height="400px"
+      >
+    </p>
 
 .. contents::
 
@@ -126,11 +126,14 @@ Long story short, enter these commands into the console one-by-one:
 That's all! Now you can visit http://localhost:8081 and see your application's
 Admin Web UI:
 
-..  image:: rst/images/full-cluster.png
-    :align: left
-    :scale: 40%
+..  raw:: html
 
-|nbsp|
+    <p align="center">
+      <img
+        src="https://github.com/tarantool/cartridge/raw/master/full-cluster.png"
+        height="400px"
+      >
+    </p>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next steps

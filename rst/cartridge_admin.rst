@@ -1196,14 +1196,18 @@ Cartridge displays cluster and instances issues in WebUI:
 
 |nbsp|
 
-*   Replication:
-    * **critical**: "Replication from ... to ... isn't running" --
-      when ``box.info.replication.upstream == nil``;
-    * **critical**: "Replication from ... to ... state "stopped"/"orphan"/etc. (...)";
-    * **warning**: "Replication from ... to ...: high lag" --
-      when ``upstream.lag > box.cfg.replication_sync_lag``;
-    * **warning**: "Replication from ... to ...: long idle" --
-      when ``upstream.idle > 2 * box.cfg.replication_timeout``;
+*   Replication
+
+    *   **critical**: "Replication from ... to ... isn't running" --
+        when ``box.info.replication.upstream == nil``;
+
+    *   **critical**: "Replication from ... to ... state "stopped"/"orphan"/etc. (...)";
+
+    *   **warning**: "Replication from ... to ...: high lag" --
+        when ``upstream.lag > box.cfg.replication_sync_lag``;
+
+    *   **warning**: "Replication from ... to ...: long idle" --
+        when ``upstream.idle > 2 * box.cfg.replication_timeout``;
 
     ..  image:: images/cartridge-issues-high-lag.png
         :align: left
@@ -1221,36 +1225,36 @@ Cartridge displays cluster and instances issues in WebUI:
     |nbsp|
 
 *   Failover:
-    * **warning**: "Can't obtain failover coordinator (...)";
-    * **warning**: "There is no active failover coordinator";
-    * **warning**: "Failover is stuck on ...: Error fetching appointments (...)";
-    * **warning**: "Failover is stuck on ...: Failover fiber is dead" -
-      this is likely a bug;
+
+    *   **warning**: "Can't obtain failover coordinator (...)";
+    *   **warning**: "There is no active failover coordinator";
+    *   **warning**: "Failover is stuck on ...: Error fetching appointments (...)";
+    *   **warning**: "Failover is stuck on ...: Failover fiber is dead" -- this is likely a bug;
 
 *   Switchover:
 
-    * **warning**: "Consistency on ... isn't reached yet";
+    *   **warning**: "Consistency on ... isn't reached yet";
 
 *   Clock:
 
-    * **warning**: "Clock difference between ... and ... exceed threshold"
-     `limits.clock_delta_threshold_warning`;
+    *   **warning**: "Clock difference between ... and ... exceed threshold" -- ``limits.clock_delta_threshold_warning``;
 
 *   Memory:
 
-    * **critical**: "Running out of memory on ..." - when all 3 metrics
-      ``items_used_ratio``, ``arena_used_ratio``, ``quota_used_ratio`` from
-      ``box.slab.info()`` exceed ``limits.fragmentation_threshold_critical``;
-    * **warning**: "Memory is highly fragmented on ..." - when
-      ``items_used_ratio > limits.fragmentation_threshold_warning`` and
-      both ``arena_used_ratio``, ``quota_used_ratio`` exceed critical limit;
+    *   **critical**: "Running out of memory on ..." -- when all 3 metrics
+        ``items_used_ratio``, ``arena_used_ratio``, ``quota_used_ratio`` from
+        ``box.slab.info()`` exceed ``limits.fragmentation_threshold_critical``;
+
+    *   **warning**: "Memory is highly fragmented on ..." - when
+        ``items_used_ratio > limits.fragmentation_threshold_warning`` and
+        both ``arena_used_ratio``, ``quota_used_ratio`` exceed critical limit;
 
 *   Configuration:
 
-    * **warning**: "Configuration checksum mismatch on ...";
-    * **warning**: "Configuration is prepared and locked on ...";
-    * **warning**: "Advertise URI (...) differs from clusterwide config (...)";
-    * **warning**: "Configuring roles is stuck on ... and hangs for ... so far";
+    *   **warning**: "Configuration checksum mismatch on ...";
+    *   **warning**: "Configuration is prepared and locked on ...";
+    *   **warning**: "Advertise URI (...) differs from clusterwide config (...)";
+    *   **warning**: "Configuring roles is stuck on ... and hangs for ... so far";
 
     ..  image:: images/cartridge-issues-config-mismatch.png
         :align: left
@@ -1269,8 +1273,8 @@ Cartridge displays cluster and instances issues in WebUI:
 
 *   Alien members:
 
-    * **warning**: "Instance ... with alien uuid is in the membership" -
-      when two separate clusters share the same cluster cookie;
+    *   **warning**: "Instance ... with alien uuid is in the membership" --
+        when two separate clusters share the same cluster cookie;
 
     ..  image:: images/cartridge-issues-alien-uuid.png
         :align: left

@@ -432,8 +432,8 @@ Or you can use the following workaround:
     require('cartridge.lua-api.topology').set_electable_servers({uuid1, uuid2, ... uuidN}) -- list all of your uuids here
 
 
-A'Connection refused' error in unconfigured instance since 2.7.4
-----------------------------------------------------------------
+A 'Connection refused' error in unconfigured instance since 2.7.4
+-----------------------------------------------------------------
 
 Before `v2.7.4 <https://github.com/tarantool/cartridge/blob/master/CHANGELOG.rst#274---2022-04-11>`_, an unconfigured instance was bound to the `0.0.0.0` interface.
 Given that `0.0.0.0` accepts connections on any IP address assigned to the machine,
