@@ -126,8 +126,11 @@ Long story short, enter these commands into the console one-by-one:
 That's all! Now you can visit http://localhost:8081 and see your application's
 Admin Web UI:
 
-.. image:: rst/images/full-cluster.png
-   :align: center
+..  image:: rst/images/full-cluster.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next steps

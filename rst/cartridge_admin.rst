@@ -1190,11 +1190,11 @@ Issues and suggestions
 
 Cartridge displays cluster and instances issues in WebUI:
 
-..  image:: images/cluster-issues-replication.png
+..  image:: images/cartridge-issues-replication-details.png
         :align: left
         :scale: 40%
 
-    |nbsp|
+|nbsp|
 
 *   Replication:
     * **critical**: "Replication from ... to ... isn't running" --
@@ -1214,7 +1214,7 @@ Cartridge displays cluster and instances issues in WebUI:
     Cartridge can propose you to fix some of replication issues by
     restarting replication:
 
-    ..  image:: images/cartridge-issues-restart-replication.png
+    ..  image:: images/cluster-issues-replication.png
         :align: left
         :scale: 40%
 
@@ -1332,15 +1332,15 @@ To see it, click on "Server details button".
     :align: left
     :scale: 40%
 
-    |nbsp|
+|nbsp|
 
 And then choose one of the tabs to see various parameters:
 
-..  image:: images/cartridge-server-details-button.png
+..  image:: images/cartridge-server-details.png
     :align: left
     :scale: 40%
 
-    |nbsp|
+|nbsp|
 
 
 .. _cartridge-change-cookie:
