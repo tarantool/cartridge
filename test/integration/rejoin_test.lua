@@ -42,7 +42,7 @@ g.before_test('test_rebootstrap', function()
         http_port = 8083,
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13303,
-        env = {TARANTOOL_MEMTX_MEMORY = '1'},
+        env = {TARANTOOL_MEMTX_MIN_TUPLE_SIZE = '1000000'},
     })
 
     g.server:start()
@@ -94,7 +94,7 @@ function g.test_rebootstrap()
     -- Heal the server and restart
     log.info('--------------------------------------------------------')
     g.server.advertise_uri = 'localhost:13303'
-    g.server.env['TARANTOOL_MEMTX_MEMORY'] = nil
+    g.server.env['TARANTOOL_MEMTX_MIN_TUPLE_SIZE'] = nil
     g.server:start()
     g.cluster:wait_until_healthy()
 end
