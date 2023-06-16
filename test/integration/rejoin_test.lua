@@ -33,6 +33,8 @@ g.after_each(function()
 end)
 
 g.before_test('test_rebootstrap', function()
+    t.skip_if(_G._TARANTOOL < '2.0', 'Tarantool version should be greater 2.0')
+
     g.server = helpers.Server:new({
         workdir = g.cluster.datadir .. '/13303',
         alias = 'spare',
