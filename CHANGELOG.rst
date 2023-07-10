@@ -16,7 +16,7 @@ Unreleased
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``ddl`` dependency to `1.6.3 <https://github.com/tarantool/ddl/releases/tag/1.6.3>`_.
+- Update ``ddl`` dependency to `1.6.4 <https://github.com/tarantool/ddl/releases/tag/1.6.4>`_.
 
 -------------------------------------------------------------------------------
 [2.8.0] - 2023-05-25
