@@ -27,6 +27,7 @@ local Cluster = {
 function Cluster:inherit(object)
     setmetatable(object, self)
     self.__index = self
+    return object
 end
 
 --- Build cluster object.
