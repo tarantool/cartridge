@@ -18,6 +18,8 @@ Changed
 
 - Update ``ddl`` dependency to `1.6.4 <https://github.com/tarantool/ddl/releases/tag/1.6.4>`_.
 
+- Update ``cartridge-metrics-role`` dependency to `0.1.1 <https://github.com/tarantool/cartridge-metrics-role/releases/tag/0.1.1>`_.
+
 -------------------------------------------------------------------------------
 [2.8.0] - 2023-05-25
 -------------------------------------------------------------------------------
