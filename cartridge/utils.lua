@@ -268,19 +268,6 @@ local function set_readonly(tbl, ro)
     return tbl
 end
 
---- Return true if we run under systemd.
--- systemd detection based on http://unix.stackexchange.com/a/164092
-local function under_systemd()
-    local rv = os.execute("systemctl 2>/dev/null | grep '\\-\\.mount' " ..
-                              "1>/dev/null 2>/dev/null")
-    if rv == 0 and ffi.C.getppid() == 1 then
-        return true
-    end
-
-    return false
-end
-
-
 local function is_email_valid(str)
     if type(str) ~= 'string' then
         return nil, "Expected string"
@@ -557,7 +544,6 @@ return {
     file_exists = file_exists,
     randomize_path = randomize_path,
 
-    under_systemd = under_systemd,
     is_email_valid = is_email_valid,
 
     table_setro = function(tbl)

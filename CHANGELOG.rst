@@ -20,6 +20,8 @@ Changed
 
 - Update ``cartridge-metrics-role`` dependency to `0.1.1 <https://github.com/tarantool/cartridge-metrics-role/releases/tag/0.1.1>`_.
 
+- Don't require systemd to default to syslog logging. Only check that syslog UNIX socket is available.
+
 -------------------------------------------------------------------------------
 [2.8.0] - 2023-05-25
 -------------------------------------------------------------------------------

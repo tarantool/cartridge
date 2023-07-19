@@ -394,10 +394,8 @@ local function cfg(opts, box_opts)
         ssl_client_password = opts.ssl_client_password,
     })
 
-    -- Using syslog driver when running under systemd
-    -- makes it possible to filter by severity with
-    -- systemctl
-    if utils.under_systemd() and box_opts.log == nil then
+    -- Using syslog driver, when available, by default
+    if box_opts.log == nil then
         local syslog, _ = socket.connect('unix/', '/dev/log')
         if not syslog then
             syslog, _ = socket.connect('unix/', '/var/run/syslog')
