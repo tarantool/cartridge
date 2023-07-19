@@ -397,6 +397,15 @@ local function cfg(opts, box_opts)
     -- Using syslog driver, when available, by default
     if box_opts.log == nil then
         local syslog, _ = socket.connect('unix/', '/dev/log')
+
+        -- On RHEL 7.9 and Centos 7.9 /dev/log is a UDP socket, not TCP
+        if not syslog then
+            local s = socket('AF_UNIX', 'SOCK_DGRAM', 0)
+            if s:sysconnect('unix/', '/dev/log') then
+                syslog = s
+            end
+        end
+
         if not syslog then
             syslog, _ = socket.connect('unix/', '/var/run/syslog')
         end
