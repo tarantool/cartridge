@@ -22,6 +22,8 @@ Changed
 
 - Don't require systemd to default to syslog logging. Only check that syslog UNIX socket is available.
 
+- Fix syslog UNIX socket check for older RHEL-based distros: check both SOCK_STREAM and SOCK_DGRAM.
+
 -------------------------------------------------------------------------------
 [2.8.0] - 2023-05-25
 -------------------------------------------------------------------------------
