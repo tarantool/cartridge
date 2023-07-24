@@ -26,6 +26,9 @@ local ok, err = cartridge.cfg({
     roles = {
         'mymodule',
     },
+},
+{
+    log = '',
 })
 
 if not ok then

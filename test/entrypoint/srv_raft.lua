@@ -24,6 +24,9 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'test.roles.storage',
     },
     enable_sychro_mode = true,
+},
+{
+    log = '',
 })
 if not ok then
     log.error('%s', err)

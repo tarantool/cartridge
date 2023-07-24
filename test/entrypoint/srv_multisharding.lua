@@ -24,6 +24,9 @@ local ok, err = cartridge.cfg({
         'cartridge.roles.vshard-storage',
         'cartridge.roles.vshard-router',
     },
+},
+{
+    log = '',
 })
 
 if not ok then

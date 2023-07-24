@@ -203,6 +203,9 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',
     disable_errstack = disable_errstack,
+},
+{
+    log = '',
 })
 if not ok then
     log.error('%s', err)
