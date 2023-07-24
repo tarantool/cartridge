@@ -48,7 +48,7 @@ local function get_appointments(topology_cfg)
 
             if member ~= nil
             and member.payload.leader_uuid ~= nil
-            and member.payload.raft_term or 0 >= latest_term
+            and (member.payload.raft_term or 0) >= latest_term
             then
                 latest_leader = member.payload.leader_uuid
                 latest_term = member.payload.raft_term or 0
