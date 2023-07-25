@@ -280,3 +280,15 @@ function g.test_timeouts()
         t.assert_equals(twophase.get_apply_config_timeout(), 111)
     end)
 end
+
+function g.test_2pc_is_locked_after_prepare_timeout()
+    g.s1:exec(function()
+        local t = require('luatest')
+        local twophase = require('cartridge.twophase')
+        twophase.set_validate_config_timeout(0.001)
+        local _, err = twophase.patch_clusterwide({})
+        twophase.set_validate_config_timeout(10) -- default
+        _, err = twophase.patch_clusterwide({})
+        t.assert_not(err)
+    end)
+end
