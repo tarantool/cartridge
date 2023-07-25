@@ -164,10 +164,14 @@ local function mktree(path)
     for _, dir in ipairs(dirs) do
         current_dir = fio.pathjoin(current_dir, dir)
         local stat = fio.stat(current_dir)
+        fiber.testcancel()
         if stat == nil then
             local _, err = fio.mkdir(current_dir)
+            fiber.testcancel()
             local _errno = errno()
-            if err ~= nil and not fio.path.is_dir(current_dir) then
+            local is_dir = fio.path.is_dir(current_dir)
+            fiber.testcancel()
+            if err ~= nil and not is_dir  then
                 return nil, errors.new('MktreeError',
                     'Error creating directory %q: %s',
                     current_dir, errno.strerror(_errno)
@@ -208,21 +212,26 @@ local function file_write(path, data, opts, perm)
     opts = opts or {'O_CREAT', 'O_WRONLY', 'O_TRUNC'}
     perm = perm or tonumber(644, 8)
     local file = fio.open(path, opts, perm)
+    fiber.testcancel()
     if file == nil then
         return nil, OpenFileError:new('%s: %s', path, errno.strerror())
     end
 
     local res = file:write(data)
+    fiber.testcancel()
     if not res then
         local err = WriteFileError:new('%s: %s', path, errno.strerror())
         fio.unlink(path)
+        fiber.testcancel()
         return nil, err
     end
 
     local res = file:close()
+    fiber.testcancel()
     if not res then
         local err = WriteFileError:new('%s: %s', path, errno.strerror())
         fio.unlink(path)
+        fiber.testcancel()
         return nil, err
     end
 

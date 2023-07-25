@@ -38,6 +38,7 @@ vars:new('locks', {})
 vars:new('prepared_config', nil)
 vars:new('prepared_config_release_notification', fiber.cond())
 vars:new('on_patch_triggers', {})
+vars:new('prepare_fiber', nil)
 
 vars:new('options', {
     netbox_call_timeout = 1,
@@ -49,6 +50,7 @@ vars:new('options', {
 local function release_config_lock()
     local prepared_config = vars.prepared_config
     vars.prepared_config = nil
+    vars.prepare_fiber = nil
     vars.prepared_config_release_notification:broadcast()
     return prepared_config
 end
@@ -134,6 +136,7 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function prepare_2pc(upload_id)
+    vars.prepare_fiber = fiber.self()
     local data
     if type(upload_id) == 'table' then
         -- Preserve compatibility with older versions.
@@ -171,7 +174,6 @@ local function prepare_2pc(upload_id)
 
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
-
     if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
         log.warn('%s', err)
@@ -179,7 +181,9 @@ local function prepare_2pc(upload_id)
     end
 
     local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
-    if not ok and fio.path.exists(path_prepare) then
+    local prepare_path_exists = fio.path.exists(path_prepare)
+    fiber.testcancel()
+    if not ok and prepare_path_exists then
         err = Prepare2pcError:new('Two-phase commit is locked')
     end
 
@@ -267,6 +271,29 @@ local function commit_2pc()
     end
 end
 
+local function cancel_prepare_fiber()
+    local f = vars.prepare_fiber
+    if not f then
+        log.warn("Prepare fiber was not created")
+        return
+    end
+    if f:status() == 'dead' then
+        return
+    end
+    f:set_joinable(true)
+    local ok, err
+    ok, err = pcall(f.cancel, f)
+    if not ok then
+        log.warn("Cancel prepare fiber error: " .. err)
+        return
+    end
+    ok, err = pcall(f.join, f)
+    if not ok then
+        log.warn("Join prepare fiber error: " .. err)
+        return
+    end
+end
+
 --- Two-phase commit - abort stage.
 --
 -- Release the lock for further commit attempts.
@@ -274,6 +301,7 @@ end
 -- @local
 -- @treturn boolean true
 local function abort_2pc()
+    cancel_prepare_fiber()
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
     ClusterwideConfig.remove(path_prepare)
@@ -440,7 +468,6 @@ local function twophase_commit(opts)
     end
 
     local _2pc_error
-    local abortion_list = {}
     local activity_name = opts.activity_name or 'twophase_commit'
 
     goto prepare
@@ -472,7 +499,6 @@ local function twophase_commit(opts)
         for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] then
                 log.warn('Prepared for %s at %s', activity_name, uri)
-                table.insert(abortion_list, uri)
             end
         end
         for _, uri in ipairs(opts.uri_list) do
@@ -523,11 +549,11 @@ local function twophase_commit(opts)
         log.warn('(2PC) %s abort phase...', activity_name)
 
         local retmap, errmap = pool.map_call(opts.fn_abort, nil,{
-            uri_list = abortion_list,
+            uri_list = opts.uri_list,
             timeout = vars.options.netbox_call_timeout,
         })
 
-        for _, uri in ipairs(abortion_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] then
                 log.warn('Aborted %s at %s', activity_name, uri)
             else
