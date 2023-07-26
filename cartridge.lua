@@ -23,6 +23,7 @@ local http = require('http.server')
 local fiber = require('fiber')
 local socket = require('socket')
 local json = require('json')
+local tarantool_version = require('tarantool').version
 
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
@@ -316,6 +317,10 @@ local function cfg(opts, box_opts)
         ssl_client_password = '?string',
         disable_errstack = '?boolean',
     }, '?table')
+
+    if tarantool_version:sub(1, 2) == '3.' then
+        return nil, CartridgeCfgError:new("Unsupported Tarantool version " .. tarantool_version)
+    end
 
     if opts.enable_sychro_mode ~= nil then
         opts.enable_synchro_mode = opts.enable_sychro_mode
