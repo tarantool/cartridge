@@ -19,6 +19,9 @@ end
 local ok, err = cartridge.cfg({
     roles = {},
     auth_backend_name = 'no-auth',
+},
+{
+    log = '',
 })
 
 if not ok then
