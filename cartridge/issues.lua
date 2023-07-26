@@ -305,6 +305,36 @@ local function list_on_instance(opts)
         })
     end
 
+    if box.ctl.promote ~= nil
+    and failover.is_leader()
+    and (failover.mode() == 'eventual'
+    or (failover.mode() == 'stateful' and not failover.is_synchro_mode_enabled())) then
+        local has_sync_spaces = false
+        local n = 0
+        for _, tuple in box.space._space:pairs(512, {iterator = 'GE'}) do
+            n = n + 1
+            if n % 500 == 0 then
+                fiber.yield()
+            end
+            if tuple.flags.is_sync then
+                has_sync_spaces = true
+                break
+            end
+        end
+        if has_sync_spaces then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'failover',
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = 'Having sync spaces may cause failover errors. ' ..
+                    'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                    'raft failover mode'
+            })
+        end
+    end
+
+
     -- It should be a vclockkeeper, but it's not
     if failover.consistency_needed()
     and failover.get_active_leaders()[replicaset_uuid] == instance_uuid
@@ -557,8 +587,7 @@ local function list_on_cluster()
 
     -- Check stateful failover issues
 
-    local failover_cfg = topology.get_failover_params(topology_cfg)
-    if failover_cfg.mode == 'stateful' then
+    if failover.mode() == 'stateful' then
         local coordinator, err = failover.get_coordinator()
 
         if err ~= nil then

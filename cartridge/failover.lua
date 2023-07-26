@@ -1025,12 +1025,28 @@ local function is_suppressed()
     return vars.failover_suppressed
 end
 
+--- Check if failover synchro mode enabled.
+-- @function is_synchro_mode_enabled
+-- @local
+-- @treturn boolean true / false
+local function is_synchro_mode_enabled()
+    return vars.enable_sychro_mode
+end
+
 --- Check if current configuration implies consistent switchover.
 -- @function consistency_needed
 -- @local
 -- @treturn boolean true / false
 local function consistency_needed()
     return vars.consistency_needed
+end
+
+--- Get failover mode.
+-- @function mode
+-- @local
+-- @treturn string
+local function mode()
+    return vars.mode
 end
 
 --- Get current stateful failover coordinator
@@ -1182,6 +1198,8 @@ return {
     is_rw = is_rw,
     is_paused = is_paused,
     is_suppressed = is_suppressed,
+    is_synchro_mode_enabled = is_synchro_mode_enabled,
+    mode = mode,
 
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
