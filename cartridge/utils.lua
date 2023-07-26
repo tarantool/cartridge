@@ -564,4 +564,5 @@ return {
     appoint_leaders_check = appoint_leaders_check,
 
     feature = feature,
+    version_is_at_least = version_is_at_least,
 }

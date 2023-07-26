@@ -2,6 +2,20 @@ local log = require('log')
 local fiber = require('fiber')
 local vars = require('cartridge.vars').new('cartridge.invalid-format')
 
+local utils = require('cartridge.utils')
+
+
+-- In Tarantool >= 2.10.4 invalid format leads to an error,
+-- so we don't need to perform a check
+if utils.version_is_at_least(2, 10, 4) then
+    return {
+        start_check = function() end,
+        end_check = function() end,
+        spaces_list_str = function() return '' end,
+        run_check = function() return {} end,
+    }
+end
+
 --- Set of illegal params.
 --
 -- @table illegal_types
