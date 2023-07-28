@@ -50,6 +50,7 @@ local SwitchoverError = errors.new_class('SwitchoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
+local SetOptionsError = errors.new_class('SetOptionsError')
 
 vars:new('mode')
 vars:new('all_roles')
@@ -1142,12 +1143,38 @@ local function wait_consistency(leaders)
     return true
 end
 
+--- Set internal failover options.
+--
+-- Available options are: WAITLSN_PAUSE, WAITLSN_TIMEOUT, LONGPOLL_TIMEOUT, NETBOX_CALL_TIMEOUT
+--
+-- @function set_options
+-- @local
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function set_options(opts)
+    checks('table')
+    for k, v in pairs(opts) do
+        if vars.options[k] == nil then
+            return nil, SetOptionsError:new(('Invalid option %s'):format(k))
+        end
+        if type(v) ~= "number" then
+            return nil, SetOptionsError:new(('Invalid option %s value, expected number'):format(k))
+        end
+    end
+    for k, v in pairs(opts) do
+        vars.options[k] = v
+    end
+    return true
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
     get_coordinator = get_coordinator,
     get_error = get_error,
     check_cookie_hash_error = check_cookie_hash_error,
+    set_options = set_options,
 
     consistency_needed = consistency_needed,
     is_vclockkeeper = is_vclockkeeper,
