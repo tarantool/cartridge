@@ -17,7 +17,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = helpers.random_cookie(),
+        cookie = 'secret',
         replicasets = {
             {
                 alias = 'router',
@@ -717,23 +717,28 @@ function g.test_sync_spaces_is_prohibited()
         box.schema.space.create('test', {if_not_exists = true, is_sync=true})
     end)
 
-    t.assert_items_equals(helpers.list_cluster_issues(master), {
-        {
-            level = 'warning',
-            topic = 'failover',
-            message = 'Having sync spaces may cause failover errors. ' ..
-                    'Consider to change failover type to stateful and enable synchro_mode or use ' ..
-                    'raft failover mode',
-            instance_uuid = master.instance_uuid,
-            replicaset_uuid = master.replicaset_uuid,
-        },
-    })
+    master:restart()
+
+    helpers.retrying({}, function()
+        t.assert_items_equals(helpers.list_cluster_issues(master), {
+            {
+                level = 'warning',
+                topic = 'failover',
+                message = 'Having sync spaces may cause failover errors. ' ..
+                        'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                        'raft failover mode. Sync spaces: test',
+                instance_uuid = master.instance_uuid,
+                replicaset_uuid = master.replicaset_uuid,
+            },
+        })
+    end)
 end
 
 g.after_test('test_sync_spaces_is_prohibited', function()
     cluster:server('storage-1'):exec(function()
         box.space.test:drop()
     end)
+    cluster:server('storage-1'):restart()
 end)
 
 

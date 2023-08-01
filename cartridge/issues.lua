@@ -96,6 +96,7 @@ local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
 local invalid_format = require('cartridge.invalid-format')
+local sync_spaces = require('cartridge.sync-spaces')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
@@ -305,33 +306,20 @@ local function list_on_instance(opts)
         })
     end
 
-    if box.ctl.promote ~= nil
-    and failover.is_leader()
+    local sync_spaces_list = sync_spaces.spaces_list_str()
+    if sync_spaces_list ~= ''
+    and (failover.is_leader()
     and (failover.mode() == 'eventual'
-    or (failover.mode() == 'stateful' and not failover.is_synchro_mode_enabled())) then
-        local has_sync_spaces = false
-        local n = 0
-        for _, tuple in box.space._space:pairs(512, {iterator = 'GE'}) do
-            n = n + 1
-            if n % 500 == 0 then
-                fiber.yield()
-            end
-            if tuple.flags.is_sync then
-                has_sync_spaces = true
-                break
-            end
-        end
-        if has_sync_spaces then
-            table.insert(ret, {
-                level = 'warning',
-                topic = 'failover',
-                instance_uuid = instance_uuid,
-                replicaset_uuid = replicaset_uuid,
-                message = 'Having sync spaces may cause failover errors. ' ..
-                    'Consider to change failover type to stateful and enable synchro_mode or use ' ..
-                    'raft failover mode'
-            })
-        end
+    or (failover.mode() == 'stateful' and not failover.is_synchro_mode_enabled()))) then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = 'Having sync spaces may cause failover errors. ' ..
+                'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                'raft failover mode. Sync spaces: ' .. sync_spaces_list
+        })
     end
 
 
