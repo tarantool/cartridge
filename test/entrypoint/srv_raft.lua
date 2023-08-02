@@ -23,7 +23,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'test.roles.api',
         'test.roles.storage',
     },
-    enable_sychro_mode = true,
+    enable_synchro_mode = true,
 },
 {
     log = '',

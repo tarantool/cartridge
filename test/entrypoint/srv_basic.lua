@@ -198,7 +198,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     webui_blacklist = webui_blacklist,
     roles_reload_allowed = roles_reload_allowed,
     enable_failover_suppressing = enable_failover_suppressing,
-    enable_sychro_mode = enable_synchro_mode,
+    enable_synchro_mode = enable_synchro_mode,
     -- Compatibility tests run on cartridge 1.2.0
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',

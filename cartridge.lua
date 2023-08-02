@@ -300,6 +300,7 @@ local function cfg(opts, box_opts)
         upload_prefix = '?string',
         enable_failover_suppressing = '?boolean',
         enable_sychro_mode = '?boolean',
+        enable_synchro_mode = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -315,6 +316,11 @@ local function cfg(opts, box_opts)
         ssl_client_password = '?string',
         disable_errstack = '?boolean',
     }, '?table')
+
+    if opts.enable_sychro_mode ~= nil then
+        opts.enable_synchro_mode = opts.enable_sychro_mode
+        log.warn('enable_sychro_mode is deprecated. Use enable_synchro_mode instead')
+    end
 
     if opts.webui_blacklist ~= nil then
         local i = 0
@@ -875,7 +881,7 @@ local function cfg(opts, box_opts)
         advertise_uri = advertise_uri,
         upgrade_schema = opts.upgrade_schema,
         enable_failover_suppressing = opts.enable_failover_suppressing,
-        enable_sychro_mode = opts.enable_sychro_mode,
+        enable_synchro_mode = opts.enable_synchro_mode,
 
         transport = opts.transport,
         ssl_ciphers = opts.ssl_ciphers,

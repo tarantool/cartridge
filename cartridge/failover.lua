@@ -62,7 +62,7 @@ vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
 vars:new('cookie_check_err', nil)
-vars:new('enable_sychro_mode', false)
+vars:new('enable_synchro_mode', false)
 vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
@@ -423,7 +423,7 @@ local function fencing_start()
 end
 
 local function synchro_promote()
-    if vars.enable_sychro_mode == true
+    if vars.enable_synchro_mode == true
     and vars.mode == 'stateful'
     and vars.consistency_needed
     and vars.cache.is_leader
@@ -756,7 +756,7 @@ local function cfg(clusterwide_config, opts)
         vars.suppress_fiber:name('cartridge.suppress_failover')
     end
 
-    vars.enable_sychro_mode = opts.enable_sychro_mode
+    vars.enable_synchro_mode = opts.enable_synchro_mode
 
     fencing_cancel()
     leader_autoreturn.cancel()
