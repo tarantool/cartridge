@@ -17,7 +17,10 @@ Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Fix operation priority in Raft failover.
+
 - Typo in ``cartridge.cfg`` option ``enable_synchro_mode``.
+
+- Show issue about memory usage when using large tuples.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Deprecated

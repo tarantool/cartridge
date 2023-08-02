@@ -331,10 +331,13 @@ local function list_on_instance(opts)
     local items_used_ratio = slab_info.items_used / (slab_info.items_size + 0.0001)
     local arena_used_ratio = slab_info.arena_used / (slab_info.arena_size + 0.0001)
     local quota_used_ratio = slab_info.quota_used / (slab_info.quota_size + 0.0001)
+    local total_used_ratio =
+        (slab_info.arena_used + slab_info.quota_used - slab_info.arena_size) / (slab_info.quota_size + 0.0001)
 
     if  items_used_ratio > vars.limits.fragmentation_threshold_critical
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
+    or  total_used_ratio > vars.limits.fragmentation_threshold_critical
     or  items_used_ratio >= vars.limits.fragmentation_threshold_full
     or  quota_used_ratio >= vars.limits.fragmentation_threshold_full
     then
@@ -354,6 +357,7 @@ local function list_on_instance(opts)
     elseif items_used_ratio > vars.limits.fragmentation_threshold_warning
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
+    or  total_used_ratio > vars.limits.fragmentation_threshold_warning
     then
         table.insert(ret, {
             level = 'warning',
