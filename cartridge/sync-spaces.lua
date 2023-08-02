@@ -26,9 +26,9 @@ local function on_schema_init()
     box.space._space:before_replace(before_replace)
 end
 
---- Check if spaces have invalid format.
+--- List sync spaces.
 --
--- @function start_check
+-- @function spaces_list_str
 -- @treturn string String of spaces with invalid params, delimeted by comma
 local function spaces_list_str()
     local res = ''
