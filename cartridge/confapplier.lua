@@ -29,6 +29,7 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 local logging_whitelist = require('cartridge.logging_whitelist')
 local invalid_format = require('cartridge.invalid-format')
+local sync_spaces = require('cartridge.sync-spaces')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -558,12 +559,14 @@ local function boot_instance(clusterwide_config)
     -- It recovers snapshot
     -- Or bootstraps replication
     invalid_format.start_check()
+    sync_spaces.start_check()
     local snap1 = hotreload.snap_fibers()
 
     box.cfg(box_opts)
     local snap2 = hotreload.snap_fibers()
     hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
     invalid_format.end_check()
+    sync_spaces.end_check()
     require('membership.options').SUSPICIOUSNESS = true
 
     local username = cluster_cookie.username()

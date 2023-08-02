@@ -96,6 +96,7 @@ local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
 local invalid_format = require('cartridge.invalid-format')
+local sync_spaces = require('cartridge.sync-spaces')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
@@ -304,6 +305,23 @@ local function list_on_instance(opts)
             ),
         })
     end
+
+    local sync_spaces_list = sync_spaces.spaces_list_str()
+    if sync_spaces_list ~= ''
+    and (failover.is_leader()
+    and (failover.mode() == 'eventual'
+    or (failover.mode() == 'stateful' and not failover.is_synchro_mode_enabled()))) then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = 'Having sync spaces may cause failover errors. ' ..
+                'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                'raft failover mode. Sync spaces: ' .. sync_spaces_list
+        })
+    end
+
 
     -- It should be a vclockkeeper, but it's not
     if failover.consistency_needed()
@@ -557,8 +575,7 @@ local function list_on_cluster()
 
     -- Check stateful failover issues
 
-    local failover_cfg = topology.get_failover_params(topology_cfg)
-    if failover_cfg.mode == 'stateful' then
+    if failover.mode() == 'stateful' then
         local coordinator, err = failover.get_coordinator()
 
         if err ~= nil then

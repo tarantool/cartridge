@@ -709,6 +709,39 @@ g.after_test('test_sigstop', function()
     cluster:wait_until_healthy()
 end)
 
+
+function g.test_sync_spaces_is_prohibited()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'))
+    local master = cluster:server('storage-1')
+    master:exec(function()
+        box.schema.space.create('test', {if_not_exists = true, is_sync=true})
+    end)
+
+    master:restart()
+
+    helpers.retrying({}, function()
+        t.assert_items_equals(helpers.list_cluster_issues(master), {
+            {
+                level = 'warning',
+                topic = 'failover',
+                message = 'Having sync spaces may cause failover errors. ' ..
+                        'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                        'raft failover mode. Sync spaces: test',
+                instance_uuid = master.instance_uuid,
+                replicaset_uuid = master.replicaset_uuid,
+            },
+        })
+    end)
+end
+
+g.after_test('test_sync_spaces_is_prohibited', function()
+    cluster:server('storage-1'):exec(function()
+        box.space.test:drop()
+    end)
+    cluster:server('storage-1'):restart()
+end)
+
+
 local function failover_pause()
     cluster.main_server:graphql({
         query = [[
