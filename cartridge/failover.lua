@@ -1030,7 +1030,7 @@ end
 -- @local
 -- @treturn boolean true / false
 local function is_synchro_mode_enabled()
-    return vars.enable_sychro_mode
+    return vars.enable_synchro_mode
 end
 
 --- Check if current configuration implies consistent switchover.

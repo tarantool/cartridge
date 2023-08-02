@@ -17,7 +17,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = 'secret',
+        cookie = helpers.random_cookie(),
         replicasets = {
             {
                 alias = 'router',
