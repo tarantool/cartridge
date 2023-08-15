@@ -61,6 +61,7 @@ local errno = require('errno')
 local errors = require('errors')
 
 local utils = require('cartridge.utils')
+local internal = require('cartridge.cwinternal')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -485,6 +486,19 @@ end
 local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
     local random_path = utils.randomize_path(path)
+
+    local sections_k = {}
+    local sections_v = {}
+    for k, v in pairs(clusterwide_config._plaintext) do
+        table.insert(sections_k, k)
+        table.insert(sections_v, v)
+    end
+    local rc = internal.save(path, random_path, sections_k, sections_v)
+    if rc == -1 then
+        return nil, SaveConfigError:new("error in c")
+    end
+
+    if true then return true end
 
     local ok, err = utils.mktree(random_path)
     if not ok then

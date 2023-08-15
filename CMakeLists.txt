@@ -174,6 +174,8 @@ add_test(
 ## Install ####################################################################
 ###############################################################################
 
+add_subdirectory(${PROJECT_NAME})
+
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}
