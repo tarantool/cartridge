@@ -906,7 +906,7 @@ local function cfg(clusterwide_config, opts)
         end
 
         if topology_cfg.replicasets[vars.replicaset_uuid].all_rw then
-            return ApplyConfigError:new("Raft failover can't be enabled with ALL_RW replicasets")
+            return nil, ApplyConfigError:new("Raft failover can't be enabled with ALL_RW replicasets")
         end
         vars.fencing_enabled = false
         vars.consistency_needed = false
