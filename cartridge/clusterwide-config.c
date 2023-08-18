@@ -63,9 +63,10 @@ static int mktree(char* path) {
   return 0;
 }
 
-static int cw_save(char* path, char* random_path, char** sections_k, char** sections_v, int section_l) {
+static int cw_save(char* path, char* random_path, char** sections_k, char** sections_v, int section_l, char* err) {
   if(mktree(random_path) == -1 ) {
     say_error("mktree() error");
+    sprintf(err, "%s: %s", random_path, strerror(errno));
     return -1;
   }
 
@@ -74,20 +75,22 @@ static int cw_save(char* path, char* random_path, char** sections_k, char** sect
     sprintf(tmp_path, "%s/%s", random_path, sections_k[i]);
     if(file_write(tmp_path, sections_v[i]) == -1) {
       say_error("file_write() error: %s", strerror(errno));
+      sprintf(err, "%s: %s", tmp_path, strerror(errno));
       goto rollback;
     }
   }
 
   if(rename(random_path, path) == -1) {
     say_error("rename() error: %s", strerror(errno));
+    sprintf(err, "%s: %s", path, strerror(errno));
     goto rollback;
   }
 
   say_verbose("%s has renamed to %s", random_path, path);
   goto exit;
 rollback:
-  if(remove(path) == -1) {
-    say_error("remove error: %s, path: %s", strerror(errno), path);
+  if(remove(random_path) == -1) {
+    say_warn("remove error: %s, path: %s", strerror(errno), random_path);
   }
   return -1;
 exit:
@@ -100,7 +103,8 @@ static ssize_t va_cw_save(va_list argp) {
   char** keys = va_arg(argp, char**);
   char** values = va_arg(argp, char**);
   int l = va_arg(argp, int);
-  return cw_save(path, random_path, keys, values, l);
+  char* err = va_arg(argp, char*);
+  return cw_save(path, random_path, keys, values, l, err);
 }
 
 static int lua_cw_save(lua_State *L) {
@@ -118,7 +122,7 @@ static int lua_cw_save(lua_State *L) {
       const char* _type = luaL_typename(L, -1);
       say_error("wrong format of table field at index %d: expect string, actual is %s", v, _type);
       lua_pushnil(L);
-      lua_pushstring(L, "error");
+      lua_pushstring(L, "format error");
       return 2;
     }
     sections_v[v-1] = lua_tostring(L, -1);
@@ -138,7 +142,7 @@ static int lua_cw_save(lua_State *L) {
       const char* _type = luaL_typename(L, -1);
       say_error("wrong format of table field at index %d: expect string, actual is %s", k, _type);
       lua_pushnil(L);
-      lua_pushstring(L, "error");
+      lua_pushstring(L, "format error");
       return 2;
     }
     sections_k[k-1] = lua_tostring(L, -1);
@@ -153,10 +157,12 @@ static int lua_cw_save(lua_State *L) {
     return 2;
   }
 
-  if(coio_call(va_cw_save, path, random_path, sections_k, sections_v, k-1) == -1) {
+  char err[PATH_MAX];
+
+  if(coio_call(va_cw_save, path, random_path, sections_k, sections_v, k-1, err) == -1) {
     say_error("coio_call() error");
     lua_pushnil(L);
-    lua_pushstring(L, "deep error");
+    lua_pushstring(L, err);
     return 2;
   }
 
