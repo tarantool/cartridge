@@ -76,24 +76,17 @@ static int cw_save(char* path, char* random_path, char** sections_k, char** sect
     if(file_write(tmp_path, sections_v[i]) == -1) {
       say_error("file_write() error: %s", strerror(errno));
       sprintf(err, "%s: %s", tmp_path, strerror(errno));
-      goto rollback;
+      return -1;
     }
   }
 
   if(rename(random_path, path) == -1) {
     say_error("rename() error: %s", strerror(errno));
     sprintf(err, "%s: %s", path, strerror(errno));
-    goto rollback;
+    return -1;
   }
 
   say_verbose("%s has renamed to %s", random_path, path);
-  goto exit;
-rollback:
-  if(remove(random_path) == -1) {
-    say_warn("remove error: %s, path: %s", strerror(errno), random_path);
-  }
-  return -1;
-exit:
   return 0;
 }
 

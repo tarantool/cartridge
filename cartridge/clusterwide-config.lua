@@ -494,6 +494,13 @@ local function save(clusterwide_config, path)
     end
     local ok, err = internal.save(path, random_path, sections_k, sections_v)
     if not ok and err then
+        local _, rm_err = fio.rmtree(random_path)
+        if rm_err then
+            log.warn(
+                "Error removing %s: %s",
+                random_path, err
+            )
+        end
         return nil, SaveConfigError:new("%s: %s", path, err)
     end
     return true
