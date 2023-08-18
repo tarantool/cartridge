@@ -117,7 +117,9 @@ static int lua_cw_save(lua_State *L) {
     if(!lua_isstring(L, -1)) {
       const char* _type = luaL_typename(L, -1);
       say_error("wrong format of table field at index %d: expect string, actual is %s", v, _type);
-      return -1;
+      lua_pushnil(L);
+      lua_pushstring(L, "error");
+      return 2;
     }
     sections_v[v-1] = lua_tostring(L, -1);
     lua_pop(L, 1);
@@ -135,7 +137,9 @@ static int lua_cw_save(lua_State *L) {
     if(!lua_isstring(L, -1)) {
       const char* _type = luaL_typename(L, -1);
       say_error("wrong format of table field at index %d: expect string, actual is %s", k, _type);
-      return -1;
+      lua_pushnil(L);
+      lua_pushstring(L, "error");
+      return 2;
     }
     sections_k[k-1] = lua_tostring(L, -1);
     lua_pop(L, 1);
@@ -144,18 +148,21 @@ static int lua_cw_save(lua_State *L) {
 
   if(k != v) {
     say_error("count of keys and count of values are different");
-    lua_pushnumber(L, -1);
-    return -1;
+    lua_pushnil(L);
+    lua_pushstring(L, "error");
+    return 2;
   }
 
   if(coio_call(va_cw_save, path, random_path, sections_k, sections_v, k-1) == -1) {
     say_error("coio_call() error");
-    lua_pushnumber(L, -1);
-    return -1;
+    lua_pushnil(L);
+    lua_pushstring(L, "deep error");
+    return 2;
   }
 
-  lua_pushnumber(L, 0);
-  return 0;
+  lua_pushboolean(L, 1);
+  lua_pushnil(L);
+  return 2;
 }
 
 static const struct luaL_Reg functions[] = {

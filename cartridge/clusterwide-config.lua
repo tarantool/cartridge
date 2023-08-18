@@ -492,9 +492,9 @@ local function save(clusterwide_config, path)
         table.insert(sections_k, k)
         table.insert(sections_v, v)
     end
-    local rc = internal.save(path, random_path, sections_k, sections_v)
-    if rc == -1 then
-        return nil, SaveConfigError:new("error in c")
+    local ok, err = internal.save(path, random_path, sections_k, sections_v)
+    if not ok and err then
+        return nil, SaveConfigError:new("%s: %s", path, err)
     end
     return true
 end
