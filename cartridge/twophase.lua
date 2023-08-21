@@ -134,6 +134,8 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function prepare_2pc(upload_id)
+    local fid = fiber.self():id()
+    local start_csw = fiber.info()[fid].csw
     local data
     if type(upload_id) == 'table' then
         -- Preserve compatibility with older versions.
@@ -178,7 +180,9 @@ local function prepare_2pc(upload_id)
         return nil, err
     end
 
+    local start_save_time = fiber.time64() / 1e3
     local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
+    local end_save_time = fiber.time64() / 1e3
     if not ok and fio.path.exists(path_prepare) then
         err = Prepare2pcError:new('Two-phase commit is locked')
     end
@@ -189,6 +193,8 @@ local function prepare_2pc(upload_id)
     end
 
     vars.prepared_config = clusterwide_config
+    log.info("prepare_2pc yields count: %d", fiber.info()[fid].csw - start_csw)
+    log.info("clusterwide-config.save duration: %d ms", tonumber(end_save_time - start_save_time))
     return true
 end
 
