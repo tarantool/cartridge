@@ -1,4 +1,4 @@
 -- Сontains the module version.
 -- Requires manual update in case of release commit.
 
-return '2.8.1'
+return '2.8.2'
