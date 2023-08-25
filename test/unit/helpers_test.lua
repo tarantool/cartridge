@@ -142,7 +142,7 @@ function g.test_failover()
         {uri = coordinator.advertise_uri, uuid = coordinator.instance_uuid})
 
     t.assert_error_msg_contains(
-        "failover must be 'disabled', 'eventual' or 'stateful'",
+        "failover must be 'disabled', 'eventual', 'stateful' or 'raft'",
         build_cluster, {
         replicasets = {{roles = {}, servers = 1, alias = ''}},
         failover = 'thebest'
