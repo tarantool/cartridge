@@ -92,8 +92,9 @@ function Cluster:initialize()
     assert(
         self.failover == 'disabled'
         or self.failover == 'eventual'
-        or self.failover == 'stateful',
-        "failover must be 'disabled', 'eventual' or 'stateful'"
+        or self.failover == 'stateful'
+        or self.failover == 'raft',
+        "failover must be 'disabled', 'eventual', 'stateful' or 'raft'"
     )
 
     if self.failover == 'stateful' then
