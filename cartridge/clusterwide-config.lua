@@ -501,7 +501,7 @@ local function save(clusterwide_config, path)
                 random_path, err
             )
         end
-        return nil, SaveConfigError:new("%s: %s", path, err)
+        return nil, SaveConfigError:new("%s", err)
     end
     return true
 end

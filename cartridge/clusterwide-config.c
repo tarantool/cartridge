@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #include <tarantool/module.h>
 #include <tarantool/lua.h>
@@ -46,13 +47,10 @@ static int mktree(char* path) {
     sprintf(current_dir, "%s/%s", tmp_dir, dir);
     mode_t mode = 0744;
     int stat_rc = stat(current_dir, &st);
-    say_info("current_dir: %s", current_dir);
     if(stat_rc == -1) {
       if(mkdir(current_dir, mode) ==  -1) {
         say_error("mkdir() error: %s, path: %s, mode: %x", strerror(errno), current_dir, mode);
         return -1;
-      } else {
-        say_info("Directory '%s' has created", current_dir);
       }
     } else if(!S_ISDIR(st.st_mode)) {
       say_warn("path: %s : %s", current_dir, strerror(EEXIST));
@@ -73,6 +71,12 @@ static int cw_save(char* path, char* random_path, char** sections_k, char** sect
   for (int i = 0; i < section_l; i++) {
     char tmp_path[512];
     sprintf(tmp_path, "%s/%s", random_path, sections_k[i]);
+    char* _dirname = dirname(tmp_path);
+    if(mktree(_dirname) == -1) {
+      say_error("mktree() error: %s", strerror(errno));
+      sprintf(err, "%s: %s", _dirname, strerror(errno));
+      return -1;
+    }
     if(file_write(tmp_path, sections_v[i]) == -1) {
       say_error("file_write() error: %s", strerror(errno));
       sprintf(err, "%s: %s", tmp_path, strerror(errno));
