@@ -44,6 +44,13 @@ Installing Tarantool Cartridge
    ``cartridge-cli``, a command-line tool for developing, deploying, and
    managing Tarantool applications.
 
+   .. important::
+
+     ``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
+     This guide uses ``cartridge-cli`` as a native tool for Cartridge applications
+     development. However, we encourage you to switch to ``tt`` in order to simplify
+     the migration to Tarantool 3.0 and newer versions.
+
 #. `Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`__
    ``git``, a version control system.
 
@@ -1141,7 +1148,7 @@ entities are additionally created:
             -   ``srwxr-xr-x``
             -   ``tarantool:tarantool``
             -   Unix socket to connect to the instance via the
-                `tarantoolctl <https://www.tarantool.io/en/doc/latest/reference/tarantoolctl/>`_
+                `tt CLI <https://www.tarantool.io/en/doc/latest/reference/tooling/tt_cli/>`_
                 utility.
 
 .. _cartridge-deploy-tgz:
@@ -1233,7 +1240,7 @@ This deployment method is intended for local testing only.
 
     ..  code-block:: bash
 
-        $ tarantoolctl rocks make
+        $ tt rocks make
 
 #.  Configure the instance(s).
     Create a file called ``/etc/tarantool/conf.d/instances.yml``.

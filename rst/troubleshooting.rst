@@ -57,7 +57,7 @@ instances.
 
     ..  code-block:: bash
 
-        tarantoolctl connect unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+        tt connect /var/run/tarantool/<app-name>.<instance-name>.control
 
 #.  Inspect what's going on.
 
@@ -126,8 +126,8 @@ option to zero. It may be accomplished in two ways:
 
     ..  code-block:: bash
 
-        echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect \
-        unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+        echo "box.cfg({replication_connect_quorum = 0})" | tt connect \
+        /var/run/tarantool/<app-name>.<instance-name>.control -f -
 
 I want to run an instance with a new advertise_uri
 --------------------------------------------------
@@ -310,8 +310,8 @@ To change instance advertise URI you have to perform these actions:
 
     ..  code-block:: bash
 
-        echo "return box.info().uuid" | tarantoolctl connect \
-        unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+        echo "return box.info().uuid" | tt connect \
+        /var/run/tarantool/<app-name>.<instance-name>.control -f -
 
 #.  Now we need to update instance advertise URI in all instances cluster-wide
     configuration files on each machine. Run ``cartridge repair set-advertise-uri``
@@ -386,8 +386,8 @@ You can remove instance from cluster using ``cartridge repair`` command.
 
     ..  code-block:: bash
 
-        echo "return box.info().uuid" | tarantoolctl connect \
-        unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+        echo "return box.info().uuid" | tt connect \
+        /var/run/tarantool/<app-name>.<instance-name>.control -f -
 
 #.  Now we need to update cluster-wide config for all instances on each machine.
     Run ``cartridge repair remove-instance`` with ``--dry-run`` flag on each

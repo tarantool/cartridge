@@ -42,6 +42,13 @@ Then :ref:`start the instances <cartridge-run>`, for example using
 
     $ cartridge start my_app --cfg demo.yml --run-dir ./tmp/run
 
+.. important::
+
+    ``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
+    This guide uses ``cartridge-cli`` as a native tool for Cartridge applications
+    development. However, we encourage you to switch to ``tt`` in order to simplify
+    the migration to Tarantool 3.0 and newer versions.
+
 And bootstrap the cluster.
 You can do this via the Web interface which is available at
 ``http://<instance_hostname>:<instance_http_port>``
@@ -875,11 +882,12 @@ YAML format.
 To connect to a Tarantool instance via the console, you can choose
 one of the commands:
 
-*   Old-fashioned way:
+
+*   Using the ``tt`` CLI utility:
 
     ..  code-block:: bash
 
-        $ tarantoolctl connect <instance_hostname>:<port>
+        $ tt connect <instance_hostname>:<port>
 
 *   If you have cartridge-cli installed:
 
@@ -892,6 +900,12 @@ one of the commands:
     ..  code-block:: bash
 
         $ cartridge enter <node_name>
+
+*   Old-fashioned way with ``tarantoolctl``:
+
+    ..  code-block:: bash
+
+        $ tarantoolctl connect <instance_hostname>:<port>
 
 where the ``<instance_hostname>:<port>`` is the instance's URI.
 
