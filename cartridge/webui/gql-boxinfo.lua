@@ -140,7 +140,10 @@ local boxinfo_schema = {
                         kind = gql_types.string,
                         description = 'Current read-only state reason',
                     },
-
+                    election_leader_idle = {
+                        kind = gql_types.float,
+                        description = 'Leader idle value in seconds',
+                    },
                     election_state = {
                         kind = gql_types.string,
                         description = 'State after Raft leader election',

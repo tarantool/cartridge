@@ -419,6 +419,36 @@ function g.test_state_hangs()
     t.assert_equals(helpers.list_cluster_issues(g.master), {})
 end
 
+g.before_test('test_election_leader_high_idle', function()
+    t.skip_if(not helpers.tarantool_version_ge('2.10.0'), 'leader_idle is not supported')
+    g.master:exec(function()
+        rawset(_G, 'old_info_election', box.info.election)
+        local elect = table.deepcopy(_G.old_info_election)
+        elect.leader_idle = 10
+        rawset(box.info, 'election', elect)
+    end)
+end)
+
+function g.test_election_leader_high_idle()
+    t.assert_items_equals(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'warning',
+            topic = 'raft',
+            message = ("Raft leader idle is 10.000000 on %s. "..
+                "Is raft leader alive and connection is healthy?"):
+                format(g.master.instance_uuid),
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+g.after_test('test_election_leader_high_idle', function()
+    g.master:exec(function()
+        rawset(box.info, 'election', _G.old_info_election)
+    end)
+end)
+
 function g.test_aliens()
     g.alien:start()
 
