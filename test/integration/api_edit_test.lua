@@ -266,7 +266,9 @@ local function test_all_rw(all_rw)
                 servers {
                     uuid
                     boxinfo {
-                        general { ro ro_reason election_state election_mode synchro_queue_owner}
+                        general { ro ro_reason election_leader_idle
+                            election_state election_mode synchro_queue_owner
+                        }
                     }
                 }
                 master {
@@ -292,6 +294,7 @@ local function test_all_rw(all_rw)
 
             if helpers.tarantool_version_ge('2.10.0') then
                 t.assert_equals(srv['boxinfo']['general']['election_state'], 'follower')
+                t.assert_equals(srv['boxinfo']['general']['election_leader_idle'], box.NULL)
                 t.assert_equals(srv['boxinfo']['general']['ro_reason'], box.NULL)
             end
         else

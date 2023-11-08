@@ -59,6 +59,11 @@
 --
 -- * warning: "Instance ... has spaces with deprecated format: space1, ..."
 --
+-- Raft issues:
+--
+-- * warning: "Raft leader idle is 10.000 on ... .
+--   Is raft leader alive and connection is healthy?"
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -203,8 +208,8 @@ local function list_on_instance(opts)
         }
         table.insert(ret, issue)
     end
-
-    for _, replication_info in pairs(box.info.replication) do
+    local box_info = box.info
+    for _, replication_info in pairs(box_info.replication) do
         local replica = enabled_servers[replication_info.uuid]
         if replica == nil then
             goto continue
@@ -290,6 +295,26 @@ local function list_on_instance(opts)
         end
 
         ::continue::
+    end
+
+    if box_info.election then
+        local leader_idle = box_info.election.leader_idle
+        if leader_idle ~= nil
+        and leader_idle >= 4 * box.cfg.replication_timeout then
+            local issue = {
+                level = 'warning',
+                topic = 'raft',
+                replicaset_uuid = replicaset_uuid,
+                instance_uuid = instance_uuid,
+                message = string.format(
+                    "Raft leader idle is %f on %s. "..
+                    "Is raft leader alive and connection is healthy?",
+                    leader_idle,
+                    instance_uuid
+                )
+            }
+            table.insert(ret, issue)
+        end
     end
 
     local failover_error = failover.get_error()
