@@ -328,8 +328,7 @@ To update the configuration:
 
     To remove a section, simply remove it from the configuration file.
 
-#.  Compress the configuration file as a ``.zip`` archive and
-    click **Upload configuration** button to upload it.
+#.  Click **Upload configuration** button to upload configuration file.
 
     You will see a message in the lower part of the screen saying whether
     configuration was uploaded successfully, and an error description if the
