@@ -253,7 +253,15 @@ local function get_topology()
     }
 end
 
-local function get_servers()
+
+--- Get servers list.
+-- @function get_servers
+-- @local
+-- @tparam ?function filter
+--   function(x: ServerInfo) -> boolean
+-- @return table {ServerInfo, ...}
+local function get_servers(filter)
+    filter = filter or function() return true end
     local servers = {}
     local topology, err = get_topology()
     if topology == nil then
@@ -265,9 +273,23 @@ local function get_servers()
             server.replicaset_uuid = server.replicaset.uuid
         end
         server.replicaset = nil
-        table.insert(servers, server)
+        if filter(server) then
+            table.insert(servers, server)
+        end
     end
     return servers
+end
+
+--- Get servers uri list.
+-- @function get_uris
+-- @local
+-- @tparam ?function filter
+--   function(x: ServerInfo) -> boolean
+-- @return table {uri1, uri2, ...}
+local function get_uris(filter)
+    return fun.iter(get_servers(filter)):map(function(server)
+        return server.uri
+    end):totable()
 end
 
 local function get_replicasets()
@@ -314,4 +336,5 @@ return {
     get_servers = get_servers,
     get_replicasets = get_replicasets,
     get_enabled_roles_without_deps = get_enabled_roles_without_deps,
+    get_uris = get_uris,
 }
