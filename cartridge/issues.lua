@@ -45,6 +45,12 @@
 -- * warning: "Advertise URI (...) differs from clusterwide config (...)";
 -- * warning: "Configuring roles is stuck on ... and hangs for ... so far";
 --
+-- Vshard:
+--
+-- * various vshard alerts (see vshard docs for details);
+-- * warning: "Group "..." wasn't bootstrapped: ...";
+-- * warning: Vshard storages in replicaset %s marked as "all writable".
+--
 -- Alien members:
 --
 -- * warning: "Instance ... with alien uuid is in the membership" -

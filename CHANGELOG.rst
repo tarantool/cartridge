@@ -24,6 +24,8 @@ Added
 
 - Filter param to Lua API ``get_servers`` to filter instances.
 
+- new issue about vshard storages marked as ``ALL_RW``.
+
 -------------------------------------------------------------------------------
 [2.8.4] - 2023-10-31
 -------------------------------------------------------------------------------

@@ -313,4 +313,11 @@ end
 
 function g.test_all_rw_true()
     test_all_rw(true)
+    helpers.retrying({}, function()
+        t.assert_equals(
+            helpers.list_cluster_issues(g.cluster.main_server)[1].message,
+            ('Vshard storages in replicaset %s '):format(helpers.uuid('b'))..
+            'marked as "all writable". This might not work as expected.'
+        )
+    end)
 end
