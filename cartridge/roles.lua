@@ -267,6 +267,10 @@ local enabled_roles_cache = setmetatable({}, {__mode = 'k'})
 -- This function returns all roles that will be enabled
 -- including their dependencies (both hidden and not)
 -- and permanent roles.
+-- By default, only permanent roles are returned.
+-- When you pass table with the roles names as an argument,
+-- This function also checks their dependencies and
+-- returns them as well.
 --
 -- @function get_enabled_roles
 -- @local
