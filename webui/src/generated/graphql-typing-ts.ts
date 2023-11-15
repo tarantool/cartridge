@@ -199,6 +199,8 @@ export type FieldCompressionInfo = {
   __typename?: 'FieldCompressionInfo';
   /** compression percentage */
   compression_percentage: Scalars['Int'];
+  /** compression time */
+  compression_time: Scalars['Int'];
   /** field name */
   field_name: Scalars['String'];
 };
@@ -584,6 +586,8 @@ export type ServerInfoGeneral = {
   __typename?: 'ServerInfoGeneral';
   /** The Application version */
   app_version?: Maybe<Scalars['String']>;
+  /** Leader idle value in seconds */
+  election_leader_idle?: Maybe<Scalars['Float']>;
   /** Instance election mode */
   election_mode: Scalars['String'];
   /** State after Raft leader election */
@@ -1008,6 +1012,8 @@ export type ServerStatFieldsFragment = {
     items_used_ratio: string;
     quotaSize: number;
     arenaUsed: number;
+    quotaUsed: number;
+    arenaSize: number;
     bucketsCount?: number | null;
   } | null;
 };
@@ -1189,6 +1195,7 @@ export type ServerDetailsFieldsFragment = {
       election_state?: string | null;
       election_mode: string;
       synchro_queue_owner: number;
+      ro_reason?: string | null;
     };
     replication: {
       __typename?: 'ServerInfoReplication';
@@ -1315,6 +1322,7 @@ export type InstanceDataQuery = {
         election_state?: string | null;
         election_mode: string;
         synchro_queue_owner: number;
+        ro_reason?: string | null;
       };
       replication: {
         __typename?: 'ServerInfoReplication';
@@ -1474,6 +1482,7 @@ export type BoxInfoQuery = {
         election_state?: string | null;
         election_mode: string;
         synchro_queue_owner: number;
+        ro_reason?: string | null;
       };
       replication: {
         __typename?: 'ServerInfoReplication';
@@ -1582,6 +1591,8 @@ export type ServerListQuery = {
       items_used_ratio: string;
       quotaSize: number;
       arenaUsed: number;
+      quotaUsed: number;
+      arenaSize: number;
       bucketsCount?: number | null;
     } | null;
   } | null> | null;
@@ -1633,6 +1644,8 @@ export type ServerStatQuery = {
       items_used_ratio: string;
       quotaSize: number;
       arenaUsed: number;
+      quotaUsed: number;
+      arenaSize: number;
       bucketsCount?: number | null;
     } | null;
   } | null> | null;

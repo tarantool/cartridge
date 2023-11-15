@@ -12,7 +12,7 @@ dependencies = {
     'errors == 2.2.1-1',
     'vshard == 0.1.24-1',
     'membership == 2.4.1-1',
-    'frontend-core == 8.2.1-1',
+    'frontend-core == 8.2.2-1',
     'cartridge-metrics-role == 0.1.1',
     'graphql == 0.3.0-1',
 }
