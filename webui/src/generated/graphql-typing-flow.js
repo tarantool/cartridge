@@ -199,6 +199,8 @@ export type FieldCompressionInfo = {|
   __typename?: 'FieldCompressionInfo',
   /** compression percentage */
   compression_percentage: $ElementType<Scalars, 'Int'>,
+  /** compression time */
+  compression_time: $ElementType<Scalars, 'Int'>,
   /** field name */
   field_name: $ElementType<Scalars, 'String'>,
 |};
@@ -607,6 +609,8 @@ export type ServerInfoGeneral = {|
   __typename?: 'ServerInfoGeneral',
   /** The Application version */
   app_version?: ?$ElementType<Scalars, 'String'>,
+  /** Leader idle value in seconds */
+  election_leader_idle?: ?$ElementType<Scalars, 'Float'>,
   /** Instance election mode */
   election_mode: $ElementType<Scalars, 'String'>,
   /** State after Raft leader election */
@@ -919,7 +923,7 @@ export type ServerStatFieldsFragment = ({
   ...{| statistics?: ?({
       ...{ __typename?: 'ServerStat' },
     ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
-    ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
+    ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, quotaUsed: $ElementType<ServerStat, 'quota_used'>, arenaSize: $ElementType<ServerStat, 'arena_size'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
   }) |}
 });
 
@@ -1049,7 +1053,7 @@ export type ServerDetailsFieldsFragment = ({
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
     }), general: ({
         ...{ __typename?: 'ServerInfoGeneral' },
-      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
+      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: *, ro_reason?: * |}>
     }), replication: ({
         ...{ __typename?: 'ServerInfoReplication' },
       ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1106,7 +1110,7 @@ export type InstanceDataQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: *, ro_reason?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1212,7 +1216,7 @@ export type BoxInfoQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: *, pid: *, replicaset_uuid: *, work_dir?: *, memtx_dir?: *, vinyl_dir?: *, wal_dir?: *, worker_pool_threads?: *, listen?: *, election_state?: *, election_mode: *, synchro_queue_owner: *, ro_reason?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1289,7 +1293,7 @@ export type ServerListQuery = ({
     ...{| statistics?: ?({
         ...{ __typename?: 'ServerStat' },
       ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
-      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
+      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, quotaUsed: $ElementType<ServerStat, 'quota_used'>, arenaSize: $ElementType<ServerStat, 'arena_size'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
     }) |}
   })>, cluster?: ?({
       ...{ __typename?: 'Apicluster' },
@@ -1329,7 +1333,7 @@ export type ServerStatQuery = ({
     ...{| statistics?: ?({
         ...{ __typename?: 'ServerStat' },
       ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
-      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
+      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, quotaUsed: $ElementType<ServerStat, 'quota_used'>, arenaSize: $ElementType<ServerStat, 'arena_size'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
     }) |}
   })> |}
 });

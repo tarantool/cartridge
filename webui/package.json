@@ -67,7 +67,7 @@
     "@graphql-codegen/typescript-operations": "2.3.5",
     "@tarantool.io/babel-config": "1.0.1",
     "@tarantool.io/eslint-config": "1.0.7",
-    "@tarantool.io/frontend-core": "8.2.1",
+    "@tarantool.io/frontend-core": "8.2.2",
     "@tarantool.io/import-sort-style": "1.0.4",
     "@tarantool.io/prettier-config": "1.0.4",
     "@tarantool.io/typescript": "1.0.3",
