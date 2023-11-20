@@ -1,3 +1,6 @@
+--- Compression API.
+--
+-- @module cartridge.lua-api.compression
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 local log = require('log')
 local fiber = require('fiber')
