@@ -20,10 +20,12 @@ hotreload.whitelist_globals({
 vars:new('vshard_cfg')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
+vars:new('issues', {})
 local _G_vshard_backup
 
-local function apply_config(conf, _)
+local function apply_config(conf, opts)
     checks('table', {is_master = 'boolean'})
+    vars.issues = {}
 
     local my_replicaset = conf.topology.replicasets[vars.replicaset_uuid]
     local group_name = my_replicaset.vshard_group or 'default'
@@ -33,6 +35,15 @@ local function apply_config(conf, _)
     vshard_cfg.collect_lua_garbage = nil
     vshard_cfg.listen = box.cfg.listen
     vshard_cfg.replication = box.cfg.replication
+
+    if my_replicaset.all_rw and opts.is_master then
+        table.insert(vars.issues, {
+            level = 'warning',
+            topic = 'vshard',
+            message = ([[Vshard storages in replicaset %s marked as "all writable". ]] ..
+                [[This might not work as expected.]]):format(vars.replicaset_uuid),
+        })
+    end
 
     if utils.deepcmp(vshard_cfg, vars.vshard_cfg) then
         -- No reconfiguration required, skip it
@@ -101,4 +112,5 @@ return {
     on_apply_config = on_apply_config,
     init = init,
     stop = stop,
+    get_issues = function() return vars.issues end,
 }

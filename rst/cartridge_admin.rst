@@ -1379,6 +1379,14 @@ Cartridge displays cluster and instances issues in WebUI:
 
     |nbsp|
 
+*   Vshard:
+
+    *   various vshard alerts (see vshard docs for details);
+
+    *   **warning**: warning: "Group "..." wasn't bootstrapped: ...";
+
+    *   **warning**: Vshard storages in replicaset %s marked as "all writable".
+
 *   Alien members:
 
     *   **warning**: "Instance ... with alien uuid is in the membership" --
@@ -1390,9 +1398,20 @@ Cartridge displays cluster and instances issues in WebUI:
 
     |nbsp|
 
+*   Expelled instances:
+
+    * **warning**: "Replicaset ... has expelled instance ... in box.space._cluster" -
+      when instance was expelled from replicaset, but still remains in box.space._cluster;
+
 *   Deprecated space format:
 
     * **warning**: "Instance ... has spaces with deprecated format: space1, ..."
+
+*   Raft issues:
+
+    * **warning**: "Raft leader idle is 10.000 on ... .
+      Is raft leader alive and connection is healthy?"
+
 
 *   Custom issues (defined by user):
 
