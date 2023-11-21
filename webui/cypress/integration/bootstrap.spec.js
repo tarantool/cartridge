@@ -186,9 +186,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('form input[value="vshard-router"]').check({ force: true }).should('be.checked');
     cy.get('form input[value="vshard-storage"]').should('not.be.checked');
 
-    cy.get('form input[name="all_rw"]').check({ force: true });
-    cy.get('form input[name="all_rw"]').should('be.checked');
-
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
     cy.get('#root').contains('test-router');
 
@@ -243,12 +240,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('form input[value="vshard-router"]').should('not.be.checked');
     cy.get('form input[value="vshard-storage"]').should('be.checked');
 
-    cy.get('form input[name="all_rw"]').check({ force: true }).should('be.checked');
-
     cy.get('.meta-test__CreateReplicaSetBtn').click();
 
     cy.get('#root').contains('test-storage');
-    cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
 
     // Check health state
     cy.get('section').eq(0).contains('Total unconfigured instances1');
@@ -283,7 +277,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
 
     cy.get('form input[name="alias"]').type('{selectall}edited-storage').should('have.value', 'edited-storage');
-    cy.get('form input[name="all_rw"]').uncheck({ force: true }).should('not.be.checked');
 
     cy.get('form input[value="myrole"]').uncheck({ force: true }).should('not.be.checked');
     cy.get('form input[value="myrole-dependency"]').should('be.enabled').should('not.be.checked');
