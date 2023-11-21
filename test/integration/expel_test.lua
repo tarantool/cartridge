@@ -19,6 +19,8 @@ g.before_all(function()
     g.cluster:start()
 
     g.A1 = g.cluster:server('A-1')
+    g.A2 = g.cluster:server('A-2')
+    g.A3 = g.cluster:server('A-3')
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.A1), {})
     end)
@@ -93,4 +95,12 @@ function g.test_api()
         g.A1.net_box.space._cluster:select(),
         {{1, g.r1_uuid}, {3, g.r3_uuid}}
     )
+
+    -- Check that expelled leader is not in membership.
+    for _, srv in ipairs({g.A1, g.A3}) do
+        local res = srv:exec(function()
+            return rawget(_G, '__membership_stash')['members._all_members']
+        end)
+        t.assert_not(res[g.A2.advertise_uri])
+    end
 end

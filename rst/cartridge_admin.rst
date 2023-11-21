@@ -664,6 +664,24 @@ instance from ``box.space._cluster``:
         box.space._cluster.index.uuid:delete(uuid)
     end
 
+Since Cartridge 2.8.5 expelled instances will be removed from the ``membership`` tables.
+You can manually remove expelled instances from ``membership`` tables in previous Cartridge
+versions.
+
+..  code-block:: lua
+
+    local fun = require('fun')
+    local membership = require('membership')
+    local uris = fun.iter(membership.members()):filter(function(_, y)
+        return y.status == 'left' -- you can change this condition if you need
+    end):map(function (_, y) return y.uri end):totable()
+
+    -- call thin on each node:
+    for _, uri in ipairs(uris) do
+        __membership_stash['members._all_members'][uri] = nil
+    end
+
+
 ..  note::
 
     * Do not expel instances until they're stopped.

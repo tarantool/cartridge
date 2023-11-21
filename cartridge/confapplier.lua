@@ -284,13 +284,25 @@ local function apply_config(clusterwide_config)
         'Unexpected state ' .. vars.state
     )
 
+    local old_config = vars.clusterwide_config
     vars.clusterwide_config = clusterwide_config
+
     set_state('ConfiguringRoles')
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
-    if failover.is_leader() then
-        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+    local old_topology = {servers = {}}
+    if old_config ~= nil then
+        old_topology = old_config:get_readonly('topology')
+    end
+
+    for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+        if failover.is_leader() then
             box.space._cluster.index.uuid:delete(uuid)
+        end
+        local old_server = old_topology.servers[uuid]
+
+        if old_server ~= nil and old_server ~= 'expelled' then
+            rawget(_G, '__membership_stash')['members._all_members'][old_server.uri] = nil
         end
     end
 
