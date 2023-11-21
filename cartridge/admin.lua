@@ -23,6 +23,7 @@ return {
     get_servers = lua_api_topology.get_servers,
     get_replicasets = lua_api_topology.get_replicasets,
     get_topology = lua_api_topology.get_topology,
+    get_uris = lua_api_topology.get_uris,
 
     edit_topology = lua_api_topology.edit_topology,
     probe_server = lua_api_topology.probe_server,

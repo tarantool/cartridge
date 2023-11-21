@@ -1011,6 +1011,11 @@ return {
     admin_get_replicasets = lua_api_topology.get_replicasets,
 
     --- .
+    -- @refer cartridge.lua-api.get-topology.get_uris
+    -- @function admin_get_uris
+    admin_get_uris = lua_api_topology.get_uris,
+
+    --- .
     -- @refer cartridge.lua-api.topology.probe_server
     -- @function admin_probe_server
     admin_probe_server = lua_api_topology.probe_server,

@@ -20,6 +20,10 @@ Added
 
 - new issue when ``box.info.election.leader_idle`` is too high.
 
+- Lua API ``get_uris`` to get all instances uris.
+
+- Filter param to Lua API ``get_servers`` to filter instances.
+
 -------------------------------------------------------------------------------
 [2.8.4] - 2023-10-31
 -------------------------------------------------------------------------------
