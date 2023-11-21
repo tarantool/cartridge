@@ -180,7 +180,7 @@ functionality, you should enable it in your ``init.lua`` file:
 
    cartridge.cfg({
       ...
-      enable_sychro_mode = true,
+      enable_synchro_mode = true,
   })
 
 
