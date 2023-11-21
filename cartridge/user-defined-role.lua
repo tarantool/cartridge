@@ -7,7 +7,7 @@
 -- When absent, module name is used instead.
 -- @tfield string role_name
 
---- Hidden role flag. aren't listed in
+--- Hidden role flag. Aren't listed in
 -- `cartridge.admin_get_replicasets().roles` and therefore in WebUI.
 -- Hidden roled are supposed to be a dependency for another role.
 -- @tfield boolean hidden

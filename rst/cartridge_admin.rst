@@ -44,7 +44,7 @@ Then :ref:`start the instances <cartridge-run>`, for example using
 
 .. important::
 
-    ``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
+``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
     This guide uses ``cartridge-cli`` as a native tool for Cartridge applications
     development. However, we encourage you to switch to ``tt`` in order to simplify
     the migration to Tarantool 3.0 and newer versions.
@@ -1303,6 +1303,8 @@ Cartridge displays cluster and instances issues in WebUI:
 
     * Custom roles can announce more issues with their own level, topic
       and message. See `custom-role.get_issues`.
+
+.. _cartridge-compression-suggestions:
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Compression suggestions (Enterprise only)

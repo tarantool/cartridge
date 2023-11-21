@@ -319,7 +319,7 @@ end
 
 --- Upload application config.
 -- @tparam string|table config - table will be encoded as yaml and posted to /admin/config.
--- @param table opts - http request options
+-- @tparam table opts - http request options
 function Server:upload_config(config, opts)
     checks('table', 'string|table', 'table|nil')
     if type(config) == 'table' then
