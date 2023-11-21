@@ -60,6 +60,7 @@ vars:new('upgrade_schema', nil)
 
 vars:new('enable_failover_suppressing', nil)
 vars:new('enable_synchro_mode', nil)
+vars:new('disable_raft_on_small_clusters', nil)
 
 vars:new('transport', nil)
 vars:new('ssl_options', {
@@ -314,6 +315,7 @@ local function apply_config(clusterwide_config)
         {
             enable_failover_suppressing = vars.enable_failover_suppressing,
             enable_synchro_mode = vars.enable_synchro_mode,
+            disable_raft_on_small_clusters = vars.disable_raft_on_small_clusters,
         }
     )
     if not ok then
@@ -780,6 +782,7 @@ local function init(opts)
         upgrade_schema = '?boolean',
         enable_failover_suppressing = '?boolean',
         enable_synchro_mode = '?boolean',
+        disable_raft_on_small_clusters = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -802,6 +805,7 @@ local function init(opts)
     vars.upgrade_schema = opts.upgrade_schema
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
     vars.enable_synchro_mode = opts.enable_synchro_mode
+    vars.disable_raft_on_small_clusters = opts.disable_raft_on_small_clusters
     vars.transport = opts.transport
     vars.ssl_ciphers = opts.ssl_ciphers
     vars.ssl_server_ca_file = opts.ssl_server_ca_file

@@ -217,7 +217,8 @@ election mode using the argparse option ``TARANTOOL_ELECTION_MODE`` or
 ``--election-mode`` or use ``box.cfg{election_mode = ...}`` API in runtime.
 
 Raft failover can be enabled only on replicasets of 3 or more instances
-and can't be enabled with ``ALL_RW`` replicasets.
+(you can change the behavior by using ``cartridge.cfg`` option
+``disable_raft_on_small_clusters``) and can't be enabled with ``ALL_RW`` replicasets.
 
 ..  important::
 
