@@ -38,35 +38,35 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - Tarantool 2.10
      - Tarantool 2.11
    * - Cartridge 2.8.4
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.8.3
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.8.2
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.8.1
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.8.0
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.7.9
-     - +
-     - +
-     - +
-     - +
+     - \+
+     - \+
+     - \+
+     - \+
    * - Cartridge 2.7.8
      - Update is broken
      - Update is broken
@@ -83,35 +83,35 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - Update is broken
      - Update is broken
    * - Cartridge 2.7.5
-     - +
-     - +
-     - +
-     - -
+     - \+
+     - \+
+     - \+
+     - \-
    * - Cartridge 2.7.4
-     - +
-     - +
-     - +
-     - -
+     - \+
+     - \+
+     - \+
+     - \-
    * - Cartridge 2.7.3
-     - +
-     - +
-     - -
-     - -
+     - \+
+     - \+
+     - \-
+     - \-
    * - Cartridge 2.7.2
-     - +
-     - +
-     - -
-     - -
+     - \+
+     - \+
+     - \-
+     - \-
    * - Cartridge 2.7.1
-     - +
-     - +
-     - -
-     - -
+     - \+
+     - \+
+     - \-
+     - \-
    * - Cartridge 2.7.0
-     - +
-     - +
-     - -
-     - -
+     - \+
+     - \+
+     - \-
+     - \-
 
 .. _cartridge-deployment:
 
