@@ -109,6 +109,7 @@ local cluster_opts = {
     ssl_client_password = 'string', -- **string**
     disable_errstack = 'boolean', -- **boolean**
     enable_synchro_mode = 'boolean', -- **boolean**
+    disable_raft_on_small_clusters = 'boolean', -- **boolean**
     enable_failover_suppressing = 'boolean', -- **boolean**
 }
 

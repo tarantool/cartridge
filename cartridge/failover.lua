@@ -63,6 +63,7 @@ vars:new('failover_fiber')
 vars:new('failover_err')
 vars:new('cookie_check_err', nil)
 vars:new('enable_synchro_mode', false)
+vars:new('disable_raft_on_small_clusters', true)
 vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
@@ -758,6 +759,10 @@ local function cfg(clusterwide_config, opts)
 
     vars.enable_synchro_mode = opts.enable_synchro_mode
 
+    if opts.disable_raft_on_small_clusters ~= nil then
+        vars.disable_raft_on_small_clusters = opts.disable_raft_on_small_clusters
+    end
+
     fencing_cancel()
     leader_autoreturn.cancel()
     schedule_clear()
@@ -912,7 +917,8 @@ local function cfg(clusterwide_config, opts)
         vars.consistency_needed = false
 
         -- Raft failover can be enabled only on replicasets of 3 or more instances
-        if #topology.get_leaders_order(
+        if vars.disable_raft_on_small_clusters
+        and #topology.get_leaders_order(
             topology_cfg, vars.replicaset_uuid, nil, {only_electable=false, only_enabled = true}) < 3
         then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)

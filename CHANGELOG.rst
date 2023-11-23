@@ -26,6 +26,9 @@ Added
 
 - new issue about vshard storages marked as ``ALL_RW``.
 
+- ``cartridge.cfg`` option ``disable_raft_on_small_clusters`` to disable Raft
+  failover on clusters with less than 3 instances (default: ``true``).
+
 -------------------------------------------------------------------------------
 [2.8.4] - 2023-10-31
 -------------------------------------------------------------------------------

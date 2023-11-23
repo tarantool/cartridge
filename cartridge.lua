@@ -302,6 +302,7 @@ local function cfg(opts, box_opts)
         enable_failover_suppressing = '?boolean',
         enable_sychro_mode = '?boolean',
         enable_synchro_mode = '?boolean',
+        disable_raft_on_small_clusters = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -887,6 +888,7 @@ local function cfg(opts, box_opts)
         upgrade_schema = opts.upgrade_schema,
         enable_failover_suppressing = opts.enable_failover_suppressing,
         enable_synchro_mode = opts.enable_synchro_mode,
+        disable_raft_on_small_clusters = opts.disable_raft_on_small_clusters,
 
         transport = opts.transport,
         ssl_ciphers = opts.ssl_ciphers,
