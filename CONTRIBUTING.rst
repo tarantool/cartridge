@@ -103,7 +103,7 @@ Running tests
 
     # Backend
     tarantoolctl rocks install luacheck
-    tarantoolctl rocks install luatest 0.5.7
+    tarantoolctl rocks install luatest 1.0.0
     .rocks/bin/luacheck .
     .rocks/bin/luatest -v
 

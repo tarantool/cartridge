@@ -57,7 +57,7 @@ jobs:
           path: .rocks/
           key: compat-rocks-${{ hashFiles('*.rockspec') }}-03
       -
-        run: tarantoolctl rocks install luatest 0.5.7
+        run: tarantoolctl rocks install luatest 1.0.0
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
