@@ -597,6 +597,10 @@ local function cfg(opts, box_opts)
         return nil, CartridgeCfgError:new('Invalid port in advertise_uri %q', opts.advertise_uri)
     end
 
+    if advertise.ipv6 then
+        advertise.host = '[' .. advertise.ipv6 .. ']'
+    end
+
     local membership_new_opts, err = argparse.get_opts({
         swim_protocol_period_seconds = 'number',
         swim_anti_entropy_period_seconds = 'number',

@@ -636,13 +636,18 @@ local function boot_instance(clusterwide_config)
     log.info('Remote control stopped')
 
     local parts = uri_tools.parse(vars.advertise_uri)
+    local family = parts.ipv6 and 'AF_INET6' or 'AF_INET'
     local addrinfo, err = socket.getaddrinfo(
         parts.host, parts.service,
-        {family='AF_INET', type='SOCK_STREAM'}
+        {family=family, type='SOCK_STREAM'}
     )
     if err ~= nil then
         set_state('BootError', err)
         return nil, err
+    end
+
+    if parts.ipv6 then
+        addrinfo[1].host = '[' .. addrinfo[1].host .. ']'
     end
     local listen_uri = addrinfo[1].host .. ":" .. addrinfo[1].port --vars.binary_port
 
@@ -818,9 +823,10 @@ local function init(opts)
     vars.ssl_client_password = opts.ssl_client_password
 
     local parts = uri_tools.parse(opts.advertise_uri)
+    local family = parts.ipv6 and 'AF_INET6' or 'AF_INET'
     local addrinfo, err = socket.getaddrinfo(
         parts.host, parts.service,
-        {family='AF_INET', type='SOCK_STREAM'}
+        {family=family, type='SOCK_STREAM'}
     )
     if addrinfo == nil then
         set_state('InitError', err)
