@@ -500,8 +500,38 @@ end
 
 local is_enterprise = (tarantool.package == 'Tarantool Enterprise')
 local tnt_version = semver.parse(_TARANTOOL)
+
+--- Check if Tarantool version is at least the given one.
+-- Tarantool's version has format:
+--
+--     x.x.x-typen-commit-ghash
+--
+-- * x.x.x - major, middle, minor release numbers;
+-- * typen - release type and its optional number: alpha1, beta5, rc10.
+--   Optional;
+-- * commit - commit count since the latest release. Optional;
+-- * ghash - latest commit hash in format g<hash>. Optional.
+--
+-- @function
+-- @local
+--
+-- @int id_major
+-- @int id_middle
+-- @int id_minor
+-- @string[opt] rel_type
+-- @int[opt=0] rel_num
+-- @int[opt=0] id_commit
+--
+-- @treturn boolean
 local function version_is_at_least(...)
-    return tnt_version >= semver.new(...)
+    local id_major, id_middle, id_minor, rel_type, rel_num, id_commit = ...
+    if rel_num == nil then
+        rel_num = 0
+    end
+    if id_commit == nil then
+        id_commit = 0
+    end
+    return tnt_version >= semver.new(id_major, id_middle, id_minor, rel_type, rel_num, id_commit)
 end
 local feature = {
     ssl = (function()
