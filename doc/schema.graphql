@@ -31,6 +31,9 @@ type Apicluster {
   """Show suggestions to resolve operation problems"""
   suggestions: Suggestions
 
+  """Get state provider status."""
+  failover_state_provider_status: [StateProviderStatus]!
+
   """List authorized users"""
   users(
     """
@@ -41,24 +44,24 @@ type Apicluster {
     username: String
   ): [User!]
 
-  """Virtual buckets count in cluster"""
-  vshard_bucket_count: Int!
+  """compression info about cluster"""
+  cluster_compression: ClusterCompressionInfo!
 
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
 
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
+
   """Get automatic failover configuration."""
   failover_params: FailoverAPI!
-
-  """Get list of known vshard storage groups."""
-  vshard_known_groups: [String!]!
   vshard_groups: [VshardGroup!]!
 
   """Validate config"""
   validate_config(sections: [ConfigSectionInput]): ValidateConfigResult!
 
-  """compression info about cluster"""
-  cluster_compression: ClusterCompressionInfo!
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
@@ -1067,6 +1070,15 @@ type SpaceCompressionInfo {
 
   """space name"""
   space_name: String!
+}
+
+"""Failover state provider status"""
+type StateProviderStatus {
+  """State provider uri"""
+  uri: String!
+
+  """State provider status"""
+  status: Boolean!
 }
 
 type Suggestions {

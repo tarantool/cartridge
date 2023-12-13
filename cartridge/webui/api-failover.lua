@@ -73,6 +73,21 @@ local gql_type_userapi = gql_types.object({
     }
 })
 
+local gql_type_state_provider_status = gql_types.object({
+    name = 'StateProviderStatus',
+    description = 'Failover state provider status',
+    fields = {
+        uri = {
+            kind = gql_types.string.nonNull,
+            description = 'State provider uri',
+        },
+        status = {
+            kind = gql_types.boolean.nonNull,
+            description = 'State provider status',
+        },
+    }
+})
+
 local function get_failover_params(_, _)
     local failover_params = lua_api_failover.get_params()
     local masked_pwd = '******'
@@ -116,6 +131,14 @@ local function promote(_, args)
     return lua_api_failover.promote({[replicaset_uuid] = instance_uuid}, opts)
 end
 
+local function get_state_provider_status(_, _)
+    local result = {}
+    for uri, status in pairs(lua_api_failover.get_state_provider_status()) do
+        table.insert(result, {uri = uri, status = status})
+    end
+    return result
+end
+
 local function init(graphql)
 
     graphql.add_callback({
@@ -148,6 +171,15 @@ local function init(graphql)
         args = {},
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.get_failover_params',
+    })
+
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'failover_state_provider_status',
+        doc = 'Get state provider status.',
+        args = {},
+        kind = gql_types.list(gql_type_state_provider_status).nonNull,
+        callback = module_name .. '.get_state_provider_status',
     })
 
     graphql.add_mutation({
@@ -209,6 +241,7 @@ return {
     set_failover_enabled = set_failover_enabled,
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
+    get_state_provider_status = get_state_provider_status,
     promote = promote,
     pause = pause,
     resume = resume,

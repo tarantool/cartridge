@@ -18,6 +18,8 @@ Added
 
 - Twophase commit timeouts now can be set with env.
 
+- New GraphQL API ``failover_state_provider_status`` to ping state provider connection.
+
 -------------------------------------------------------------------------------
 [2.9.0] - 2024-03-06
 -------------------------------------------------------------------------------
