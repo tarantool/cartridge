@@ -78,7 +78,8 @@ g.test_sections = function()
             ['custom.sub.sub'] = {
                 x = '@custom.sub.sub',
                 y_subsub = true,
-            }
+            },
+            ['invalid'] = 'so wrong',
         })
     )
 
@@ -142,6 +143,15 @@ g.test_sections = function()
         y_sub = 3.14,
         y_subsub = true,
     })
+    local function check_err(cmd_args, expected)
+        local ok, err = pcall(g.run, cmd_args, {'TARANTOOL_CFG=./tarantool.yml'})
+        t.assert_not(ok)
+        t.assert_str_contains(err, expected)
+    end
+    check_err('--instance-name invalid',
+        [[ParseConfigError: invalid content found in file ./tarantool.yml in section invalid: ]]..
+        [[expected a table of key-value pairs, got string]]
+    )
 end
 
 g.test_priority = function()

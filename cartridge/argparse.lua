@@ -41,6 +41,9 @@
 -- In this case, all files in the directory are parsed.
 -- To avoid conflicts, the same section mustn't repeat across different files.
 --
+-- Argparse logs if there were some ignored sections in configuration files.
+-- All sections should be key-value pairs as in example, otherwise you'll get an error.
+--
 -- @module cartridge.argparse
 
 local fio = require('fio')
@@ -48,6 +51,7 @@ local yaml = require('yaml')
 local json = require('json')
 local checks = require('checks')
 local errors = require('errors')
+local log = require('log')
 -- local base_dir = fio.abspath(fio.dirname(arg[0]))
 
 local vars = require('cartridge.vars').new('cartridge.argparse')
@@ -279,7 +283,13 @@ local function load_dir(dirname)
                     section_name, dirname, origin[section_name], fio.basename(f)
                 )
             end
-
+            if type(content) ~= 'table' then
+                return nil, ParseConfigError:new(
+                    'invalid content found in file %s in section %s: '..
+                    'expected a table of key-value pairs, got %s',
+                    fio.basename(f), section_name, type(content)
+                )
+            end
             for argname, argvalue in pairs(content) do
                 ret[section_name][argname:lower()] = argvalue
             end
@@ -351,12 +361,33 @@ local function parse_file(filename, search_name)
     end
 
     local ret = {}
+    local sections = {}
+    for section_name, _ in pairs(file_sections) do
+        sections[section_name] = true
+    end
     for _, section_name in ipairs(section_names) do
         local content = file_sections[section_name] or {}
-
+        if type(content) ~= 'table' then
+            return nil, ParseConfigError:new(
+                'invalid content found in file %s in section %s: '..
+                'expected a table of key-value pairs, got %s',
+                filename, section_name, type(content)
+            )
+        end
+        sections[section_name] = false
         for argname, argvalue in pairs(content) do
             ret[argname:lower()] = argvalue
         end
+    end
+    local names = {}
+    for section_name, ignored in pairs(sections) do
+        if ignored then
+           table.insert(names, section_name)
+        end
+    end
+    if #names > 0 then
+        log.warn('Some sections in config file %s were ignored: %s',
+            filename, table.concat(names, ', '))
     end
 
     return ret
