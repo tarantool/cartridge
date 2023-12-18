@@ -284,15 +284,17 @@ local function load_dir(dirname)
                 )
             end
             if type(content) ~= 'table' then
-                return nil, ParseConfigError:new(
-                    'invalid content found in file %s in section %s: '..
+                log.warn(
+                    'invalid content ignored in file %s in section %s: '..
                     'expected a table of key-value pairs, got %s',
                     fio.basename(f), section_name, type(content)
                 )
+                goto next
             end
             for argname, argvalue in pairs(content) do
                 ret[section_name][argname:lower()] = argvalue
             end
+            ::next::
         end
     end
 
@@ -368,16 +370,18 @@ local function parse_file(filename, search_name)
     for _, section_name in ipairs(section_names) do
         local content = file_sections[section_name] or {}
         if type(content) ~= 'table' then
-            return nil, ParseConfigError:new(
-                'invalid content found in file %s in section %s: '..
+            log.warn(
+                'invalid content ignored in file %s in section %s: '..
                 'expected a table of key-value pairs, got %s',
                 filename, section_name, type(content)
             )
+            goto next
         end
         sections[section_name] = false
         for argname, argvalue in pairs(content) do
             ret[argname:lower()] = argvalue
         end
+        ::next::
     end
     local names = {}
     for section_name, ignored in pairs(sections) do
