@@ -78,7 +78,8 @@ g.test_sections = function()
             ['custom.sub.sub'] = {
                 x = '@custom.sub.sub',
                 y_subsub = true,
-            }
+            },
+            ['invalid'] = 'so wrong',
         })
     )
 
@@ -141,6 +142,12 @@ g.test_sections = function()
         y_custom = '$',
         y_sub = 3.14,
         y_subsub = true,
+    })
+    -- invalid section format ignored
+    check('--instance_name invalid', {
+        instance_name = 'invalid',
+        x = '@default',
+        y_default = 0,
     })
 end
 

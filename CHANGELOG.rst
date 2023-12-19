@@ -29,6 +29,9 @@ Added
 - ``cartridge.cfg`` option ``disable_raft_on_small_clusters`` to disable Raft
   failover on clusters with less than 3 instances (default: ``true``).
 
+- ``argparse`` now logs if some sections in config files were ignored
+  (`#2169 <https://github.com/tarantool/cartridge/issues/2169>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
