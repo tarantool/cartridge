@@ -25,6 +25,7 @@ local function setup_cluster(g)
         cookie = helpers.random_cookie(),
         env = {
             TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
+            TARANTOOL_ELECTION_MODE = 'manual',
         },
         replicasets = {
             {

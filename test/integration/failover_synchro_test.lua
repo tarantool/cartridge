@@ -56,6 +56,7 @@ local function setup_cluster(g)
         },
         env = {
             TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+            TARANTOOL_ELECTION_MODE = 'manual',
         }
     })
     g.cluster:start()
