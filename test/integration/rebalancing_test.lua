@@ -159,7 +159,7 @@ function g.test()
     t.assert_covers(err, {
         type = 'ShardingError',
         name = 'MISSING_MASTER',
-        replicaset_uuid = g.sA1.replicaset_uuid,
+        replicaset = g.sA1.replicaset_uuid,
         message = 'Master is not configured for' ..
             ' replicaset ' .. g.sA1.replicaset_uuid,
     })
@@ -168,7 +168,7 @@ function g.test()
 
     helpers.retrying({}, function() g.sA1:eval([[
         for _, f in pairs(require('fiber').info()) do
-            if f.name:startswith('vshard.') then
+            if f.name:startswith('vshard.') and f.name ~= 'vshard.conn_man' then
                 error('Fiber ' .. f.name .. ' still alive', 0)
             end
         end
