@@ -159,7 +159,7 @@ function g.test()
     t.assert_covers(err, {
         type = 'ShardingError',
         name = 'MISSING_MASTER',
-        replicaset_uuid = g.sA1.replicaset_uuid,
+        replicaset = g.sA1.replicaset_uuid,
         message = 'Master is not configured for' ..
             ' replicaset ' .. g.sA1.replicaset_uuid,
     })

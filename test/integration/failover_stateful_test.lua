@@ -574,7 +574,7 @@ add('test_leaderless', function(g)
     t.assert_covers(err, {
         name = "MISSING_MASTER",
         type = "ShardingError",
-        replicaset_uuid = storage_uuid,
+        replicaset = storage_uuid,
         message = "Master is not configured for replicaset " .. storage_uuid,
     })
 
