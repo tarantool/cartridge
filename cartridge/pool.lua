@@ -38,6 +38,11 @@ local function format_uri(uri)
     elseif parts.service == nil then
         return nil, FormatURIError:new('Invalid URI %q (missing port)', uri)
     end
+
+    if parts.ipv6 then
+        parts.host = '[' .. parts.host .. ']'
+    end
+
     return uri_lib.format({
         host = parts.host,
         service = parts.service,
