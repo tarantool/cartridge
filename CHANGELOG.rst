@@ -32,6 +32,8 @@ Added
 - ``argparse`` now logs if some sections in config files were ignored
   (`#2169 <https://github.com/tarantool/cartridge/issues/2169>`_).
 
+- IPv6 support (`#2166 <https://github.com/tarantool/cartridge/issues/2166>`_).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
