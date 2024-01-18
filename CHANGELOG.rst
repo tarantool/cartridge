@@ -44,7 +44,7 @@ Fixed
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``vshard`` dependency to `0.1.25 <https://github.com/tarantool/vshard/releases/tag/0.1.25>`_.
+- Update ``vshard`` dependency to `0.1.26 <https://github.com/tarantool/vshard/releases/tag/0.1.26>`_.
 
 -------------------------------------------------------------------------------
 [2.8.4] - 2023-10-31
