@@ -46,6 +46,8 @@ Changed
 
 - Update ``vshard`` dependency to `0.1.26 <https://github.com/tarantool/vshard/releases/tag/0.1.26>`_.
 
+- Update ``membership`` dependency to `2.4.2 <https://github.com/tarantool/membership/releases/tag/2.4.2>`_.
+
 -------------------------------------------------------------------------------
 [2.8.4] - 2023-10-31
 -------------------------------------------------------------------------------
