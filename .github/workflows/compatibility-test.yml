@@ -21,7 +21,16 @@ jobs:
         downgrade: [null]
         include:
           - tarantool: '1.10'
-            cartridge: '2.7.0'
+            cartridge: '2.7.9'
+            downgrade: true
+          - tarantool: '1.10'
+            cartridge: '2.8.4'
+            downgrade: true
+          - tarantool: '2.10'
+            cartridge: '2.7.9'
+            downgrade: true
+          - tarantool: '2.10'
+            cartridge: '2.8.4'
             downgrade: true
     runs-on: ubuntu-20.04
     env:
