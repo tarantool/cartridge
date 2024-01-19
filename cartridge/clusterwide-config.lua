@@ -61,6 +61,7 @@ local errno = require('errno')
 local errors = require('errors')
 
 local utils = require('cartridge.utils')
+local internal = require('cartridge.cwinternal')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -485,51 +486,24 @@ end
 local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
     local random_path = utils.randomize_path(path)
-
-    local ok, err = utils.mktree(random_path)
-    if not ok then
-        return nil, err
+    local sections_k = {}
+    local sections_v = {}
+    for k, v in pairs(clusterwide_config._plaintext) do
+        table.insert(sections_k, k)
+        table.insert(sections_v, v)
     end
-
-    for section, content in pairs(clusterwide_config._plaintext) do
-        local abspath = fio.pathjoin(random_path, section)
-        local dirname = fio.dirname(abspath)
-
-        ok, err = utils.mktree(dirname)
-        if not ok then
-            goto rollback
+    local ok, err = internal.save(path, random_path, sections_k, sections_v)
+    if not ok and err then
+        local _, rm_err = fio.rmtree(random_path)
+        if rm_err then
+            log.warn(
+                "Error removing %s: %s",
+                random_path, err
+            )
         end
-
-        ok, err = utils.file_write(
-            abspath, content,
-            {'O_CREAT', 'O_EXCL', 'O_WRONLY', 'O_SYNC'}
-        )
-        if not ok then
-            goto rollback
-        end
+        return nil, SaveConfigError:new("%s", err)
     end
-
-    ok = fio.rename(random_path, path)
-    if not ok then
-        err = SaveConfigError:new(
-            '%s: %s',
-            path, errno.strerror()
-        )
-        goto rollback
-    else
-        return true
-    end
-
-::rollback::
-    local ok, _err = fio.rmtree(random_path)
-    if not ok then
-        log.warn(
-            "Error removing %s: %s",
-            random_path, _err
-        )
-    end
-
-    return nil, err
+    return true
 end
 
 --- Load object from filesystem.
