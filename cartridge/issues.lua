@@ -406,7 +406,6 @@ local function list_on_instance(opts)
     elseif items_used_ratio > vars.limits.fragmentation_threshold_warning
     and arena_used_ratio > vars.limits.fragmentation_threshold_critical
     and quota_used_ratio > vars.limits.fragmentation_threshold_critical
-    or  total_used_ratio > vars.limits.fragmentation_threshold_warning
     then
         table.insert(ret, {
             level = 'warning',
