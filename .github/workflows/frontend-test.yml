@@ -20,8 +20,8 @@ jobs:
           - cypress
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '16.8.0'
 
@@ -32,7 +32,7 @@ jobs:
       ##################################################################
       # Setup rocks
       - name: Cache rocks
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-rocks
         with:
           path: .rocks/
@@ -44,7 +44,7 @@ jobs:
       ##################################################################
       # Cachce node_modules
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: webui/node_modules/
           key: node-modules-${{ hashFiles('webui/package-lock.json') }}
@@ -52,7 +52,7 @@ jobs:
       ##################################################################
       # Cachce webui bundle
       - name: Cache webui bundle
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             webui/build/bundle.lua
@@ -65,7 +65,7 @@ jobs:
       - name: Cache cypress
         if: matrix.script == 'cypress'
         id: cache-cypress
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ./node_modules
@@ -95,7 +95,7 @@ jobs:
         run: ./cypress-test.sh run
 
       - name: Create upload folder for screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-screenshots-from-server
@@ -104,7 +104,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Create upload folder for diff outputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-snapshots-diff-output-from-server
@@ -113,7 +113,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Create upload folder for snapshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() && matrix.script == 'cypress'
         with:
           name: ${{ matrix.script }}-snapshots-from-server

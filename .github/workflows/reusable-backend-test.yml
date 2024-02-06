@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: 'Clone the cartridge module'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/cartridge
 
@@ -46,7 +46,7 @@ jobs:
         run: tarantoolctl rocks install luatest 1.0.1
 
       # Setup pytest
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.7
       - name: 'Install pytest'
