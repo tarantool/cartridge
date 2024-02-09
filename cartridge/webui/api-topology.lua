@@ -34,6 +34,10 @@ local gql_type_replicaset = gql_types.object {
             description = 'Vshard replica set weight.' ..
                 ' Null for replica sets with vshard-storage role disabled.'
         },
+        rebalancer = {
+            kind = gql_types.boolean,
+            description = 'Is the rebalancer enabled for the replica set.',
+        },
         vshard_group = {
             kind = gql_types.string,
             description = 'Vshard storage group name.' ..
@@ -91,6 +95,10 @@ local gql_type_server = gql_types.object {
             kind = gql_types.boolean,
             description = 'Is allowed to elect this instance as leader',
         },
+        rebalancer = {
+            kind = gql_types.boolean,
+            description = 'Is rebalancer enabled for this instance',
+        },
         disabled = gql_types.boolean,
         priority = {
             kind = gql_types.int,
@@ -120,6 +128,7 @@ local gql_type_edit_server_input = gql_types.inputObject {
         zone = gql_types.string,
         labels = gql_types.list(gql_type_label_input),
         electable = gql_types.boolean,
+        rebalancer = gql_types.boolean,
         disabled = gql_types.boolean,
         expelled = gql_types.boolean,
     }
@@ -140,6 +149,7 @@ local gql_type_edit_replicaset_input = gql_types.inputObject {
                     uri = gql_types.string.nonNull,
                     uuid = gql_types.string,
                     zone = gql_types.string,
+                    rebalancer = gql_types.boolean,
                     labels = gql_types.list(gql_type_label_input),
                 }
             })
@@ -147,6 +157,7 @@ local gql_type_edit_replicaset_input = gql_types.inputObject {
         failover_priority = gql_types.list(gql_types.string.nonNull),
         all_rw = gql_types.boolean,
         weight = gql_types.float,
+        rebalancer = gql_types.boolean,
         vshard_group = gql_types.string,
     }
 }

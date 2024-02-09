@@ -48,6 +48,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         --     electable = true,
         --     replicaset_uuid = 'replicaset-uuid-2',
         --     zone = nil | string,
+        --     rebalancer = nil | true,
         -- },
     },
     replicasets = {
@@ -60,6 +61,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
         --     weight = 1.0,
         --     vshard_group = 'group_name',
+        --     rebalancer = nil | true,
         -- }
     },
 }]]
@@ -258,6 +260,12 @@ local function validate_schema(field, topology)
                 '%s.zone must be a string, got %s', field, type(server.zone)
             )
 
+            e_config:assert(
+                server.rebalancer == nil or
+                type(server.rebalancer) == 'boolean',
+                '%s.rebalancer must be a string, got %s', field, type(server.rebalancer)
+            )
+
             if rawget(_G, '__cartridge_log_invalid_labels') == true then
                 local ok, err = label_utils.validate_labels(field, server)
                 if not ok then
@@ -270,6 +278,7 @@ local function validate_schema(field, topology)
                 ['disabled'] = true,
                 ['electable'] = true,
                 ['replicaset_uuid'] = true,
+                ['rebalancer'] = true,
                 ['labels'] = true,
                 ['zone'] = true,
             }
@@ -345,6 +354,11 @@ local function validate_schema(field, topology)
             '%s.vshard_group must be a string, got %s', field, type(replicaset.vshard_group)
         )
 
+        e_config:assert(
+            (replicaset.rebalancer == nil) or (type(replicaset.rebalancer) == 'boolean'),
+            '%s.rebalancer must be a boolean, got %s', field, type(replicaset.rebalancer)
+        )
+
         for k, v in pairs(replicaset.roles) do
             e_config:assert(
                 type(k) == 'string',
@@ -368,6 +382,7 @@ local function validate_schema(field, topology)
             ['roles'] = true,
             ['master'] = true,
             ['weight'] = true,
+            ['rebalancer'] = true,
             ['vshard_group'] = true,
             ['all_rw'] = true,
             ['alias'] = true,

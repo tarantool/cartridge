@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Fri Feb 02 2024 17:36:46 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Feb 09 2024 20:08:33 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -102,25 +102,27 @@ type DisableServerSuggestion {
 
 """Parameters for editing a replicaset"""
 input EditReplicasetInput {
-  uuid: String
   weight: Float
-  vshard_group: String
-  join_servers: [JoinServerInput]
-  roles: [String!]
-  alias: String
   all_rw: Boolean
   failover_priority: [String!]
+  vshard_group: String
+  join_servers: [JoinServerInput]
+  alias: String
+  uuid: String
+  roles: [String!]
+  rebalancer: Boolean
 }
 
 """Parameters for editing existing server"""
 input EditServerInput {
   electable: Boolean
+  zone: String
   uri: String
   labels: [LabelInput]
   disabled: Boolean
   uuid: String!
   expelled: Boolean
-  zone: String
+  rebalancer: Boolean
 }
 
 type EditTopologyResult {
@@ -229,10 +231,11 @@ type Issue {
 
 """Parameters for joining a new server"""
 input JoinServerInput {
-  zone: String
   uri: String!
-  uuid: String
   labels: [LabelInput]
+  rebalancer: Boolean
+  uuid: String
+  zone: String
 }
 
 """Cluster server label"""
@@ -463,9 +466,6 @@ type MutationApicluster {
     """
     rebalancer_mode: String
 
-    """The `Boolean` scalar type represents `true` or `false`."""
-    rebalancer: Boolean
-
     """
     The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
     """
@@ -605,9 +605,9 @@ type RefineUriSuggestion {
 """Group of servers replicating the same data"""
 type Replicaset {
   """
-  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
+  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
   """
-  active_master: Server!
+  weight: Float
 
   """The leader according to the configuration."""
   master: Server!
@@ -616,6 +616,9 @@ type Replicaset {
   The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy".
   """
   status: String!
+
+  """The replica set uuid"""
+  uuid: String!
 
   """All instances in replica set are rw"""
   all_rw: Boolean!
@@ -628,19 +631,19 @@ type Replicaset {
   """The replica set alias"""
   alias: String!
 
-  """
-  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
-  """
-  weight: Float
-
   """The role set enabled on every instance in the replica set"""
   roles: [String!]
+
+  """
+  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
+  """
+  active_master: Server!
 
   """Servers in the replica set."""
   servers: [Server!]!
 
-  """The replica set uuid"""
-  uuid: String!
+  """Is the rebalancer enabled for the replica set."""
+  rebalancer: Boolean
 }
 
 """Statistics for an instance in the replica set."""
@@ -674,15 +677,8 @@ type Role {
 type Server {
   statistics: ServerStat
   boxinfo: ServerInfo
-  status: String!
-  disabled: Boolean
-  uuid: String!
-  zone: String
   replicaset: Replicaset
-  alias: String
-  uri: String!
-  labels: [Label]
-  message: String!
+  disabled: Boolean
 
   """
   Difference between remote clock and the current one. Obtained from the
@@ -690,12 +686,22 @@ type Server {
   of local, and vice versa. In seconds.
   """
   clock_delta: Float
+  message: String!
+  zone: String
+
+  """Is allowed to elect this instance as leader"""
+  electable: Boolean
+  status: String!
+  uri: String!
+  labels: [Label]
+  uuid: String!
+  alias: String
 
   """Failover priority within the replica set"""
   priority: Int
 
-  """Is allowed to elect this instance as leader"""
-  electable: Boolean
+  """Is rebalancer enabled for this instance"""
+  rebalancer: Boolean
 }
 
 """Server information and configuration."""
@@ -969,26 +975,29 @@ type ServerInfoStorage {
 }
 
 type ServerInfoVshardStorage {
-  """The number of buckets that are sending at this time"""
-  buckets_sending: Int
-
-  """The number of buckets that are waiting to be collected by GC"""
-  buckets_garbage: Int
-
   """Total number of buckets on the storage"""
   buckets_total: Int
+
+  """The number of buckets that are sending at this time"""
+  buckets_sending: Int
 
   """Vshard group"""
   vshard_group: String
 
-  """The number of pinned buckets on the storage"""
-  buckets_pinned: Int
+  """The number of buckets that are receiving at this time"""
+  buckets_receiving: Int
 
   """The number of active buckets on the storage"""
   buckets_active: Int
 
-  """The number of buckets that are receiving at this time"""
-  buckets_receiving: Int
+  """The number of pinned buckets on the storage"""
+  buckets_pinned: Int
+
+  """The number of buckets that are waiting to be collected by GC"""
+  buckets_garbage: Int
+
+  """Whether the rebalancer is enabled"""
+  rebalancer_enabled: Boolean
 }
 
 """A short server information"""
@@ -1125,9 +1134,6 @@ type VshardGroup {
 
   """Rebalancer mode"""
   rebalancer_mode: String!
-
-  """Run rebalancer on a specific replicaset"""
-  rebalancer: Boolean
 
   """
   Timeout to wait for synchronization of the old master with replicas before demotion

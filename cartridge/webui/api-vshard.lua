@@ -49,10 +49,6 @@ local gql_type_vsgroup = gql_types.object({
             kind = gql_types.float.nonNull,
             description = 'A maximum bucket disbalance threshold, in percent'
         },
-        rebalancer = {
-            kind = gql_types.boolean,
-            description = 'Run rebalancer on a specific replicaset'
-        },
         rebalancer_mode = {
             kind = gql_types.string.nonNull,
             description = 'Rebalancer mode'
@@ -179,7 +175,6 @@ local function init(graphql)
             sync_timeout = gql_types.float,
             collect_bucket_garbage_interval = gql_types.float,
             rebalancer_disbalance_threshold = gql_types.float,
-            rebalancer = gql_types.boolean,
             rebalancer_mode = gql_types.string,
             sched_ref_quota = gql_types.long,
             sched_move_quota = gql_types.long,

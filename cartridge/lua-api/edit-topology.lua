@@ -32,6 +32,7 @@ local function __join_server(topology_cfg, params)
         uuid = 'string',
         zone = '?string',
         labels = '?table',
+        rebalancer = '?boolean',
         replicaset_uuid = 'string',
     })
 
@@ -59,6 +60,7 @@ local function __join_server(topology_cfg, params)
         labels = params.labels,
         disabled = false,
         electable = true,
+        rebalancer = params.rebalancer,
         replicaset_uuid = params.replicaset_uuid,
     }
 
@@ -74,6 +76,7 @@ local function __edit_server(topology_cfg, params)
         labels = '?table',
         disabled = '?boolean',
         electable = '?boolean',
+        rebalancer = '?boolean',
         expelled = '?boolean',
     })
 
@@ -122,6 +125,7 @@ local function __edit_replicaset(topology_cfg, params)
         all_rw = '?boolean',
         roles = '?table',
         weight = '?number',
+        rebalancer = '?boolean',
         failover_priority = '?table',
         vshard_group = '?string',
         join_servers = '?table',
@@ -254,6 +258,7 @@ end
 -- @tfield ?{string,...} roles
 -- @tfield ?boolean all_rw
 -- @tfield ?number weight
+-- @tfield ?boolean rebalancer
 -- @tfield ?{string,...} failover_priority
 --   array of uuids specifying servers failover priority
 -- @tfield ?string vshard_group
@@ -276,6 +281,7 @@ end
 -- @tfield ?table labels
 -- @tfield ?boolean disabled
 -- @tfield ?boolean electable
+-- @tfield ?boolean rebalancer
 -- @tfield ?boolean expelled
 --   Expelling an instance is permanent and can't be undone.
 --   It's suitable for situations when the hardware is destroyed,

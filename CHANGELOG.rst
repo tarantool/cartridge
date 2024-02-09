@@ -25,6 +25,8 @@ Added
 - New VShard configuration options: ``rebalancer`` and
   ``rebalancer_mode``.
 
+- ``rebalancer_enabled`` field to boxinfo GraphQL API.
+
 -------------------------------------------------------------------------------
 [2.8.6] - 2024-02-01
 -------------------------------------------------------------------------------
