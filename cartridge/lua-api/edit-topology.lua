@@ -111,14 +111,14 @@ local function __edit_server(topology_cfg, params)
         server.electable = params.electable
     end
 
-    if params.expelled == true then
-        topology_cfg.servers[params.uuid] = 'expelled'
-    end
-
     if params.rebalancer ~= nil then
         server.rebalancer = params.rebalancer
     else
         server.rebalancer = nil -- avoid setting it to box.NULL
+    end
+
+    if params.expelled == true then
+        topology_cfg.servers[params.uuid] = 'expelled'
     end
 
     return true
@@ -193,12 +193,6 @@ local function __edit_replicaset(topology_cfg, params)
         replicaset.all_rw = params.all_rw
     end
 
-    if params.rebalancer ~= nil then
-        replicaset.rebalancer = params.rebalancer
-    else
-        replicaset.rebalancer = nil -- avoid setting it to box.NULL
-    end
-
     -- Set proper vshard group
     repeat -- until true
         if not replicaset.roles['vshard-storage'] then
@@ -242,6 +236,18 @@ local function __edit_replicaset(topology_cfg, params)
             replicaset.weight = 1
         else
             replicaset.weight = 0
+        end
+    until true
+
+    repeat
+        if not replicaset.roles['vshard-storage'] then
+            -- ignore unless replicaset is a storage
+            break
+        end
+        if params.rebalancer ~= nil then
+            replicaset.rebalancer = params.rebalancer
+        else
+            replicaset.rebalancer = nil -- avoid setting it to box.NULL
         end
     until true
 
