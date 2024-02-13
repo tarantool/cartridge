@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Fri Feb 09 2024 20:08:33 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Feb 13 2024 18:54:32 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(

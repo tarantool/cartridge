@@ -115,6 +115,12 @@ local function __edit_server(topology_cfg, params)
         topology_cfg.servers[params.uuid] = 'expelled'
     end
 
+    if params.rebalancer ~= nil then
+        server.rebalancer = params.rebalancer
+    else
+        server.rebalancer = nil -- avoid setting it to box.NULL
+    end
+
     return true
 end
 
@@ -185,6 +191,12 @@ local function __edit_replicaset(topology_cfg, params)
 
     if params.all_rw ~= nil then
         replicaset.all_rw = params.all_rw
+    end
+
+    if params.rebalancer ~= nil then
+        replicaset.rebalancer = params.rebalancer
+    else
+        replicaset.rebalancer = nil -- avoid setting it to box.NULL
     end
 
     -- Set proper vshard group
@@ -347,6 +359,7 @@ local function edit_topology(args)
         end
     end
 
+    local rebalancer_enabled = false
     for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
         local replicaset_empty = true
         for _, _, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
@@ -368,6 +381,23 @@ local function edit_topology(args)
                     table.insert(replicaset.master, leader_uuid)
                 end
             end
+            if replicaset.rebalancer == true and rebalancer_enabled then
+                return nil, EditTopologyError:new(
+                    'Several rebalancer flags found in config'
+                )
+            elseif replicaset.rebalancer == true then
+                rebalancer_enabled = true
+            end
+        end
+    end
+
+    for _, server in pairs(topology_cfg.servers) do
+        if server.rebalancer == true and rebalancer_enabled then
+            return nil, EditTopologyError:new(
+                'Several rebalancer flags found in config'
+            )
+        elseif server.rebalancer == true then
+            rebalancer_enabled = true
         end
     end
 
