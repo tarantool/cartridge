@@ -312,8 +312,8 @@ g.test_kill_master = function()
     t.assert_equals(res.status, 200)
     t.assert_equals(res.json, {})
 
-    kill_server('storage-2')
     start_server('storage-3')
+    kill_server('storage-2')
 
     -- syncro qourum is broken now
     h.retrying({}, function()
