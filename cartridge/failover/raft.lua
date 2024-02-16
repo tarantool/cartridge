@@ -69,10 +69,13 @@ local function on_election_trigger()
     local leader = box_info.replication[election.leader] or {}
 
     if vars.leader_uuid ~= leader.uuid then
-        vars.leader_uuid = leader.uuid
-        vars.cache.is_leader = vars.leader_uuid == vars.instance_uuid
+        -- if there is no leader, we won't change the table
+        if leader.uuid ~= nil then
+            vars.leader_uuid = leader.uuid
+        end
         membership.set_payload('leader_uuid', vars.leader_uuid)
     end
+    vars.cache.is_leader = vars.leader_uuid == vars.instance_uuid
     membership.set_payload('raft_term', election.term)
 end
 
