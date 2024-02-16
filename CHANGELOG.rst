@@ -22,8 +22,8 @@ Fixed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- New VShard configuration options: ``rebalancer`` and
-  ``rebalancer_mode``.
+- New VShard configuration options: ``rebalancer`` (on server/replicaset level)
+  and ``rebalancer_mode`` (on VShard config level).
 
 - ``rebalancer_enabled`` field to boxinfo GraphQL API.
 
