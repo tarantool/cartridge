@@ -98,6 +98,7 @@ local cluster_opts = {
     console_sock = 'string', -- **string**
     auth_enabled = 'boolean', -- **boolean**
     bucket_count = 'number', -- **number**
+    rebalancer_mode = 'string', -- **string**
     upgrade_schema = 'boolean', -- **boolean**
     swim_broadcast = 'boolean', -- **boolean**
     upload_prefix = 'string', -- **string**

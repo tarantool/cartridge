@@ -166,6 +166,7 @@ export const serverDetailsFields = gql`
         buckets_garbage
         buckets_pinned
         buckets_sending
+        rebalancer_enabled
       }
       network {
         io_collect_interval

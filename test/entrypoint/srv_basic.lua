@@ -178,6 +178,11 @@ if os.getenv('TARANTOOL_DISABLE_SYNCHRO_MODE') then
     enable_synchro_mode = nil
 end
 
+local rebalancer_mode = os.getenv('TARANTOOL_REBALANCER_MODE')
+if not rebalancer_mode  then
+    rebalancer_mode = 'auto'
+end
+
 local disable_errstack = nil
 if os.getenv('TARANTOOL_DISABLE_ERRSTACK') then
     disable_errstack = true
@@ -203,6 +208,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',
     disable_errstack = disable_errstack,
+    rebalancer_mode = rebalancer_mode,
 },
 {
     log = '',

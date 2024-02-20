@@ -1,12 +1,11 @@
 local fio = require('fio')
 local fun = require('fun')
 local t = require('luatest')
-local g = t.group()
 
 local helpers = require('test.helper')
 
-g.before_all = function()
-    g.cluster = helpers.Cluster:new({
+local function new_cluser()
+    return {
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
@@ -28,14 +27,10 @@ g.before_all = function()
                 servers = 2,
             },
         },
-    })
-    g.cluster:start()
+        env = {},
+    }
 end
 
-g.after_all = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end
 
 local function rebalancer_enabled(g)
     local resp = g.cluster.main_server:graphql({
@@ -58,6 +53,21 @@ local function rebalancer_enabled(g)
         acc[v.uri] = v.boxinfo.vshard_storage.rebalancer_enabled
         return acc
     end, {})
+end
+
+-----------------------------
+-- Test rebalancer API
+
+local g = t.group('integration.vshard_rebalancer_api')
+
+g.before_all = function()
+    g.cluster = helpers.Cluster:new(new_cluser())
+    g.cluster:start()
+end
+
+g.after_all = function()
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
 end
 
 g.test_rebalancer_replicaset_level = function()
@@ -260,4 +270,31 @@ g.test_rebalancer_multiple_replicasets_and_server_error = function()
         raise = false,
     })
     t.assert_equals(res.errors[1].message, 'Several rebalancer flags found in config')
+end
+
+-----------------------------
+-- Test rebalancer off
+
+local g_off = t.group('integration.vshard_rebalancer_off')
+
+g_off.before_all = function()
+    local cluster_data = new_cluser()
+    cluster_data.env['TARANTOOL_REBALANCER_MODE'] = 'off'
+    g_off.cluster = helpers.Cluster:new(cluster_data)
+    g_off.cluster:start()
+end
+
+g_off.after_all = function()
+    g_off.cluster:stop()
+    fio.rmtree(g_off.cluster.datadir)
+end
+
+g_off.test_rebalancer_off = function()
+    t.assert_equals(rebalancer_enabled(g_off), {
+        -- uri, rebalancer_enabled
+        ['localhost:13302'] = false,
+        ['localhost:13303'] = false,
+        ['localhost:13304'] = false,
+        ['localhost:13305'] = false,
+    })
 end

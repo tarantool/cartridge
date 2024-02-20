@@ -18,6 +18,7 @@ local vshard_consts = require('vshard.consts')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('default_bucket_count', 30000)
+vars:new('default_rebalancer_mode', 'auto')
 vars:new('known_groups', nil
     --{
     --    [group_name] = {
@@ -380,10 +381,11 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
-local function set_known_groups(vshard_groups, default_bucket_count)
-    checks('nil|table', 'nil|number')
+local function set_known_groups(vshard_groups, default_bucket_count, default_rebalancer_mode)
+    checks('nil|table', 'nil|number', 'nil|string')
     vars.known_groups = vshard_groups
     vars.default_bucket_count = default_bucket_count
+    vars.default_rebalancer_mode = default_rebalancer_mode
 end
 
 --- Get list of known vshard groups.
@@ -417,6 +419,7 @@ local function get_known_groups()
             vshard_groups[name] = {
                 bucket_count = g.bucket_count or vars.default_bucket_count,
                 bootstrapped = false,
+                rebalancer_mode = g.rebalancer_mode or vars.default_rebalancer_mode,
             }
         end
     else
@@ -424,6 +427,7 @@ local function get_known_groups()
             default = {
                 bucket_count = vars.default_bucket_count,
                 bootstrapped = false,
+                rebalancer_mode = vars.default_rebalancer_mode,
             }
         }
     end
@@ -454,7 +458,7 @@ local function get_known_groups()
         end
 
         if g.rebalancer_mode == nil then
-            g.rebalancer_mode = 'auto'
+            g.rebalancer_mode = vars.default_rebalancer_mode
         end
 
         if g.sched_ref_quota == nil then
