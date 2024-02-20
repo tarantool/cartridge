@@ -179,9 +179,6 @@ if os.getenv('TARANTOOL_DISABLE_SYNCHRO_MODE') then
 end
 
 local rebalancer_mode = os.getenv('TARANTOOL_REBALANCER_MODE')
-if not rebalancer_mode  then
-    rebalancer_mode = 'auto'
-end
 
 local disable_errstack = nil
 if os.getenv('TARANTOOL_DISABLE_ERRSTACK') then
