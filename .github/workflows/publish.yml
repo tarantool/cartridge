@@ -43,7 +43,7 @@ jobs:
            python-version: '3.9'
       - run: python -m pip install -r rst/requirements.txt
 
-      - uses: tarantool/setup-tarantool@v2
+      - uses: tarantool/setup-tarantool@v3
         with:
           tarantool-version: '2.5'
       - run: tarantoolctl rocks install ldoc

@@ -17,7 +17,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup tarantool
-      uses: tarantool/setup-tarantool@v2
+      uses: tarantool/setup-tarantool@v3
       with:
         tarantool-version: '2.6'
 

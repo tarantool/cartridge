@@ -39,7 +39,7 @@ jobs:
       CARTRIDGE_DOWNGRADE: ${{ matrix.downgrade }}
     steps:
       - uses: actions/checkout@v4
-      - uses: tarantool/setup-tarantool@v2
+      - uses: tarantool/setup-tarantool@v3
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 

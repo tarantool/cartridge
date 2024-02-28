@@ -25,7 +25,7 @@ jobs:
           ref: ${{github.head_ref}}
 
       - name: Setup tarantool
-        uses: tarantool/setup-tarantool@v2
+        uses: tarantool/setup-tarantool@v3
         with:
           tarantool-version: '2.6'
 
