@@ -122,6 +122,7 @@ local function get_topology()
             servers = {},
             all_rw = replicaset.all_rw or false,
             alias = replicaset.alias or 'unnamed',
+            rebalancer = replicaset.rebalancer,
         }
 
         local enabled_roles = roles.get_enabled_roles(replicaset.roles)

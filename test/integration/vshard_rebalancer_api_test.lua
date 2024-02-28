@@ -73,13 +73,14 @@ end
 g.test_rebalancer_replicaset_level = function()
     local server = g.cluster:server('A-1')
 
-    g.cluster.main_server:graphql({
+    local res = g.cluster.main_server:graphql({
         query = [[
             mutation($replicasets: [EditReplicasetInput]) {
                 cluster {
                     edit_topology(replicasets: $replicasets) {
                         replicasets {
                             uuid
+                            rebalancer
                         }
                     }
                 }
@@ -92,6 +93,11 @@ g.test_rebalancer_replicaset_level = function()
             }}
         }
     })
+
+    t.assert_equals(
+        res['data']['cluster']['edit_topology']['replicasets'],
+        {{uuid = server.replicaset_uuid, rebalancer = true}}
+    )
 
     t.assert_equals(rebalancer_enabled(g), {
         -- uri, rebalancer_enabled
@@ -134,11 +140,14 @@ end)
 
 g.test_rebalancer_server_level = function()
     local server = g.cluster:server('A-2')
-    g.cluster.main_server:graphql({query = [[
+    local res = g.cluster.main_server:graphql({query = [[
         mutation($servers: [EditServerInput]) {
             cluster {
                 edit_topology(servers: $servers){
-                    servers {uuid}
+                    servers {
+                        uuid
+                        rebalancer
+                    }
                 }
             }
         }
@@ -147,6 +156,11 @@ g.test_rebalancer_server_level = function()
             {uuid = server.instance_uuid, rebalancer = true},
         }
     }})
+
+    t.assert_equals(
+        res['data']['cluster']['edit_topology']['servers'],
+        {{uuid = server.instance_uuid, rebalancer = true}}
+    )
 
     t.assert_equals(rebalancer_enabled(g), {
         -- uri, rebalancer_enabled
