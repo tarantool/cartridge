@@ -28,6 +28,9 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 -- @tfield number weight
 --   Vshard replicaset weight.
 --   Matters only if vshard-storage role is enabled.
+-- @tfield boolean rebalancer
+--   Is rebalancer enabled on this replicaset.
+--   Matters only if vshard-storage role is enabled.
 -- @tfield string vshard_group
 --   Name of vshard group the replicaset belongs to.
 -- @tfield boolean all_rw
@@ -45,6 +48,7 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 -- @tfield string uuid
 -- @tfield boolean disabled
 -- @tfield boolean electable
+-- @tfield boolean rebalancer
 -- @tfield string status
 --   Instance health.
 -- @tfield string message
@@ -118,6 +122,7 @@ local function get_topology()
             servers = {},
             all_rw = replicaset.all_rw or false,
             alias = replicaset.alias or 'unnamed',
+            rebalancer = replicaset.rebalancer,
         }
 
         local enabled_roles = roles.get_enabled_roles(replicaset.roles)
@@ -152,6 +157,7 @@ local function get_topology()
             disabled = not topology.not_disabled(instance_uuid, server),
             electable = topology.electable(instance_uuid, server),
             zone = server.zone,
+            rebalancer = server.rebalancer,
             alias = nil,
             status = nil,
             message = nil,

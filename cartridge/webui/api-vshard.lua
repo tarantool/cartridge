@@ -49,6 +49,10 @@ local gql_type_vsgroup = gql_types.object({
             kind = gql_types.float.nonNull,
             description = 'A maximum bucket disbalance threshold, in percent'
         },
+        rebalancer_mode = {
+            kind = gql_types.string.nonNull,
+            description = 'Rebalancer mode'
+        },
         sched_ref_quota = {
             kind = gql_types.long.nonNull,
             description = 'Scheduler storage ref quota'
@@ -171,6 +175,7 @@ local function init(graphql)
             sync_timeout = gql_types.float,
             collect_bucket_garbage_interval = gql_types.float,
             rebalancer_disbalance_threshold = gql_types.float,
+            rebalancer_mode = gql_types.string,
             sched_ref_quota = gql_types.long,
             sched_move_quota = gql_types.long,
         },

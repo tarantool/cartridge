@@ -28,7 +28,7 @@ Cartridge is compatible with Tarantool 1.10 and Tarantool 2.x.
 Cartridge doesn't support Tarantool 3.0 and higher.
 
 .. list-table:: Compatibility and known issues
-   :widths: 50 50 50 50 50
+   :widths: 50 50 50 50 50 50
    :header-rows: 1
    :stub-columns: 1
 
@@ -37,91 +37,116 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - Tarantool 2.8
      - Tarantool 2.10
      - Tarantool 2.11
+     - Additional notes
+   * - Cartridge scm-1
+     - \+
+     - \+
+     - \+
+     - \+
+     - Can't be downgraded to Cartridge 2.7.9 and lower
    * - Cartridge 2.8.6
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.5
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.4
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.3
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.2
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.1
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.8.0
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.7.9
      - \+
      - \+
      - \+
      - \+
+     -
    * - Cartridge 2.7.8
-     - Update is broken
-     - Update is broken
-     - Update is broken
-     - Update is broken
+     - \+
+     - \+
+     - \+
+     - \-
+     - Update to this release is broken
    * - Cartridge 2.7.7
-     - Update is broken
-     - Update is broken
-     - Update is broken
-     - Update is broken
+     - \+
+     - \+
+     - \+
+     - \-
+     - Update to this release is broken
    * - Cartridge 2.7.6
-     - Update is broken
-     - Update is broken
-     - Update is broken
-     - Update is broken
+     - \+
+     - \+
+     - \+
+     - \-
+     - Update to this release is broken
    * - Cartridge 2.7.5
      - \+
      - \+
      - \+
      - \-
+     -
    * - Cartridge 2.7.4
      - \+
      - \+
      - \+
      - \-
+     -
    * - Cartridge 2.7.3
      - \+
      - \+
      - \-
      - \-
+     -
    * - Cartridge 2.7.2
      - \+
      - \+
      - \-
      - \-
+     -
    * - Cartridge 2.7.1
      - \+
      - \+
      - \-
      - \-
+     -
    * - Cartridge 2.7.0
      - \+
      - \+
      - \-
      - \-
+     - Can't be downgraded to Cartridge 2.6.0 and lower
+
 
 .. _cartridge-deployment:
 

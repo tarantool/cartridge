@@ -4,6 +4,7 @@ local cartridge_opts = {
     'auth_backend_name',
     'auth_enabled',
     'bucket_count',
+    'rebalancer_mode',
     'console_sock',
     'http_enabled',
     'http_host',

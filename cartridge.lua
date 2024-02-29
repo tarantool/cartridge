@@ -171,6 +171,12 @@ end
 --  env `TARANTOOL_BUCKET_COUNT`,
 --  args `--bucket-count`)
 --
+-- @tparam ?number opts.rebalancer_mode
+--  rebalancer_mode for vshard cluster. See vshard doc for more details.
+--  (default: "auto", overridden by
+--  env `TARANTOOL_REBALANCER_MODE`,
+--  args `--rebalancer-mode`)
+--
 -- @tparam ?table opts.vshard_groups
 --  vshard storage groups.
 --  `{group_name = VshardGroup, ...}`, `{'group1', 'group2', ...}` or
@@ -282,6 +288,7 @@ local function cfg(opts, box_opts)
         advertise_uri = '?string',
         cluster_cookie = '?string',
         bucket_count = '?number',
+        rebalancer_mode = '?string',
         http_port = '?string|number',
         http_host = '?string',
         http_enabled = '?boolean',
@@ -465,6 +472,14 @@ local function cfg(opts, box_opts)
 
     if box_opts.custom_proc_title ~= nil then
         title.update(box_opts.custom_proc_title)
+    end
+
+    if opts.rebalancer_mode == nil then
+        opts.rebalancer_mode = 'auto'
+    elseif not (opts.rebalancer_mode == 'auto'
+    or opts.rebalancer_mode == 'off'
+    or opts.rebalancer_mode == 'manual') then
+        return nil, CartridgeCfgError:new('Invalid rebalancer_mode %q', opts.rebalancer_mode)
     end
 
     local vshard_groups = {}
@@ -790,7 +805,7 @@ local function cfg(opts, box_opts)
         end
     end
 
-    vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
+    vshard_utils.set_known_groups(vshard_groups, opts.bucket_count, opts.rebalancer_mode)
 
     -- Set up issues
     local issue_limits, err = argparse.get_opts({

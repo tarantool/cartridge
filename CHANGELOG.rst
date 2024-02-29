@@ -18,6 +18,15 @@ Fixed
 
 - Raft failover state transitions.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- New VShard configuration options: ``rebalancer`` (on server/replicaset level)
+  and ``rebalancer_mode`` (on VShard config level).
+
+- ``rebalancer_enabled`` field to boxinfo GraphQL API.
+
 -------------------------------------------------------------------------------
 [2.8.6] - 2024-02-01
 -------------------------------------------------------------------------------

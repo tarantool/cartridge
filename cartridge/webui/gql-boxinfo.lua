@@ -428,6 +428,10 @@ local boxinfo_schema = {
                         kind = gql_types.int,
                         description = 'The number of buckets that are sending at this time',
                     },
+                    rebalancer_enabled = {
+                        kind = gql_types.boolean,
+                        description = 'Whether the rebalancer is enabled',
+                    }
                 }
             }),
         }

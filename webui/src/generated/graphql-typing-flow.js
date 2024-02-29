@@ -780,6 +780,8 @@ export type ServerInfoVshardStorage = {|
   buckets_total?: ?$ElementType<Scalars, 'Int'>,
   /** Vshard group */
   vshard_group?: ?$ElementType<Scalars, 'String'>,
+  /** Is rebalancer enabled */
+  rebalancer_enabled?: ?$ElementType<Scalars, 'Boolean'>,
 |};
 
 /** A short server information */
@@ -1047,7 +1049,7 @@ export type ServerDetailsFieldsFragment = ({
       ...$Pick<VshardRouter, {| vshard_group?: *, buckets_unreachable?: *, buckets_available_ro?: *, buckets_unknown?: *, buckets_available_rw?: * |}>
     })>, vshard_storage?: ?({
         ...{ __typename?: 'ServerInfoVshardStorage' },
-      ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: * |}>
+      ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: *, rebalancer_enabled?: * |}>
     }), network: ({
         ...{ __typename?: 'ServerInfoNetwork' },
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
@@ -1104,7 +1106,7 @@ export type InstanceDataQuery = ({
         ...$Pick<VshardRouter, {| vshard_group?: *, buckets_unreachable?: *, buckets_available_ro?: *, buckets_unknown?: *, buckets_available_rw?: * |}>
       })>, vshard_storage?: ?({
           ...{ __typename?: 'ServerInfoVshardStorage' },
-        ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: * |}>
+        ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: *, rebalancer_enabled?: * |}>
       }), network: ({
           ...{ __typename?: 'ServerInfoNetwork' },
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
@@ -1210,7 +1212,7 @@ export type BoxInfoQuery = ({
         ...$Pick<VshardRouter, {| vshard_group?: *, buckets_unreachable?: *, buckets_available_ro?: *, buckets_unknown?: *, buckets_available_rw?: * |}>
       })>, vshard_storage?: ?({
           ...{ __typename?: 'ServerInfoVshardStorage' },
-        ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: * |}>
+        ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: *, rebalancer_enabled?: * |}>
       }), network: ({
           ...{ __typename?: 'ServerInfoNetwork' },
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>

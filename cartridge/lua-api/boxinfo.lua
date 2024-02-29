@@ -79,7 +79,8 @@ local function get_info(uri)
         local rs_uuid = box_info.cluster.uuid
         local vshard_group = topology_cfg.replicasets[rs_uuid].vshard_group or 'default'
         local ok, storage_info = pcall(vshard and vshard.storage.info)
-
+        local rebalancer_enabled = vshard and vshard.storage and
+            vshard.storage.internal.rebalancer_fiber ~= nil
         if ok then
             storage_info = {
                 vshard_group = vshard_group,
@@ -89,6 +90,7 @@ local function get_info(uri)
                 buckets_garbage = storage_info.bucket.garbage,
                 buckets_pinned = storage_info.bucket.pinned,
                 buckets_sending = storage_info.bucket.sending,
+                rebalancer_enabled = rebalancer_enabled,
             }
         else
             storage_info = box.NULL

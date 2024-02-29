@@ -18,6 +18,7 @@ local vshard_consts = require('vshard.consts')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('default_bucket_count', 30000)
+vars:new('default_rebalancer_mode', 'auto')
 vars:new('known_groups', nil
     --{
     --    [group_name] = {
@@ -30,6 +31,7 @@ vars:new('known_groups', nil
     --        rebalancer_disbalance_threshold = number,
     --        sched_ref_quota = number,
     --        sched_move_quota = number,
+    --        rebalancer_mode = string,
     --    }
     --}
 )
@@ -228,6 +230,19 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
             '%s.rebalancer_disbalance_threshold must be non-negative', field
         )
     end
+
+    if vsgroup_new.rebalancer_mode ~= nil then
+        ValidateConfigError:assert(
+            type(vsgroup_new.rebalancer_mode) == 'string'
+            and (
+                vsgroup_new.rebalancer_mode == 'auto'
+                or vsgroup_new.rebalancer_mode == 'manual'
+                or vsgroup_new.rebalancer_mode == 'off'
+            ),
+            '%s.rebalancer must be one of: "auto", "manual", "off"', field
+        )
+    end
+
     if vsgroup_new.sched_ref_quota ~= nil then
         ValidateConfigError:assert(
             type(vsgroup_new.sched_ref_quota) == 'number',
@@ -267,6 +282,7 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['sync_timeout'] = true,
         ['collect_bucket_garbage_interval'] = true,
         ['rebalancer_disbalance_threshold'] = true,
+        ['rebalancer_mode'] = true,
         ['sched_ref_quota'] = true,
         ['sched_move_quota'] = true,
     }
@@ -365,10 +381,11 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
-local function set_known_groups(vshard_groups, default_bucket_count)
-    checks('nil|table', 'nil|number')
+local function set_known_groups(vshard_groups, default_bucket_count, default_rebalancer_mode)
+    checks('nil|table', 'nil|number', 'nil|string')
     vars.known_groups = vshard_groups
     vars.default_bucket_count = default_bucket_count
+    vars.default_rebalancer_mode = default_rebalancer_mode
 end
 
 --- Get list of known vshard groups.
@@ -402,6 +419,7 @@ local function get_known_groups()
             vshard_groups[name] = {
                 bucket_count = g.bucket_count or vars.default_bucket_count,
                 bootstrapped = false,
+                rebalancer_mode = g.rebalancer_mode or vars.default_rebalancer_mode,
             }
         end
     else
@@ -409,6 +427,7 @@ local function get_known_groups()
             default = {
                 bucket_count = vars.default_bucket_count,
                 bootstrapped = false,
+                rebalancer_mode = vars.default_rebalancer_mode,
             }
         }
     end
@@ -436,6 +455,10 @@ local function get_known_groups()
 
         if g.rebalancer_disbalance_threshold == nil then
             g.rebalancer_disbalance_threshold = vshard_consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD
+        end
+
+        if g.rebalancer_mode == nil then
+            g.rebalancer_mode = vars.default_rebalancer_mode
         end
 
         if g.sched_ref_quota == nil then
@@ -474,6 +497,7 @@ local function get_vshard_config(group_name, conf)
                 sharding[replicaset_uuid] = {
                     replicas = {},
                     weight = replicaset.weight or 0.0,
+                    rebalancer = replicaset.rebalancer ~= nil and replicaset.rebalancer or nil,
                 }
             end
 
@@ -511,6 +535,7 @@ local function get_vshard_config(group_name, conf)
                 name = server.uri,
                 zone = server.zone,
                 listen = listen_uri,
+                rebalancer = server.rebalancer ~= nil and server.rebalancer or nil,
                 uri = client_uri,
                 master = (active_leaders[replicaset_uuid] == instance_uuid),
             }
@@ -555,6 +580,7 @@ local function get_vshard_config(group_name, conf)
         sync_timeout = vshard_groups[group_name].sync_timeout,
         collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
         rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
+        rebalancer_mode = vshard_groups[group_name].rebalancer_mode,
         sharding = sharding,
         read_only = not failover.is_rw(),
         weights = zone_distances,
@@ -614,6 +640,7 @@ local function edit_vshard_options(group_name, vshard_options)
             sync_timeout = '?number',
             collect_bucket_garbage_interval = '?number',
             rebalancer_disbalance_threshold = '?number',
+            rebalancer_mode = '?string',
             sched_ref_quota = '?number',
             sched_move_quota = '?number',
         }

@@ -32,6 +32,7 @@ local function __join_server(topology_cfg, params)
         uuid = 'string',
         zone = '?string',
         labels = '?table',
+        rebalancer = '?boolean',
         replicaset_uuid = 'string',
     })
 
@@ -59,6 +60,7 @@ local function __join_server(topology_cfg, params)
         labels = params.labels,
         disabled = false,
         electable = true,
+        rebalancer = params.rebalancer,
         replicaset_uuid = params.replicaset_uuid,
     }
 
@@ -74,6 +76,7 @@ local function __edit_server(topology_cfg, params)
         labels = '?table',
         disabled = '?boolean',
         electable = '?boolean',
+        rebalancer = '?boolean',
         expelled = '?boolean',
     })
 
@@ -108,6 +111,12 @@ local function __edit_server(topology_cfg, params)
         server.electable = params.electable
     end
 
+    if params.rebalancer ~= nil then
+        server.rebalancer = params.rebalancer
+    else
+        server.rebalancer = nil -- avoid setting it to box.NULL
+    end
+
     if params.expelled == true then
         topology_cfg.servers[params.uuid] = 'expelled'
     end
@@ -122,6 +131,7 @@ local function __edit_replicaset(topology_cfg, params)
         all_rw = '?boolean',
         roles = '?table',
         weight = '?number',
+        rebalancer = '?boolean',
         failover_priority = '?table',
         vshard_group = '?string',
         join_servers = '?table',
@@ -229,6 +239,18 @@ local function __edit_replicaset(topology_cfg, params)
         end
     until true
 
+    repeat
+        if not replicaset.roles['vshard-storage'] then
+            -- ignore unless replicaset is a storage
+            break
+        end
+        if params.rebalancer ~= nil then
+            replicaset.rebalancer = params.rebalancer
+        else
+            replicaset.rebalancer = nil -- avoid setting it to box.NULL
+        end
+    until true
+
     return true
 end
 
@@ -254,6 +276,7 @@ end
 -- @tfield ?{string,...} roles
 -- @tfield ?boolean all_rw
 -- @tfield ?number weight
+-- @tfield ?boolean rebalancer
 -- @tfield ?{string,...} failover_priority
 --   array of uuids specifying servers failover priority
 -- @tfield ?string vshard_group
@@ -276,6 +299,7 @@ end
 -- @tfield ?table labels
 -- @tfield ?boolean disabled
 -- @tfield ?boolean electable
+-- @tfield ?boolean rebalancer
 -- @tfield ?boolean expelled
 --   Expelling an instance is permanent and can't be undone.
 --   It's suitable for situations when the hardware is destroyed,
@@ -341,6 +365,7 @@ local function edit_topology(args)
         end
     end
 
+    local rebalancer_enabled = false
     for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
         local replicaset_empty = true
         for _, _, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
@@ -362,6 +387,23 @@ local function edit_topology(args)
                     table.insert(replicaset.master, leader_uuid)
                 end
             end
+            if replicaset.rebalancer == true and rebalancer_enabled then
+                return nil, EditTopologyError:new(
+                    'Several rebalancer flags found in config'
+                )
+            elseif replicaset.rebalancer == true then
+                rebalancer_enabled = true
+            end
+        end
+    end
+
+    for _, server in pairs(topology_cfg.servers) do
+        if server.rebalancer == true and rebalancer_enabled then
+            return nil, EditTopologyError:new(
+                'Several rebalancer flags found in config'
+            )
+        elseif server.rebalancer == true then
+            rebalancer_enabled = true
         end
     end
 

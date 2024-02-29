@@ -757,6 +757,8 @@ export type ServerInfoVshardStorage = {
   buckets_total?: Maybe<Scalars['Int']>;
   /** Vshard group */
   vshard_group?: Maybe<Scalars['String']>;
+  /** Is rebalancer enabled */
+  rebalancer_enabled?: Maybe<Scalars['Boolean']>;
 };
 
 /** A short server information */
@@ -1167,6 +1169,7 @@ export type ServerDetailsFieldsFragment = {
       buckets_garbage?: number | null;
       buckets_pinned?: number | null;
       buckets_sending?: number | null;
+      rebalancer_enabled?: boolean | null;
     } | null;
     network: {
       __typename?: 'ServerInfoNetwork';
@@ -1294,6 +1297,7 @@ export type InstanceDataQuery = {
         buckets_garbage?: number | null;
         buckets_pinned?: number | null;
         buckets_sending?: number | null;
+        rebalancer_enabled?: boolean | null;
       } | null;
       network: {
         __typename?: 'ServerInfoNetwork';
@@ -1454,6 +1458,7 @@ export type BoxInfoQuery = {
         buckets_garbage?: number | null;
         buckets_pinned?: number | null;
         buckets_sending?: number | null;
+        rebalancer_enabled?: boolean | null;
       } | null;
       network: {
         __typename?: 'ServerInfoNetwork';
