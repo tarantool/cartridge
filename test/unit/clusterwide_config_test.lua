@@ -361,6 +361,22 @@ function g.test_save_err()
     t.assert_equals(utils.file_read(g.tempdir .. '/config'), '---\n...')
 end
 
+function g.test_relative_path_err()
+    write_tree({['config'] = '---\n...'})
+    local relative_path = '../../file'
+    local cfg = ClusterwideConfig.new({[relative_path] = 'content'})
+    local ok, err = ClusterwideConfig.save(cfg, g.tempdir .. '/config')
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'SaveConfigError',
+        err = string.format(
+            "Relative paths in config is prohibited: %q",
+            relative_path
+        )
+    })
+    t.assert_equals(utils.file_read(g.tempdir .. '/config'), '---\n...')
+end
+
 function g.test_save_ok()
     local cfg = ClusterwideConfig.new()
     local ok, err = ClusterwideConfig.save(cfg, g.tempdir .. '/cfg1')

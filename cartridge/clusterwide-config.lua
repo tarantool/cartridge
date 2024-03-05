@@ -492,6 +492,13 @@ local function save(clusterwide_config, path)
     end
 
     for section, content in pairs(clusterwide_config._plaintext) do
+        if section:find("%.%.") then -- filename contains '..'
+            err = SaveConfigError:new(
+                'Relative paths in config is prohibited: %q',
+                section
+            )
+            goto rollback
+        end
         local abspath = fio.pathjoin(random_path, section)
         local dirname = fio.dirname(abspath)
 
