@@ -833,7 +833,19 @@ local function init(opts)
         return nil, InitError:new("Could not resolve advertise uri %s", opts.advertise_uri)
     end
 
-    local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port, {
+    local host = addrinfo[1].host
+    if parts.host ~= 'localhost' then
+        for _, addr in ipairs(addrinfo) do
+            if family == 'AF_INET' and addr.host ~= '127.0.0.1'
+            or family == 'AF_INET6' and addr.host ~= '::1'
+            then
+                host = addr.host
+                break
+            end
+        end
+    end
+
+    local ok, err = remote_control.bind(host, vars.binary_port, {
         transport = vars.transport, -- '' or 'ssl'
         ssl_ciphers = vars.ssl_ciphers,
         ssl_ca_file = vars.ssl_server_ca_file,
