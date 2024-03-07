@@ -112,12 +112,10 @@ jobs:
           curl -L https://tarantool.io/pre-release/2/installer.sh | bash
           sudo apt-get -y install tarantool
 
-      # Setup etcd
-      - name: Install etcd
-        uses: ./.github/actions/setup-etcd
-        if: runner.os == 'Linux'
+      - name: Set up etcd
+        uses: tarantool/actions/setup-etcd@master
         with:
-          etcd-version: '${{ matrix.etcd }}'
+          version: '${{ matrix.etcd }}'
           install-prefix: etcd-${{ matrix.etcd }}
 
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
@@ -214,12 +212,10 @@ jobs:
           echo "${SDK_PATH}" >> ${GITHUB_PATH}
           echo "TARANTOOL_SDK_PATH=${SDK_PATH}" >> ${GITHUB_ENV}
 
-      # Setup etcd
-      - name: Install etcd
-        uses: ./.github/actions/setup-etcd
-        if: runner.os == 'Linux'
+      - name: Set up etcd
+        uses: tarantool/actions/setup-etcd@master
         with:
-          etcd-version: '${{ matrix.etcd }}'
+          version: '${{ matrix.etcd }}'
           install-prefix: etcd-${{ matrix.etcd }}
 
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
