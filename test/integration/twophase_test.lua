@@ -280,3 +280,29 @@ function g.test_timeouts()
         t.assert_equals(twophase.get_apply_config_timeout(), 111)
     end)
 end
+
+function g.test_timeouts_with_argparse()
+    g.s1.env['TARANTOOL_TWOPHASE_NETBOX_CALL_TIMEOUT'] = 100
+    g.s1.env['TARANTOOL_TWOPHASE_UPLOAD_CONFIG_TIMEOUT'] = 100
+    g.s1.env['TARANTOOL_TWOPHASE_VALIDATE_CONFIG_TIMEOUT'] = 100
+    g.s1.env['TARANTOOL_TWOPHASE_APPLY_CONFIG_TIMEOUT'] = 100
+
+    g.s1:restart()
+
+    g.s1:exec(function()
+        local t = require('luatest')
+        local twophase = require('cartridge.twophase')
+
+        t.assert_equals(twophase.get_netbox_call_timeout(), 100)
+        t.assert_equals(twophase.get_upload_config_timeout(), 100)
+        t.assert_equals(twophase.get_validate_config_timeout(), 100)
+        t.assert_equals(twophase.get_apply_config_timeout(), 100)
+    end)
+
+    g.s1.env['TARANTOOL_TWOPHASE_NETBOX_CALL_TIMEOUT'] = nil
+    g.s1.env['TARANTOOL_TWOPHASE_UPLOAD_CONFIG_TIMEOUT'] = nil
+    g.s1.env['TARANTOOL_TWOPHASE_VALIDATE_CONFIG_TIMEOUT'] = nil
+    g.s1.env['TARANTOOL_TWOPHASE_APPLY_CONFIG_TIMEOUT'] = nil
+
+    g.s1:restart()
+end
