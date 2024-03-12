@@ -899,6 +899,19 @@ local function cfg(opts, box_opts)
         box.ctl.on_shutdown(roles.stop)
     end
 
+    if opts.twophase_netbox_call_timeout then
+        twophase.set_netbox_call_timeout(opts.twophase_netbox_call_timeout)
+    end
+    if opts.twophase_upload_config_timeout then
+        twophase.set_upload_config_timeout(opts.twophase_upload_config_timeout)
+    end
+    if opts.twophase_validate_config_timeout then
+        twophase.set_validate_config_timeout(opts.twophase_validate_config_timeout)
+    end
+    if opts.twophase_apply_config_timeout then
+        twophase.set_apply_config_timeout(opts.twophase_apply_config_timeout)
+    end
+
     local ok, err = confapplier.init({
         workdir = opts.workdir,
         box_opts = box_opts,

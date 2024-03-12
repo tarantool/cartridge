@@ -116,6 +116,11 @@ local cluster_opts = {
     enable_synchro_mode = 'boolean', -- **boolean**
     disable_raft_on_small_clusters = 'boolean', -- **boolean**
     enable_failover_suppressing = 'boolean', -- **boolean**
+
+    twophase_netbox_call_timeout = 'number', -- **number**
+    twophase_upload_config_timeout = 'number', -- **number**
+    twophase_validate_config_timeout = 'number', -- **number**
+    twophase_apply_config_timeout = 'number', -- **number**
 }
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
