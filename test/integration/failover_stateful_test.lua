@@ -776,3 +776,42 @@ add('test_invalid_params', function(g)
         return require('cartridge.confapplier').get_state()
     end), 'RolesConfigured')
 end)
+
+local function get_status()
+    return S1:graphql({
+        query = [[{
+            cluster {
+                failover_state_provider_status {
+                    uri
+                    status
+                }
+            }
+        }]],
+    })
+end
+
+local test_cases = {
+    [g_stateboard] = "localhost:14401",
+    [g_etcd2] = "http://127.0.0.1:14001",
+}
+for group, uri in pairs(test_cases) do
+    group.test_get_state_provider_status = function(g)
+        helpers.retrying({}, function()
+            t.assert(g.client:get_session():get_coordinator())
+        end)
+
+        local resp = get_status()
+        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['uri'], uri)
+        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['status'], true)
+
+        -- stop state provider
+        g.state_provider:stop()
+
+        local resp = get_status()
+        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['uri'], uri)
+        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['status'], false)
+        g.state_provider:start()
+    end
+end
+
+

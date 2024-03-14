@@ -5,6 +5,9 @@
 local checks = require('checks')
 local errors = require('errors')
 local fun = require('fun')
+local net_box = require('net.box')
+local httpc = require('http.client')
+local digest = require('digest')
 
 local twophase = require('cartridge.twophase')
 local topology = require('cartridge.topology')
@@ -351,12 +354,57 @@ local function resume()
     return true
 end
 
+local --[[const]] PING_TIMEOUT = 3 -- seconds
+--- Gets status of the state provider if stateful failover is enabled.
+--
+-- @function get_state_provider_status
+--
+-- @treturn table {"state-provider-url": bool status}
+--   or empty table if there are no state provider
+local function get_state_provider_status()
+    local failover_params = topology.get_failover_params(
+        confapplier.get_readonly('topology')
+    )
+    if failover_params.mode == 'stateful' then
+        if failover_params.state_provider == 'etcd2' then
+            local result = {}
+            local etcd_params = failover_params.etcd2_params
+            local etcd_uris = etcd_params.endpoints
+            local http_auth
+            if failover_params.etcd2_params.username ~= '' then
+                local credentials = etcd_params.username .. ":" .. etcd_params.password
+                http_auth = "Basic " .. digest.base64_encode(credentials)
+            end
+            for _, uri in ipairs(etcd_uris) do
+                local resp = httpc.head(uri, {
+                    timeout = PING_TIMEOUT,
+                    headers = {
+                        ['Authorization'] = http_auth,
+                    },
+                })
+                result[uri] = resp.headers ~= nil
+            end
+            return result
+        elseif failover_params.state_provider == 'tarantool' then
+            local state_provider_uri = failover_params.tarantool_params.uri
+            local conn = net_box.connect(state_provider_uri, {
+                user = 'client',
+                password = failover_params.tarantool_params.password,
+            })
+            return {[state_provider_uri] = conn:ping({timeout = PING_TIMEOUT})}
+        end
+    end
+
+    return {}
+end
+
 return {
     get_params = get_params,
     set_params = set_params,
     promote = promote,
     pause = pause,
     resume = resume,
+    get_state_provider_status = get_state_provider_status,
     get_failover_enabled = get_failover_enabled, -- deprecated
     set_failover_enabled = set_failover_enabled, -- deprecated
 }
