@@ -34,11 +34,10 @@ jobs:
         # dependencies are already there.
         run: sudo dpkg -i tarantool*.deb
 
-      # Setup etcd
-      - name: 'Install etcd'
-        uses: ./.github/actions/setup-etcd
+      - name: Set up etcd
+        uses: tarantool/actions/setup-etcd@master
         with:
-          etcd-version: v2.3.8
+          version: v2.3.8
           install-prefix: etcd-v2.3.8
 
       # Setup luatest
