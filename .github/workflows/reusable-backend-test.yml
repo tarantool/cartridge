@@ -13,7 +13,7 @@ env:
   # Skip building frontend in `tarantoolctl rocks make`.
   CMAKE_DUMMY_WEBUI: true
   # Prerequisite for some etcd-related tests.
-  ETCD_PATH: etcd-v2.3.8/etcd
+  ETCD_VERSION: v2.3.8
 
 jobs:
   run_tests:
@@ -37,8 +37,8 @@ jobs:
       - name: Set up etcd
         uses: tarantool/actions/setup-etcd@master
         with:
-          version: v2.3.8
-          install-prefix: etcd-v2.3.8
+          version: ${{ env.ETCD_VERSION }}
+          install-prefix: etcd-${{ env.ETCD_VERSION }}
 
       # Setup luatest
       - name: 'Install luatest'
@@ -65,6 +65,8 @@ jobs:
       # Run tests
       - name: 'Run luatest'
         run: .rocks/bin/luatest -v -b
+        env:
+          ETCD_PATH: etcd-${{ env.ETCD_VERSION }}/etcd
       - name: 'Run pytest'
         run: |
           source ./pytest-venv/bin/activate
