@@ -69,10 +69,23 @@ $selectedReplicasetConfigureUuid
   .reset(clusterPageCloseEvent);
 
 // effects
-editReplicasetFx.use(({ uuid, alias, roles, weight, all_rw, vshard_group, failover_priority, join_servers }) =>
-  graphql.fetch(editTopologyMutation, {
-    replicasets: [{ uuid, alias, roles, weight, all_rw, vshard_group, failover_priority, join_servers }],
-  })
+editReplicasetFx.use(
+  ({ uuid, alias, roles, weight, all_rw, rebalancer, vshard_group, failover_priority, join_servers }) =>
+    graphql.fetch(editTopologyMutation, {
+      replicasets: [
+        {
+          uuid,
+          alias,
+          roles,
+          weight,
+          all_rw,
+          vshard_group,
+          failover_priority,
+          join_servers,
+          rebalancer: rebalancer ?? null,
+        },
+      ],
+    })
 );
 
 synchronizeReplicasetConfigureLocationFx.use(({ props, open }) => {

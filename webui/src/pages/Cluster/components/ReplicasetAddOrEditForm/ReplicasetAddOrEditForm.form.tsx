@@ -5,6 +5,7 @@ import { GetClusterRole, KnownRolesNamesResult, Maybe, ServerListReplicaset, Ser
 export interface ReplicasetAddOrEditValues {
   alias: string | null;
   all_rw: boolean;
+  rebalancer: boolean | null;
   roles: string[];
   vshard_group: string | null;
   failover_priority: string[];
@@ -41,6 +42,7 @@ const validationSchemaCreator = ({ knownRolesNames }: Pick<ReplicasetAddOrEditFo
           return /^[a-zA-Z0-9-_.]+$/.test(value);
         }),
       all_rw: yup.boolean(),
+      rebalancer: yup.boolean().nullable(),
       roles: yup.array(yup.string()),
       vshard_group: yup
         .string()
@@ -69,6 +71,7 @@ export const withReplicasetAddOrEditForm = withFormik<ReplicasetAddOrEditFormPro
   mapPropsToValues: ({ replicaset }) => ({
     alias: replicaset?.alias ?? null,
     all_rw: replicaset?.all_rw ?? false,
+    rebalancer: replicaset?.rebalancer ?? null,
     roles: replicaset?.roles ?? [],
     vshard_group: replicaset?.vshard_group ?? null,
     failover_priority: replicaset?.servers.map(({ uuid }) => uuid) ?? [],

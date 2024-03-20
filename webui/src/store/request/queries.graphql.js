@@ -85,6 +85,7 @@ export const getClusterQuery = gql`
         name
         bucket_count
         bootstrapped
+        rebalancer_mode
       }
       authParams: auth_params {
         enabled
@@ -324,6 +325,7 @@ export const listQuery = gql`
       zone
       status
       message
+      rebalancer
       labels {
         name
         value
@@ -344,6 +346,7 @@ export const listQuery = gql`
       status
       roles
       vshard_group
+      rebalancer
       master {
         uuid
       }
@@ -359,6 +362,7 @@ export const listQuery = gql`
         uri
         priority
         status
+        rebalancer
         labels {
           name
           value
@@ -366,6 +370,9 @@ export const listQuery = gql`
         boxinfo {
           general {
             ro
+          }
+          vshard_storage {
+            rebalancer_enabled
           }
         }
         message
@@ -443,6 +450,16 @@ export const editTopologyMutation = gql`
         servers {
           uuid
         }
+      }
+    }
+  }
+`;
+
+export const changeRebalancerModeMutation = gql`
+  mutation changeRebalancerMode($name: String!, $rebalancer_mode: String!) {
+    cluster {
+      edit_vshard_options(name: $name, rebalancer_mode: $rebalancer_mode) {
+        rebalancer_mode
       }
     }
   }

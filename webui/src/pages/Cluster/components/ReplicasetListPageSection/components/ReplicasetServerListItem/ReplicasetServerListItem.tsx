@@ -16,6 +16,7 @@ import ReplicasetListBuckets from '../ReplicasetListBuckets';
 import ReplicasetListMemStat from '../ReplicasetListMemStat';
 import ReplicasetListStatus from '../ReplicasetListStatus';
 import ReplicasetListTag from '../ReplicasetListTag';
+import { IconRebalancer } from '../IconRebalancer';
 
 import { styles } from './ReplicasetServerListItem.styles';
 
@@ -50,6 +51,7 @@ export interface ReplicasetServerListItemServerAdditional {
   ro?: boolean;
   statistics?: Maybe<ReplicasetServerListItemStatistic>;
   filterMatching?: boolean;
+  vshardStorageRebalancer?: 'true' | 'false' | 'instance';
 }
 
 export interface ReplicasetServerListItemProps {
@@ -61,7 +63,16 @@ export interface ReplicasetServerListItemProps {
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   const {
     server: { uuid, uri, alias, status, disabled = false, electable = true, message, labels },
-    additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics, filterMatching },
+    additional: {
+      master,
+      activeMaster,
+      selfURI,
+      vshardGroupBucketsCount,
+      ro,
+      statistics,
+      filterMatching,
+      vshardStorageRebalancer,
+    },
     showFailoverPromote,
   } = props;
 
@@ -128,6 +139,11 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
           {labels?.length ? <div className={styles.wrapSL}>{labelsParse}</div> : null}
         </div>
         <div className={cx(styles.div, styles.grow)} />
+        {vshardStorageRebalancer && (
+          <div className={styles.rebalancer}>
+            <IconRebalancer type={vshardStorageRebalancer} />
+          </div>
+        )}
         <div className={styles.status}>
           <ReplicasetListStatus status={status} message={message} />
         </div>
