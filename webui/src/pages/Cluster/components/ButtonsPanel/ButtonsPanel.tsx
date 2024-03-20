@@ -11,6 +11,7 @@ import BootstrapButton from '../BootstrapButton';
 import FailoverButton from '../FailoverButton';
 import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
+import RebalancerModeButton from '../RebalancerModeButton';
 import SuggestionsButton from '../SuggestionsButton';
 
 const { compact } = app.utils;
@@ -49,6 +50,7 @@ const ButtonsPanel = () => {
                 implements_check_password={!!authParams.implements_check_password}
               />
             ),
+            <RebalancerModeButton key="RebalancerModeButton" />,
             <FailoverButton key="FailoverButton" />,
             params.showBootstrap && <BootstrapButton key="BootstrapButton" />,
           ])

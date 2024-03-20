@@ -68,4 +68,7 @@ export const styles = {
   grow: css`
     flex-grow: 1 !important;
   `,
+  rebalancer: css`
+    margin-right: 8px;
+  `,
 };

@@ -28,6 +28,8 @@ export type Apicluster = {|
   failover: $ElementType<Scalars, 'Boolean'>,
   /** Get automatic failover configuration. */
   failover_params: FailoverApi,
+  /** Get state provider status. */
+  failover_state_provider_status: Array<?StateProviderStatus>,
   /** List issues in cluster */
   issues?: ?Array<Issue>,
   /** Get list of all registered roles and their dependencies. */
@@ -114,6 +116,7 @@ export type EditReplicasetInput = {|
   all_rw?: ?$ElementType<Scalars, 'Boolean'>,
   failover_priority?: ?Array<$ElementType<Scalars, 'String'>>,
   join_servers?: ?Array<?JoinServerInput>,
+  rebalancer?: ?$ElementType<Scalars, 'Boolean'>,
   roles?: ?Array<$ElementType<Scalars, 'String'>>,
   uuid?: ?$ElementType<Scalars, 'String'>,
   vshard_group?: ?$ElementType<Scalars, 'String'>,
@@ -126,6 +129,7 @@ export type EditServerInput = {|
   electable?: ?$ElementType<Scalars, 'Boolean'>,
   expelled?: ?$ElementType<Scalars, 'Boolean'>,
   labels?: ?Array<?LabelInput>,
+  rebalancer?: ?$ElementType<Scalars, 'Boolean'>,
   uri?: ?$ElementType<Scalars, 'String'>,
   uuid: $ElementType<Scalars, 'String'>,
   zone?: ?$ElementType<Scalars, 'String'>,
@@ -240,6 +244,7 @@ export type Issue = {|
 /** Parameters for joining a new server */
 export type JoinServerInput = {|
   labels?: ?Array<?LabelInput>,
+  rebalancer?: ?$ElementType<Scalars, 'Boolean'>,
   uri: $ElementType<Scalars, 'String'>,
   uuid?: ?$ElementType<Scalars, 'String'>,
   zone?: ?$ElementType<Scalars, 'String'>,
@@ -420,6 +425,7 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {|
   rebalancer_disbalance_threshold?: ?$ElementType<Scalars, 'Float'>,
   rebalancer_max_receiving?: ?$ElementType<Scalars, 'Int'>,
   rebalancer_max_sending?: ?$ElementType<Scalars, 'Int'>,
+  rebalancer_mode?: ?$ElementType<Scalars, 'String'>,
   sched_move_quota?: ?$ElementType<Scalars, 'Long'>,
   sched_ref_quota?: ?$ElementType<Scalars, 'Long'>,
   sync_timeout?: ?$ElementType<Scalars, 'Float'>,
@@ -527,6 +533,8 @@ export type Replicaset = {|
   all_rw: $ElementType<Scalars, 'Boolean'>,
   /** The leader according to the configuration. */
   master: Server,
+  /** Is the rebalancer enabled for the replica set. */
+  rebalancer?: ?$ElementType<Scalars, 'Boolean'>,
   /** The role set enabled on every instance in the replica set */
   roles?: ?Array<$ElementType<Scalars, 'String'>>,
   /** Servers in the replica set. */
@@ -573,6 +581,8 @@ export type Server = {|
   message: $ElementType<Scalars, 'String'>,
   /** Failover priority within the replica set */
   priority?: ?$ElementType<Scalars, 'Int'>,
+  /** Is rebalancer enabled for this instance */
+  rebalancer?: ?$ElementType<Scalars, 'Boolean'>,
   replicaset?: ?Replicaset,
   statistics?: ?ServerStat,
   status: $ElementType<Scalars, 'String'>,
@@ -778,10 +788,10 @@ export type ServerInfoVshardStorage = {|
   buckets_sending?: ?$ElementType<Scalars, 'Int'>,
   /** Total number of buckets on the storage */
   buckets_total?: ?$ElementType<Scalars, 'Int'>,
+  /** Whether the rebalancer is enabled */
+  rebalancer_enabled?: ?$ElementType<Scalars, 'Boolean'>,
   /** Vshard group */
   vshard_group?: ?$ElementType<Scalars, 'String'>,
-  /** Is rebalancer enabled */
-  rebalancer_enabled?: ?$ElementType<Scalars, 'Boolean'>,
 |};
 
 /** A short server information */
@@ -832,6 +842,15 @@ export type SpaceCompressionInfo = {|
   fields_be_compressed: Array<FieldCompressionInfo>,
   /** space name */
   space_name: $ElementType<Scalars, 'String'>,
+|};
+
+/** Failover state provider status */
+export type StateProviderStatus = {|
+  __typename?: 'StateProviderStatus',
+  /** State provider status */
+  status: $ElementType<Scalars, 'Boolean'>,
+  /** State provider uri */
+  uri: $ElementType<Scalars, 'String'>,
 |};
 
 export type Suggestions = {|
@@ -895,6 +914,8 @@ export type VshardGroup = {|
   rebalancer_max_receiving: $ElementType<Scalars, 'Int'>,
   /** The maximum number of buckets that can be sent in parallel by a single replica set in the storage group */
   rebalancer_max_sending: $ElementType<Scalars, 'Int'>,
+  /** Rebalancer mode */
+  rebalancer_mode: $ElementType<Scalars, 'String'>,
   /** Scheduler bucket move quota */
   sched_move_quota: $ElementType<Scalars, 'Long'>,
   /** Scheduler storage ref quota */
@@ -987,7 +1008,7 @@ export type GetClusterQuery = ({
       ...$Pick<Role, {| name: *, dependencies?: *, implies_storage: *, implies_router: * |}>
     })>, vshard_groups: Array<({
         ...{ __typename?: 'VshardGroup' },
-      ...$Pick<VshardGroup, {| name: *, bucket_count: *, bootstrapped: * |}>
+      ...$Pick<VshardGroup, {| name: *, bucket_count: *, bootstrapped: *, rebalancer_mode: * |}>
     })>, authParams: ({
         ...{ __typename?: 'UserManagementAPI' },
       ...$Pick<UserManagementApi, {| enabled: *, implements_add_user: *, implements_check_password: *, implements_list_users: *, implements_edit_user: *, implements_remove_user: *, username?: * |}>
@@ -1249,7 +1270,7 @@ export type ServerListQuery = ({
     }) |}
   }), serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, zone?: *, status: *, message: * |}>,
+    ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, zone?: *, status: *, message: *, rebalancer?: * |}>,
     ...{| labels?: ?Array<?({
         ...{ __typename?: 'Label' },
       ...$Pick<Label, {| name: *, value: * |}>
@@ -1265,7 +1286,7 @@ export type ServerListQuery = ({
     }) |}
   })>, replicasetList?: ?Array<?({
       ...{ __typename?: 'Replicaset' },
-    ...$Pick<Replicaset, {| alias: *, all_rw: *, uuid: *, status: *, roles?: *, vshard_group?: *, weight?: * |}>,
+    ...$Pick<Replicaset, {| alias: *, all_rw: *, uuid: *, status: *, roles?: *, vshard_group?: *, rebalancer?: *, weight?: * |}>,
     ...{| master: ({
         ...{ __typename?: 'Server' },
       ...$Pick<Server, {| uuid: * |}>
@@ -1274,7 +1295,7 @@ export type ServerListQuery = ({
       ...$Pick<Server, {| uuid: * |}>
     }), servers: Array<({
         ...{ __typename?: 'Server' },
-      ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, priority?: *, status: *, message: * |}>,
+      ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, priority?: *, status: *, rebalancer?: *, message: * |}>,
       ...{| labels?: ?Array<?({
           ...{ __typename?: 'Label' },
         ...$Pick<Label, {| name: *, value: * |}>
@@ -1283,6 +1304,9 @@ export type ServerListQuery = ({
         ...{| general: ({
             ...{ __typename?: 'ServerInfoGeneral' },
           ...$Pick<ServerInfoGeneral, {| ro: * |}>
+        }), vshard_storage?: ?({
+            ...{ __typename?: 'ServerInfoVshardStorage' },
+          ...$Pick<ServerInfoVshardStorage, {| rebalancer_enabled?: * |}>
         }) |}
       }), replicaset?: ?({
           ...{ __typename?: 'Replicaset' },
@@ -1374,6 +1398,23 @@ export type EditTopologyMutation = ({
           ...{ __typename?: 'Server' },
         ...$Pick<Server, {| uuid: * |}>
       })> |}
+    }) |}
+  }) |}
+});
+
+export type ChangeRebalancerModeMutationVariables = {
+  name: $ElementType<Scalars, 'String'>,
+  rebalancer_mode: $ElementType<Scalars, 'String'>,
+};
+
+
+export type ChangeRebalancerModeMutation = ({
+    ...{ __typename?: 'Mutation' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'MutationApicluster' },
+    ...{| edit_vshard_options: ({
+        ...{ __typename?: 'VshardGroup' },
+      ...$Pick<VshardGroup, {| rebalancer_mode: * |}>
     }) |}
   }) |}
 });

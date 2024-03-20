@@ -56,6 +56,14 @@ export const failoverParams = (data: GetCluster): GetClusterFailoverParams | und
 
 export const failoverParamsMode = (data: GetCluster): string | undefined => failoverParams(data)?.mode;
 
+export const rebalancerMode = (data: GetCluster): { name: string; rebalancer_mode: string } | undefined =>
+  data?.cluster?.vshard_groups[0]
+    ? {
+        name: data.cluster.vshard_groups[0].name,
+        rebalancer_mode: data.cluster.vshard_groups[0].rebalancer_mode,
+      }
+    : undefined;
+
 export const isConfigured = (data: GetCluster): boolean => isClusterSelfConfigured(clusterSelf(data));
 
 export const knownRolesNames = (data: GetCluster): KnownRolesNamesResult => {

@@ -16,6 +16,8 @@ Unreleased
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Add "rebalancer_mode" and "rebalancer" options on web UI. 
+
 - Twophase commit timeouts now can be set with env.
 
 - New GraphQL API ``failover_state_provider_status`` to ping state provider connection.
