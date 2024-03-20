@@ -44,6 +44,7 @@ local function get_params()
     --   (added in v2.0.2-2)
     -- @tfield string tarantool_params.uri
     -- @tfield string tarantool_params.password
+    -- @tfield ?table tarantool_params.backup_uris
     -- @tfield ?table etcd2_params
     --   (added in v2.1.2-26)
     -- @tfield string etcd2_params.prefix
@@ -296,6 +297,62 @@ local function promote(replicaset_leaders, opts)
     return true
 end
 
+--- Promote leaders in stateboard.
+--
+-- @function promote
+-- @param string new_leader_uri New stateboard leader URI
+-- @tparam[opt] table opts
+--
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function stateboard_promote(new_leader_uri, _)
+    local current_params = get_params()
+
+    if current_params.mode ~= 'stateful' or current_params.state_provider ~= 'tarantool' then
+        return nil, PromoteLeaderError:new(
+            "Stateboard promotion is available only in stateful mode" ..
+            " with Tarantool state provider"
+        )
+    end
+
+    if new_leader_uri == current_params.tarantool_params.uri then
+        return nil, PromoteLeaderError:new("%s already is a leader", new_leader_uri)
+    end
+
+    local found = false
+    for _, uri in ipairs(current_params.tarantool_params.backup_uris or {}) do
+        if uri == new_leader_uri then
+            found = true
+            break
+        end
+    end
+    if not found then
+        return nil, PromoteLeaderError:new("%s is not in backup_uris", new_leader_uri)
+    end
+
+    local conn = net_box.connect(new_leader_uri, {
+        user = 'client',
+        password = current_params.tarantool_params.password,
+    })
+    local ok, err = pcall(conn.call, conn ,'box.ctl.promote')
+    if not ok then
+        return nil, PromoteLeaderError:new(err)
+    end
+
+    return set_params({
+        tarantool_params = {
+            uri = new_leader_uri,
+            password = current_params.tarantool_params.password,
+            backup_uris = {
+                current_params.tarantool_params.uri,
+                unpack(fun.iter(current_params.tarantool_params.backup_uris):
+                    filter(function(x) return x ~= new_leader_uri end):totable()),
+            },
+        }
+    })
+end
+
 --- Stops failover across cluster at runtime. Will be useful in case of "failover storms"
 -- when failover triggers too many times in minute.
 --
@@ -386,12 +443,19 @@ local function get_state_provider_status()
             end
             return result
         elseif failover_params.state_provider == 'tarantool' then
-            local state_provider_uri = failover_params.tarantool_params.uri
-            local conn = net_box.connect(state_provider_uri, {
-                user = 'client',
-                password = failover_params.tarantool_params.password,
-            })
-            return {[state_provider_uri] = conn:ping({timeout = PING_TIMEOUT})}
+            local state_provider_uris = {
+                failover_params.tarantool_params.uri,
+                unpack(failover_params.tarantool_params.backup_uris or {}),
+            }
+            local result = {}
+            for _, uri in ipairs(state_provider_uris) do
+                local conn = net_box.connect(uri, {
+                    user = 'client',
+                    password = failover_params.tarantool_params.password,
+                })
+                result[uri] = conn:ping({timeout = PING_TIMEOUT})
+            end
+            return result
         end
     end
 
@@ -402,6 +466,7 @@ return {
     get_params = get_params,
     set_params = set_params,
     promote = promote,
+    stateboard_promote = stateboard_promote,
     pause = pause,
     resume = resume,
     get_state_provider_status = get_state_provider_status,

@@ -806,7 +806,9 @@ Decisions are made by one of the instances with the ``failover-coordinator``
 role enabled. There are two options of external state provider:
 
 - Tarantool Stateboard - you need to run instance of stateboard with command
-  ``tarantool stateboard.init.lua``.
+  ``tarantool stateboard.init.lua``. You can also run a cluster of stateboards
+  using env parameter ``TARANTOOL_STATEBOARD_REPLICATION='uri1,uri2,...`` and
+  specify backup uris in failover configuration.
 
 - etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
   API is supported**, so you can still use etcd v3 with ``ETCD_ENABLE_V2=true``.
