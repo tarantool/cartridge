@@ -74,7 +74,7 @@ g_stateboard.before_all(function()
     g.kvpassword = helpers.random_cookie()
     g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
-        workdir = fio.pathjoin(g.datadir, 'stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard-1'),
         net_box_port = 14401,
         net_box_credentials = {
             user = 'client',
@@ -83,10 +83,28 @@ g_stateboard.before_all(function()
         env = {
             TARANTOOL_LOCK_DELAY = 2,
             TARANTOOL_PASSWORD = g.kvpassword,
+            TARANTOOL_STATEBOARD_REPLICATION = 'localhost:14401,localhost:14402',
+        },
+    })
+
+    g.second_state_provider = helpers.Stateboard:new({
+        command = helpers.entrypoint('srv_stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard-2'),
+        net_box_port = 14402,
+        net_box_credentials = {
+            user = 'client',
+            password = g.kvpassword,
+        },
+        env = {
+            TARANTOOL_LOCK_DELAY = 2,
+            TARANTOOL_PASSWORD = g.kvpassword,
+            TARANTOOL_STATEBOARD_REPLICATION = 'localhost:14401,localhost:14402',
         },
     })
 
     g.state_provider:start()
+    g.second_state_provider:start()
+
     g.client = stateboard_client.new({
         uri = 'localhost:' .. g.state_provider.net_box_port,
         password = g.kvpassword,
@@ -103,6 +121,7 @@ g_stateboard.before_all(function()
             tarantool_params = {
                 uri = g.state_provider.net_box_uri,
                 password = g.kvpassword,
+                backup_uris = {g.second_state_provider.net_box_uri},
             },
         }}
     ))
@@ -152,6 +171,10 @@ local function after_all(g)
     g.cluster:stop()
     g.state_provider:stop()
     fio.rmtree(g.state_provider.workdir)
+    if g.second_state_provider then
+        g.second_state_provider:stop()
+        fio.rmtree(g.second_state_provider.workdir)
+    end
     fio.rmtree(g.datadir)
 end
 g_stateboard.after_all(function() after_all(g_stateboard) end)
@@ -236,9 +259,7 @@ add('test_state_provider_restart', function(g)
         }})
     end)
 
-    fio.rmtree(g.state_provider.workdir)
     g.state_provider:start()
-
     helpers.retrying({}, function()
         t.assert_covers(
             g.client:get_session():get_leaders(),
@@ -778,7 +799,7 @@ add('test_invalid_params', function(g)
 end)
 
 local function get_status()
-    return S1:graphql({
+    local result = S1:graphql({
         query = [[{
             cluster {
                 failover_state_provider_status {
@@ -788,30 +809,78 @@ local function get_status()
             }
         }]],
     })
+    table.sort(result['data']['cluster']['failover_state_provider_status'], function(a, b)
+        return a.uri < b.uri
+    end)
+    return result
 end
 
 local test_cases = {
-    [g_stateboard] = "localhost:14401",
-    [g_etcd2] = "http://127.0.0.1:14001",
+    [g_stateboard] = {"localhost:14401", "localhost:14402"},
+    [g_etcd2] = {"http://127.0.0.1:14001"},
 }
-for group, uri in pairs(test_cases) do
+for group, uris in pairs(test_cases) do
     group.test_get_state_provider_status = function(g)
         helpers.retrying({}, function()
             t.assert(g.client:get_session():get_coordinator())
         end)
 
         local resp = get_status()
-        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['uri'], uri)
-        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['status'], true)
-
+        for i, uri in ipairs(uris) do
+            t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][i]['uri'], uri)
+            t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][i]['status'], true)
+        end
         -- stop state provider
         g.state_provider:stop()
+        if g.second_state_provider then
+            g.second_state_provider:stop()
+        end
 
         local resp = get_status()
-        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['uri'], uri)
-        t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][1]['status'], false)
+        for i, uri in ipairs(uris) do
+            t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][i]['uri'], uri)
+            t.assert_equals(resp['data']['cluster']['failover_state_provider_status'][i]['status'], false)
+        end
         g.state_provider:start()
+        if g.second_state_provider then
+            g.second_state_provider:start()
+        end
     end
 end
 
+g_stateboard.test_change_state_provider = function(g)
+    local resp, err = S1:graphql({
+        query = [[
+            mutation {
+                cluster {
+                    failover_stateboard_promote(
+                        new_leader_uri: "localhost:14402"
+                    )
+                }
+            }
+        ]]
+    }, {raise = false})
+    t.assert_not(err)
+    t.assert_equals(resp['data']['cluster']['failover_stateboard_promote'], true)
 
+    local res = g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_get_params'
+    )
+    t.assert_equals(res['tarantool_params'], {
+        uri = 'localhost:14402',
+        backup_uris = {'localhost:14401'},
+        password = g.kvpassword,
+    })
+
+    local _ = S1:graphql({
+        query = [[
+            mutation {
+                cluster {
+                    failover_stateboard_promote(
+                        new_leader_uri: "localhost:14401"
+                    )
+                }
+            }
+        ]]
+    })
+end

@@ -19,6 +19,7 @@ local gql_type_tarantool_cfg_input = gql_types.inputObject {
     fields = {
         uri = gql_types.string.nonNull,
         password = gql_types.string.nonNull,
+        backup_uris = gql_types.list(gql_types.string),
     }
 }
 
@@ -139,6 +140,10 @@ local function get_state_provider_status(_, _)
     return result
 end
 
+local function stateboard_promote(_, args)
+    return lua_api_failover.stateboard_promote(args.new_leader_uri)
+end
+
 local function init(graphql)
 
     graphql.add_callback({
@@ -180,6 +185,17 @@ local function init(graphql)
         args = {},
         kind = gql_types.list(gql_type_state_provider_status).nonNull,
         callback = module_name .. '.get_state_provider_status',
+    })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'failover_stateboard_promote',
+        doc = 'Promote stateboard instance',
+        args = {
+            new_leader_uri = gql_types.string
+        },
+        kind = gql_types.boolean.nonNull,
+        callback = module_name .. '.stateboard_promote',
     })
 
     graphql.add_mutation({
@@ -242,6 +258,7 @@ return {
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
     get_state_provider_status = get_state_provider_status,
+    stateboard_promote = stateboard_promote,
     promote = promote,
     pause = pause,
     resume = resume,

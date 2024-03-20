@@ -25,6 +25,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         -- tarantool_params = nil | {
         --     uri = string,
         --     password = string,
+        --     backup_uris = nil | {string,...},
         -- },
         -- etcd2_params = nil | {
         --     prefix = nil | string,
@@ -585,6 +586,27 @@ local function validate_failover_schema(field, topology)
                 '%s.uri: %s',
                 field, err and err.err
             )
+            if params.backup_uris ~= nil then
+                e_config:assert(
+                    type(params.backup_uris) == 'table',
+                    '%s.backup_uris must be a table, got %s',
+                    field, type(params)
+                )
+                for i, uri in ipairs(params.backup_uris) do
+                    e_config:assert(
+                        type(uri) == 'string',
+                        '%s.backup_uris[%d] must be a string, got %s',
+                        field, i, type(params.uri)
+                    )
+
+                    local _, err = pool.format_uri(uri)
+                    e_config:assert(
+                        not err,
+                        '%s.backup_uris[%d]: %s',
+                        field, i, err and err.err
+                    )
+                end
+            end
 
             e_config:assert(
                 type(params.password) == 'string',
@@ -595,6 +617,7 @@ local function validate_failover_schema(field, topology)
             local known_keys = {
                 ['uri'] = true,
                 ['password'] = true,
+                ['backup_uris'] = true,
             }
             for k, _ in pairs(params) do
                 e_config:assert(
@@ -899,6 +922,10 @@ local function get_failover_params(topology_cfg)
         if ret.etcd2_params ~= nil then
             utils.table_setrw(ret.etcd2_params)
         end
+
+        if ret.tarantool_params ~= nil then
+            utils.table_setrw(ret.tarantool_params)
+        end
     else
         local err = string.format(
             'assertion failed! topology.failover = %s (%s)',
@@ -935,6 +962,10 @@ local function get_failover_params(topology_cfg)
 
     if ret.tarantool_params.password == nil then
         ret.tarantool_params.password = ''
+    end
+
+    if ret.tarantool_params.backup_uris == nil then
+        ret.tarantool_params.backup_uris = {}
     end
 
     -- Enrich etcd2 params with defaults

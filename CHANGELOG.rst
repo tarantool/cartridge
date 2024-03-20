@@ -20,6 +20,9 @@ Added
 
 - New GraphQL API ``failover_state_provider_status`` to ping state provider connection.
 
+- Allow to setup several Tarantool Stateboard instances in the same cluster and change between
+  them using GraphQL API.
+
 -------------------------------------------------------------------------------
 [2.9.0] - 2024-03-06
 -------------------------------------------------------------------------------

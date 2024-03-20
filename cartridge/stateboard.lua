@@ -1,5 +1,6 @@
 local log = require('log')
 local fio = require('fio')
+local uri = require('uri')
 local clock = require('clock')
 local fiber = require('fiber')
 local checks = require('checks')
@@ -237,7 +238,8 @@ local function cfg()
         workdir = 'string',
         password = 'string',
         lock_delay = 'number',
-        console_sock = 'string'
+        console_sock = 'string',
+        stateboard_replication = 'string',
     })
 
     if err ~= nil then
@@ -253,6 +255,10 @@ local function cfg()
         error('"workdir" must be specified', 0)
     end
 
+    if opts.password == nil then
+        opts.password = ''
+    end
+
     local ok, err = fio.mktree(opts.workdir)
     if not ok then
         error(err, 0)
@@ -263,11 +269,42 @@ local function cfg()
         error('Box configuration error: ' .. tostring(err), 0)
     end
 
-    -- listen will be enabled when all spaces are set up
-    box_opts.listen = nil
+    local replication = {}
+    local is_leader = true
+
+    if opts.stateboard_replication ~= nil then
+        replication = opts.stateboard_replication:split(',')
+        local first_uri = uri.parse(replication[1])
+        if type(box_opts.listen) == 'string' then
+            local listen_uri = uri.parse(box_opts.listen)
+            is_leader = first_uri.service == listen_uri.service
+        elseif type(box_opts.listen) == 'number' then
+            is_leader = tonumber(first_uri.service) == box_opts.listen
+        end
+    end
+    for i, uri in ipairs(replication) do
+        replication[i] = 'client:' .. opts.password .. '@' .. uri
+    end
+
     box_opts.work_dir = opts.workdir
+    box_opts.listen = opts.listen
+    box_opts.replication = replication
+    box_opts.election_mode = 'manual'
+    box_opts.bootstrap_strategy = 'auto'
 
     box.cfg(box_opts)
+
+    local PROMOTE_TIMEOUT = 5
+    local now = fiber.clock()
+    if is_leader == true then
+        repeat
+            if fiber.clock() - now > PROMOTE_TIMEOUT then
+                error('Failed to promote stateboard')
+            end
+            local ok = pcall(box.ctl.promote)
+        until ok == true
+        box.ctl.wait_rw(3)
+    end
 
     if opts.console_sock ~= nil then
         local sock = console.listen('unix/:' .. opts.console_sock)
@@ -292,165 +329,166 @@ local function cfg()
     rawset(_G, 'delete_replicasets', delete_replicasets)
     rawset(_G, 'set_identification_string', set_identification_string)
 
-    ------------------------------------------------------------------------
-    box.schema.user.create('client', { if_not_exists = true })
-    box.schema.user.passwd('client', opts.password)
+    if is_leader == true then
+        ------------------------------------------------------------------------
+        box.schema.user.create('client', { if_not_exists = true })
+        box.schema.user.passwd('client', opts.password)
 
-    ------------------------------------------------------------------------
-    box.schema.func.create('get_coordinator', { if_not_exists = true })
-    box.schema.func.create('get_lock_delay', { if_not_exists = true })
-    box.schema.func.create('acquire_lock', { if_not_exists = true })
-    box.schema.func.create('set_leaders', { if_not_exists = true })
-    box.schema.func.create('get_leaders', { if_not_exists = true })
-    box.schema.func.create('longpoll', { if_not_exists = true })
-    box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
-    box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
-    box.schema.func.create('delete_replicasets', { if_not_exists = true })
-    box.schema.func.create('set_identification_string', { if_not_exists = true })
+        ------------------------------------------------------------------------
+        box.schema.func.create('get_coordinator', { if_not_exists = true })
+        box.schema.func.create('get_lock_delay', { if_not_exists = true })
+        box.schema.func.create('acquire_lock', { if_not_exists = true })
+        box.schema.func.create('set_leaders', { if_not_exists = true })
+        box.schema.func.create('get_leaders', { if_not_exists = true })
+        box.schema.func.create('longpoll', { if_not_exists = true })
+        box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
+        box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
+        box.schema.func.create('delete_replicasets', { if_not_exists = true })
+        box.schema.func.create('set_identification_string', { if_not_exists = true })
+        box.schema.func.create('box.ctl.promote', { if_not_exists = true })
 
-    ------------------------------------------------------------------------
-    box.schema.sequence.create('coordinator_audit', {
-        if_not_exists = true
-    })
-    box.schema.space.create('coordinator_audit', {
-        format = {
-            { name = 'ordinal', type = 'unsigned', is_nullable = false },
-            { name = 'time', type = 'number', is_nullable = false },
-            { name = 'uuid', type = 'string', is_nullable = false },
-            { name = 'uri', type = 'string', is_nullable = false },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.sequence.create('coordinator_audit', {
+            if_not_exists = true
+        })
+        box.schema.space.create('coordinator_audit', {
+            format = {
+                { name = 'ordinal', type = 'unsigned', is_nullable = false },
+                { name = 'time', type = 'number', is_nullable = false },
+                { name = 'uuid', type = 'string', is_nullable = false },
+                { name = 'uri', type = 'string', is_nullable = false },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.coordinator_audit:create_index('ordinal', {
-        unique = true,
-        type = 'TREE',
-        parts = { { field = 'ordinal', type = 'unsigned' } },
-        sequence = 'coordinator_audit',
-        if_not_exists = true,
-    })
+        box.space.coordinator_audit:create_index('ordinal', {
+            unique = true,
+            type = 'TREE',
+            parts = { { field = 'ordinal', type = 'unsigned' } },
+            sequence = 'coordinator_audit',
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-    box.schema.sequence.create('leader_audit', {
-        if_not_exists = true
-    })
-    box.schema.space.create('leader_audit', {
-        format = {
-            { name = 'ordinal', type = 'unsigned', is_nullable = false },
-            { name = 'time', type = 'number', is_nullable = false },
-            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
-            { name = 'instance_uuid', type = 'string', is_nullable = false },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.sequence.create('leader_audit', {
+            if_not_exists = true
+        })
+        box.schema.space.create('leader_audit', {
+            format = {
+                { name = 'ordinal', type = 'unsigned', is_nullable = false },
+                { name = 'time', type = 'number', is_nullable = false },
+                { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+                { name = 'instance_uuid', type = 'string', is_nullable = false },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.leader_audit:create_index('ordinal', {
-        unique = true,
-        type = 'TREE',
-        parts = {
-            { field = 'ordinal', type = 'unsigned' },
-            { field = 'replicaset_uuid', type = 'string' },
-        },
-        if_not_exists = true,
-    })
+        box.space.leader_audit:create_index('ordinal', {
+            unique = true,
+            type = 'TREE',
+            parts = {
+                { field = 'ordinal', type = 'unsigned' },
+                { field = 'replicaset_uuid', type = 'string' },
+            },
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-    box.schema.space.create('leader', {
-        format = {
-            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
-            { name = 'instance_uuid', type = 'string', is_nullable = false },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.space.create('leader', {
+            format = {
+                { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+                { name = 'instance_uuid', type = 'string', is_nullable = false },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.leader:create_index('replicaset_uuid', {
-        unique = true,
-        type = 'TREE',
-        parts = { { field = 'replicaset_uuid', type = 'string' } },
-        if_not_exists = true,
-    })
+        box.space.leader:create_index('replicaset_uuid', {
+            unique = true,
+            type = 'TREE',
+            parts = { { field = 'replicaset_uuid', type = 'string' } },
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-    box.schema.sequence.create('vclockkeeper_audit', {
-        if_not_exists = true
-    })
-    box.schema.space.create('vclockkeeper_audit', {
-        format = {
-            { name = 'ordinal', type = 'unsigned', is_nullable = false },
-            { name = 'time', type = 'number', is_nullable = false },
-            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
-            { name = 'instance_uuid', type = 'string', is_nullable = false },
-            { name = 'vclock', type = 'any', is_nullable = true },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.sequence.create('vclockkeeper_audit', {
+            if_not_exists = true
+        })
+        box.schema.space.create('vclockkeeper_audit', {
+            format = {
+                { name = 'ordinal', type = 'unsigned', is_nullable = false },
+                { name = 'time', type = 'number', is_nullable = false },
+                { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+                { name = 'instance_uuid', type = 'string', is_nullable = false },
+                { name = 'vclock', type = 'any', is_nullable = true },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.vclockkeeper_audit:create_index('ordinal', {
-        unique = true,
-        type = 'TREE',
-        parts = { { field = 'ordinal', type = 'unsigned' } },
-        sequence = 'vclockkeeper_audit',
-        if_not_exists = true,
-    })
+        box.space.vclockkeeper_audit:create_index('ordinal', {
+            unique = true,
+            type = 'TREE',
+            parts = { { field = 'ordinal', type = 'unsigned' } },
+            sequence = 'vclockkeeper_audit',
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-    box.schema.space.create('vclockkeeper', {
-        format = {
-            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
-            { name = 'instance_uuid', type = 'string', is_nullable = false },
-            { name = 'ordinal', type = 'unsigned', is_nullable = false },
-            { name = 'vclock', type = 'any', is_nullable = true },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.space.create('vclockkeeper', {
+            format = {
+                { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+                { name = 'instance_uuid', type = 'string', is_nullable = false },
+                { name = 'ordinal', type = 'unsigned', is_nullable = false },
+                { name = 'vclock', type = 'any', is_nullable = true },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.vclockkeeper:create_index('replicaset_uuid', {
-        unique = true,
-        type = 'TREE',
-        parts = { { field = 'replicaset_uuid', type = 'string' } },
-        if_not_exists = true,
-    })
+        box.space.vclockkeeper:create_index('replicaset_uuid', {
+            unique = true,
+            type = 'TREE',
+            parts = { { field = 'replicaset_uuid', type = 'string' } },
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-    box.schema.space.create('identification_string', {
-        format = {
-            { name = 'id_name', type = 'string', is_nullable = false },
-            { name = 'id_value', type = 'string', is_nullable = false },
-        },
-        if_not_exists = true,
-    })
+        ------------------------------------------------------------------------
+        box.schema.space.create('identification_string', {
+            format = {
+                { name = 'id_name', type = 'string', is_nullable = false },
+                { name = 'id_value', type = 'string', is_nullable = false },
+            },
+            if_not_exists = true,
+        })
 
-    box.space.identification_string:create_index('identification_string', {
-        unique = true,
-        type = 'TREE',
-        parts = { { field = 'id_name', type = 'string' } },
-        if_not_exists = true,
-    })
+        box.space.identification_string:create_index('identification_string', {
+            unique = true,
+            type = 'TREE',
+            parts = { { field = 'id_name', type = 'string' } },
+            if_not_exists = true,
+        })
 
-    ------------------------------------------------------------------------
-
-    box.schema.user.grant('client', 'read,write', 'space', 'coordinator_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'space', 'leader_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'space', 'leader', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'space', 'identification_string', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'sequence', 'coordinator_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'sequence', 'leader_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'read,write', 'sequence', 'vclockkeeper_audit', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'get_coordinator', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'get_lock_delay', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'acquire_lock', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'set_leaders', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'get_leaders', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'set_identification_string', { if_not_exists = true })
-
-    -- Enable listen port only after all spaces are set up
-    box.cfg({ listen = opts.listen })
+        ------------------------------------------------------------------------
+        box.schema.user.grant('client', 'replication', nil, nil, {if_not_exists = true})
+        box.schema.user.grant('client', 'read,write', 'space', 'coordinator_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'space', 'leader_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'space', 'leader', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'space', 'identification_string', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'sequence', 'coordinator_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'sequence', 'leader_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'read,write', 'sequence', 'vclockkeeper_audit', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'get_coordinator', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'get_lock_delay', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'acquire_lock', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'set_leaders', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'get_leaders', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'set_identification_string', { if_not_exists = true })
+        box.schema.user.grant('client', 'execute', 'function', 'box.ctl.promote', { if_not_exists = true })
+    end
 
     -- Emulate support for NOTIFY_SOCKET in old tarantool.
     -- NOTIFY_SOCKET is fully supported in >= 2.2.2

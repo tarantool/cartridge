@@ -183,6 +183,22 @@ functionality, you should enable it in your ``init.lua`` file:
       enable_synchro_mode = true,
   })
 
+You can add several backup instances of Tarantool Stateboard. It's useful
+when you have a highload production cluster and you want to avoid a single point of failure.
+You can add backup instances URIs in failover configuration and start several
+stateboard instances using env parameter ``TARANTOOL_STATEBOARD_REPLICATION='uri1,uri2,...``.
+Failover only works with the first available stateboard instance. If it's not available,
+you can switch to another one manually using graphql mutation:
+
+.. code-block:: graphql
+
+    mutation {
+      cluster {
+        failover_stateboard_promote(
+          new_leader_uri: "localhost:14401"
+        )
+      }
+    }
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage
@@ -362,7 +378,7 @@ These are clusterwide parameters:
 * ``state_provider``: "tarantool" / "etcd".
 * ``failover_timeout`` -- time (in seconds) to mark ``suspect`` members
   as ``dead`` and trigger failover (default: 20).
-* ``tarantool_params``: ``{uri = "...", password = "..."}``.
+* ``tarantool_params``: ``{uri = "...", password = "...", backup_uris = {...}}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
 * ``fencing_enabled``: ``true`` / ``false`` (default: false).
 * ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
