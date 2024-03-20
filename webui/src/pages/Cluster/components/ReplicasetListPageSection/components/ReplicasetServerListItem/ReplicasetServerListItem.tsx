@@ -11,12 +11,12 @@ import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 
 import ServerDropdown from '../../../ServerDropdown';
+import { IconRebalancer } from '../IconRebalancer';
 import { NonElectableFlag } from '../NonElectableFlag';
 import ReplicasetListBuckets from '../ReplicasetListBuckets';
 import ReplicasetListMemStat from '../ReplicasetListMemStat';
 import ReplicasetListStatus from '../ReplicasetListStatus';
 import ReplicasetListTag from '../ReplicasetListTag';
-import { IconRebalancer } from '../IconRebalancer';
 
 import { styles } from './ReplicasetServerListItem.styles';
 
