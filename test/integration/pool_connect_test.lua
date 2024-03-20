@@ -35,7 +35,10 @@ function g.test_identity()
 
     -- netbox.connect implicitly calls fiber.create(...)
     -- so there would be one context switch
-    t.assert_equals(csw1 + 1, csw2)
+    -- changed in 2.11: netbox.connect doesn't yield
+    if not helpers.tarantool_version_ge('2.11.2') then
+        t.assert_equals(csw1 + 1, csw2)
+    end
     t.assert_equals(err, nil)
     t.assert_covers(conn, {state = 'initial'})
 
@@ -91,7 +94,10 @@ function g.test_errors()
 
     -- netbox.connect implicitly calls fiber.create (+1 context switch)
     -- and calls cond:wait(0) (wait for connection active state) (+1 context switch)
-    t.assert_equals(csw1 + 2,  csw2)
+    -- changed in 2.11: netbox.connect doesn't yield
+    if not helpers.tarantool_version_ge('2.11.2') then
+        t.assert_equals(csw1 + 2,  csw2)
+    end
     t.assert_equals(conn, nil)
     t.assert_covers(err, {
         class_name = 'NetboxConnectError',
