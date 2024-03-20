@@ -162,7 +162,7 @@ jobs:
           retry_on: error
           timeout_minutes: 30
           command: |
-            .rocks/bin/luatest -v
+            .rocks/bin/luatest -v --fail-fast
 
       - name: Run pytest -v
         run: |
@@ -250,7 +250,7 @@ jobs:
           retry_on: error
           timeout_minutes: 30
           command: |
-            .rocks/bin/luatest -v
+            .rocks/bin/luatest -v --fail-fast
 
       - name: Run pytest -v
         run: |
