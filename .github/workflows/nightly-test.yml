@@ -8,8 +8,6 @@ on:
 env:
   # Skip building frontend in tarantoolctl rocks make
   CMAKE_DUMMY_WEBUI: true
-  # Prerequisite for some etcd-related tests
-  ETCD_PATH: etcd-v2.3.8/etcd
 
 jobs:
   run-tests:
@@ -50,6 +48,9 @@ jobs:
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
       - run: .rocks/bin/luatest -v
+        env:
+          # Prerequisite for some etcd-related tests
+          ETCD_PATH: etcd-v2.3.8/etcd
 
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
