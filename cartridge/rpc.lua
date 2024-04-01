@@ -52,21 +52,11 @@ local function call_local(role_name, fn_name, args)
 end
 
 local function member_is_healthy(uri, instance_uuid)
-    local member = membership.get_member(uri)
-    return (
-        (member ~= nil)
-        and (member.status == 'alive' or member.status == 'suspect')
-        and (member.payload.uuid == instance_uuid)
-        and (
-            member.payload.state_prev == nil or -- for backward compatibility with old versions
-            member.payload.state_prev == 'RolesConfigured' or
-            member.payload.state_prev == 'ConfiguringRoles'
-        )
-        and (
-            member.payload.state == 'ConfiguringRoles' or
-            member.payload.state == 'RolesConfigured'
-        )
-    )
+    local res, _ = topology.member_is_healthy(uri, instance_uuid)
+    if res == nil then
+        return false
+    end
+    return true
 end
 
 --- List candidates suitable for performing a remote call.

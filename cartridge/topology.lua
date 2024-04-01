@@ -1088,13 +1088,53 @@ local function refine_servers_uri(topology_cfg)
     return ret
 end
 
+--- Check the instance health.
+-- It is healthy if its state is OK.
+--
+-- The function is designed mostly for testing purposes.
+--
+-- @function member_is_healthy
+-- @treturn[1] boolean|nil true / nil
+-- @treturn[1] string error description
+local function member_is_healthy(uri, instance_uuid)
+    local member = membership.get_member(uri) or {}
+
+    if (member.status ~= 'alive' and member.status ~= 'suspect') then
+        return nil, string.format(
+            '%s status is %s',
+            uri, member.status
+        )
+    elseif (member.payload.uuid ~= instance_uuid) then
+        return nil, string.format(
+            '%s uuid mismatch: expected %s, have %s',
+            uri, instance_uuid, member.payload.uuid
+        )
+    elseif member.payload.state_prev ~= nil
+    and member.payload.state_prev ~= 'ConfiguringRoles'
+    and member.payload.state_prev ~= 'RolesConfigured' then
+        return nil, string.format(
+            '%s previous state %s',
+            uri, member.payload.state_prev
+        )
+    elseif member.payload.state ~= 'ConfiguringRoles'
+    and member.payload.state ~= 'RolesConfigured' then
+        return nil, string.format(
+            '%s state %s',
+            uri, member.payload.state
+        )
+    end
+    return true
+end
+
 --- Check the cluster health.
 -- It is healthy if all instances are healthy.
 --
 -- The function is designed mostly for testing purposes.
 --
 -- @function cluster_is_healthy
--- @treturn boolean true / false
+-- @function member_is_healthy
+-- @treturn[1] boolean|nil true / nil
+-- @treturn[1] string error description
 local function cluster_is_healthy()
     local confapplier = require('cartridge.confapplier')
     if confapplier.get_state() ~= 'RolesConfigured' then
@@ -1104,24 +1144,9 @@ local function cluster_is_healthy()
     local topology_cfg = confapplier.get_readonly('topology')
 
     for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
-        local member = membership.get_member(server.uri) or {}
-
-        if (member.status ~= 'alive') then
-            return nil, string.format(
-                '%s status is %s',
-                server.uri, member.status
-            )
-        elseif (member.payload.uuid ~= instance_uuid) then
-            return nil, string.format(
-                '%s uuid mismatch: expected %s, have %s',
-                server.uri, instance_uuid, member.payload.uuid
-            )
-        elseif member.payload.state ~= 'ConfiguringRoles'
-        and member.payload.state ~= 'RolesConfigured' then
-            return nil, string.format(
-                '%s state %s',
-                server.uri, member.payload.state
-            )
+        local res, err = member_is_healthy(server.uri, instance_uuid)
+        if res == nil then
+            return nil, err
         end
     end
 
@@ -1220,6 +1245,7 @@ return {
 
     get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,
+    member_is_healthy = member_is_healthy,
     cluster_is_healthy = cluster_is_healthy,
     refine_servers_uri = refine_servers_uri,
     probe_missing_members = probe_missing_members,
