@@ -1094,8 +1094,9 @@ end
 -- The function is designed mostly for testing purposes.
 --
 -- @function member_is_healthy
--- @treturn[1] boolean|nil true / nil
--- @treturn[1] string error description
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function member_is_healthy(uri, instance_uuid)
     local member = membership.get_member(uri) or {}
 
@@ -1132,9 +1133,9 @@ end
 -- The function is designed mostly for testing purposes.
 --
 -- @function cluster_is_healthy
--- @function member_is_healthy
--- @treturn[1] boolean|nil true / nil
--- @treturn[1] string error description
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function cluster_is_healthy()
     local confapplier = require('cartridge.confapplier')
     if confapplier.get_state() ~= 'RolesConfigured' then
