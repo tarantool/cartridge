@@ -83,9 +83,8 @@ end
 local function electable(_, srv)
     if srv ~= nil and srv.electable ~= nil then
         return srv.electable
-    else
-        return true
     end
+    return true
 end
 
 local function not_expelled(_, srv)
@@ -100,7 +99,7 @@ local function not_electable(_, srv)
     return not electable(_, srv)
 end
 
-local function every_node()
+local function every_node(_, _)
     return true
 end
 

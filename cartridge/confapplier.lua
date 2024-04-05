@@ -346,7 +346,7 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --    (https://github.com/tarantool/tarantool/issues/4691)
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local leaders_order = errors.pcall('E',
-        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid
+        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid, {only_enabled = true}
     )
 
     if leaders_order == nil then
@@ -490,7 +490,7 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = replicaset_uuid
 
         local leaders_order = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            topology_cfg, replicaset_uuid, nil, {only_enabled = true}
         )
 
         -- if other instances report that they have a leader
@@ -498,14 +498,13 @@ local function boot_instance(clusterwide_config)
         local leader_uuid
         for _, instance_uuid in ipairs(leaders_order) do
             local server = topology_cfg.servers[instance_uuid]
-            if not server.disabled then
-                local member = membership.get_member(server.uri)
-                if member.status == 'alive'
-                and member.payload.leader_uuid ~= nil
-                then
-                    leader_uuid = member.payload.leader_uuid
-                    break
-                end
+
+            local member = membership.get_member(server.uri)
+            if member.status == 'alive'
+            and member.payload.leader_uuid ~= nil
+            then
+                leader_uuid = member.payload.leader_uuid
+                break
             end
         end
 
