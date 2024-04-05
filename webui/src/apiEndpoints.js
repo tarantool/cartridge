@@ -15,6 +15,7 @@ const apiEndpoints = {
   LOGIN_API_ENDPOINT: apiPrefix + process.env.REACT_APP_LOGIN_API_ENDPOINT,
   LOGOUT_API_ENDPOINT: apiPrefix + process.env.REACT_APP_LOGOUT_API_ENDPOINT,
   GRAPHQL_API_ENDPOINT: apiPrefix + process.env.REACT_APP_GRAPHQL_API_ENDPOINT,
+  MIGRATIONS_API_ENDPOINT: apiPrefix + process.env.REACT_APP_MIGRATIONS_ENDPOINT,
 };
 
 export const getApiEndpoint = (alias) => {

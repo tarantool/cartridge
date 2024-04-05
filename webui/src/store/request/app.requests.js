@@ -1,7 +1,32 @@
 // @flow
 import graphql from 'src/api/graphql';
+import rest from 'src/api/rest';
+import { getApiEndpoint } from 'src/apiEndpoints';
 
 import { getClusterQuery } from './queries.graphql';
+
+export function getMigrationsStates() {
+  return rest.get(getApiEndpoint('MIGRATIONS_API_ENDPOINT') + '/applied');
+}
+
+export function migrationsUp() {
+  return rest.post(getApiEndpoint('MIGRATIONS_API_ENDPOINT') + '/up');
+}
+
+export function migrationsMove() {
+  return rest.post(getApiEndpoint('MIGRATIONS_API_ENDPOINT') + '/move_migrations_state');
+}
+
+export async function getMigrationsEnabled() {
+  try {
+    await getMigrationsStates();
+    return true;
+  } catch (error) {
+    void error;
+  }
+
+  return false;
+}
 
 export async function getClusterSelf() {
   const response = await graphql.fetch(getClusterQuery);

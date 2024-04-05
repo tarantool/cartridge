@@ -17,7 +17,7 @@ import {
   APP_SET_MESSAGE_DONE,
 } from 'src/store/actionTypes';
 import { baseSaga } from 'src/store/commonRequest';
-import { getClusterSelf } from 'src/store/request/app.requests';
+import { getClusterSelf, getMigrationsEnabled } from 'src/store/request/app.requests';
 
 function* reloadClusterSelfRequestSaga() {
   yield takeLatest(APP_RELOAD_CLUSTER_SELF, function* reload() {
@@ -39,6 +39,7 @@ function* appDataRequestSaga() {
 
     let response;
     try {
+      const migrationsEnabled = yield call(getMigrationsEnabled);
       const clusterSelfResponse = yield call(getClusterSelf);
       const { app_name, instance_name } = clusterSelfResponse.clusterSelf;
 
@@ -51,14 +52,14 @@ function* appDataRequestSaga() {
       menuFilter.set(clusterSelfResponse.MenuBlacklist);
       core.dispatch('dispatchToken', { type: '' });
 
-      if (implements_add_user || implements_list_users) {
-        core.dispatch('dispatchToken', {
-          type: 'ADD_CLUSTER_USERS_MENU_ITEM',
-          payload: {
-            location: core.history.location,
-          },
-        });
-      }
+      core.dispatch('dispatchToken', {
+        type: 'UPDATE_CLUSTER_MENU_ITEMS',
+        payload: {
+          users: Boolean(implements_add_user || implements_list_users),
+          migrations: migrationsEnabled,
+          location: core.history.location,
+        },
+      });
 
       response = {
         ...clusterSelfResponse,

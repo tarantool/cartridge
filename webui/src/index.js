@@ -18,6 +18,7 @@ import { createLazySection } from 'src/misc/lazySection';
 import { app } from 'src/models';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import Dashboard from 'src/pages/Dashboard';
+import { MigrationsPage } from 'src/pages/Migrations/MigrationsPage';
 import Users from 'src/pages/Users';
 import { appDidMount, appReloadClusterSelf } from 'src/store/actions/app.actions';
 import { expectWelcomeMessage, logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
@@ -53,6 +54,7 @@ class RootComponent extends React.Component {
                 <Route path={projectPath('configuration')} component={ConfigManagement} />
                 <Route path={projectPath('users')} component={Users} />
                 <Route path={projectPath('code')} component={Code} />
+                <Route path={projectPath('migrations')} component={MigrationsPage} />
               </Switch>
               <NetworkErrorSplash />
             </Suspense>
