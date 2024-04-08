@@ -18,7 +18,7 @@ const RebalancerModeButton = () => {
     }
   }, [data]);
 
-  if (!selectors.isConfigured(clusterStore) || !data) {
+  if (!(selectors.isConfigured(clusterStore) && selectors.isVshardAvailable(clusterStore) && data)) {
     return null;
   }
 

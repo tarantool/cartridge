@@ -119,7 +119,7 @@ const ServerDropdown = ({
         <DropdownItem key="handleSetElectableServer" onClick={handleSetElectableServer}>
           {server?.electable === false ? 'Set as electable' : 'Set as non-electable'}
         </DropdownItem>,
-        server && (
+        server && replicaset?.roles?.includes('vshard-storage') && (
           <DropdownItem key="handleSetElectableServer" onClick={handleRebalancer}>
             Rebalancer: {server.rebalancer === true ? 'true' : server.rebalancer === false ? 'false' : 'unset'}
           </DropdownItem>

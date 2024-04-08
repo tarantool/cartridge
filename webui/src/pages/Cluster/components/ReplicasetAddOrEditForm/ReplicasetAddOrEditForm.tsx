@@ -238,13 +238,15 @@ const ReplicasetAddOrEditForm = ({
             </Checkbox>
           </FormField>
         )}
-        <FormField className={styles.field} label="Rebalancer" largeMargins>
-          <Select
-            options={rebalancerOptions}
-            value={values.rebalancer === true ? 'true' : values.rebalancer === false ? 'false' : 'unset'}
-            onChange={handleRebalancerCheck}
-          />
-        </FormField>
+        {values.roles.includes('vshard-storage') && (
+          <FormField className={styles.field} label="Rebalancer" largeMargins>
+            <Select
+              options={rebalancerOptions}
+              value={values.rebalancer === true ? 'true' : values.rebalancer === false ? 'false' : 'unset'}
+              onChange={handleRebalancerCheck}
+            />
+          </FormField>
+        )}
         {replicaset && (
           <LabeledInput
             name="failover_priority"
