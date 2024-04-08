@@ -16,7 +16,9 @@ Unreleased
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add "rebalancer_mode" and "rebalancer" options on web UI. 
+- Add the "Migrations" page.
+
+- Add "rebalancer_mode" and "rebalancer" options on web UI.
 
 - Twophase commit timeouts now can be set with env.
 
