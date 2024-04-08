@@ -137,4 +137,7 @@ export const styles = {
     display: flex;
     flex-wrap: wrap;
   `,
+  rebalancer: css`
+    margin-right: 8px;
+  `,
 };

@@ -31,6 +31,8 @@ export type Apicluster = {
   failover: Scalars['Boolean'];
   /** Get automatic failover configuration. */
   failover_params: FailoverApi;
+  /** Get state provider status. */
+  failover_state_provider_status: Array<Maybe<StateProviderStatus>>;
   /** List issues in cluster */
   issues?: Maybe<Array<Issue>>;
   /** Get list of all registered roles and their dependencies. */
@@ -114,6 +116,7 @@ export type EditReplicasetInput = {
   all_rw?: InputMaybe<Scalars['Boolean']>;
   failover_priority?: InputMaybe<Array<Scalars['String']>>;
   join_servers?: InputMaybe<Array<InputMaybe<JoinServerInput>>>;
+  rebalancer?: InputMaybe<Scalars['Boolean']>;
   roles?: InputMaybe<Array<Scalars['String']>>;
   uuid?: InputMaybe<Scalars['String']>;
   vshard_group?: InputMaybe<Scalars['String']>;
@@ -126,6 +129,7 @@ export type EditServerInput = {
   electable?: InputMaybe<Scalars['Boolean']>;
   expelled?: InputMaybe<Scalars['Boolean']>;
   labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  rebalancer?: InputMaybe<Scalars['Boolean']>;
   uri?: InputMaybe<Scalars['String']>;
   uuid: Scalars['String'];
   zone?: InputMaybe<Scalars['String']>;
@@ -240,6 +244,7 @@ export type Issue = {
 /** Parameters for joining a new server */
 export type JoinServerInput = {
   labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  rebalancer?: InputMaybe<Scalars['Boolean']>;
   uri: Scalars['String'];
   uuid?: InputMaybe<Scalars['String']>;
   zone?: InputMaybe<Scalars['String']>;
@@ -405,6 +410,7 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {
   rebalancer_disbalance_threshold?: InputMaybe<Scalars['Float']>;
   rebalancer_max_receiving?: InputMaybe<Scalars['Int']>;
   rebalancer_max_sending?: InputMaybe<Scalars['Int']>;
+  rebalancer_mode?: InputMaybe<Scalars['String']>;
   sched_move_quota?: InputMaybe<Scalars['Long']>;
   sched_ref_quota?: InputMaybe<Scalars['Long']>;
   sync_timeout?: InputMaybe<Scalars['Float']>;
@@ -504,6 +510,8 @@ export type Replicaset = {
   all_rw: Scalars['Boolean'];
   /** The leader according to the configuration. */
   master: Server;
+  /** Is the rebalancer enabled for the replica set. */
+  rebalancer?: Maybe<Scalars['Boolean']>;
   /** The role set enabled on every instance in the replica set */
   roles?: Maybe<Array<Scalars['String']>>;
   /** Servers in the replica set. */
@@ -550,6 +558,8 @@ export type Server = {
   message: Scalars['String'];
   /** Failover priority within the replica set */
   priority?: Maybe<Scalars['Int']>;
+  /** Is rebalancer enabled for this instance */
+  rebalancer?: Maybe<Scalars['Boolean']>;
   replicaset?: Maybe<Replicaset>;
   statistics?: Maybe<ServerStat>;
   status: Scalars['String'];
@@ -755,10 +765,10 @@ export type ServerInfoVshardStorage = {
   buckets_sending?: Maybe<Scalars['Int']>;
   /** Total number of buckets on the storage */
   buckets_total?: Maybe<Scalars['Int']>;
+  /** Whether the rebalancer is enabled */
+  rebalancer_enabled?: Maybe<Scalars['Boolean']>;
   /** Vshard group */
   vshard_group?: Maybe<Scalars['String']>;
-  /** Is rebalancer enabled */
-  rebalancer_enabled?: Maybe<Scalars['Boolean']>;
 };
 
 /** A short server information */
@@ -809,6 +819,15 @@ export type SpaceCompressionInfo = {
   fields_be_compressed: Array<FieldCompressionInfo>;
   /** space name */
   space_name: Scalars['String'];
+};
+
+/** Failover state provider status */
+export type StateProviderStatus = {
+  __typename?: 'StateProviderStatus';
+  /** State provider status */
+  status: Scalars['Boolean'];
+  /** State provider uri */
+  uri: Scalars['String'];
 };
 
 export type Suggestions = {
@@ -878,6 +897,8 @@ export type VshardGroup = {
   rebalancer_max_receiving: Scalars['Int'];
   /** The maximum number of buckets that can be sent in parallel by a single replica set in the storage group */
   rebalancer_max_sending: Scalars['Int'];
+  /** Rebalancer mode */
+  rebalancer_mode: Scalars['String'];
   /** Scheduler bucket move quota */
   sched_move_quota: Scalars['Long'];
   /** Scheduler storage ref quota */
@@ -1087,7 +1108,13 @@ export type GetClusterQuery = {
       implies_storage: boolean;
       implies_router: boolean;
     }>;
-    vshard_groups: Array<{ __typename?: 'VshardGroup'; name: string; bucket_count: number; bootstrapped: boolean }>;
+    vshard_groups: Array<{
+      __typename?: 'VshardGroup';
+      name: string;
+      bucket_count: number;
+      bootstrapped: boolean;
+      rebalancer_mode: string;
+    }>;
     authParams: {
       __typename?: 'UserManagementAPI';
       enabled: boolean;
@@ -1555,6 +1582,7 @@ export type ServerListQuery = {
     zone?: string | null;
     status: string;
     message: string;
+    rebalancer?: boolean | null;
     labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
     boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
     replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
@@ -1567,6 +1595,7 @@ export type ServerListQuery = {
     status: string;
     roles?: Array<string> | null;
     vshard_group?: string | null;
+    rebalancer?: boolean | null;
     weight?: number | null;
     master: { __typename?: 'Server'; uuid: string };
     active_master: { __typename?: 'Server'; uuid: string };
@@ -1579,9 +1608,14 @@ export type ServerListQuery = {
       uri: string;
       priority?: number | null;
       status: string;
+      rebalancer?: boolean | null;
       message: string;
       labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
-      boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
+      boxinfo?: {
+        __typename?: 'ServerInfo';
+        general: { __typename?: 'ServerInfoGeneral'; ro: boolean };
+        vshard_storage?: { __typename?: 'ServerInfoVshardStorage'; rebalancer_enabled?: boolean | null } | null;
+      } | null;
       replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
     }>;
   } | null> | null;
@@ -1679,6 +1713,19 @@ export type EditTopologyMutation = {
       __typename?: 'EditTopologyResult';
       servers: Array<{ __typename?: 'Server'; uuid: string } | null>;
     } | null;
+  } | null;
+};
+
+export type ChangeRebalancerModeMutationVariables = Exact<{
+  name: Scalars['String'];
+  rebalancer_mode: Scalars['String'];
+}>;
+
+export type ChangeRebalancerModeMutation = {
+  __typename?: 'Mutation';
+  cluster?: {
+    __typename?: 'MutationApicluster';
+    edit_vshard_options: { __typename?: 'VshardGroup'; rebalancer_mode: string };
   } | null;
 };
 

@@ -11,6 +11,7 @@ import BootstrapButton from '../BootstrapButton';
 import FailoverButton from '../FailoverButton';
 import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
+import RebalancerModeButton from '../RebalancerModeButton';
 import SuggestionsButton from '../SuggestionsButton';
 
 const { compact } = app.utils;
@@ -30,6 +31,7 @@ const ButtonsPanel = () => {
 
     const { implements_add_user, implements_check_password, implements_list_users } = authParams;
     return {
+      showRebalancer: isConfigured(clusterStore) && isVshardAvailable(clusterStore),
       showBootstrap:
         isConfigured(clusterStore) && isVshardAvailable(clusterStore) && !isVshardBootstrapped(clusterStore),
       showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password, // TODO: move to selectors
@@ -49,6 +51,7 @@ const ButtonsPanel = () => {
                 implements_check_password={!!authParams.implements_check_password}
               />
             ),
+            params.showRebalancer && <RebalancerModeButton key="RebalancerModeButton" />,
             <FailoverButton key="FailoverButton" />,
             params.showBootstrap && <BootstrapButton key="BootstrapButton" />,
           ])

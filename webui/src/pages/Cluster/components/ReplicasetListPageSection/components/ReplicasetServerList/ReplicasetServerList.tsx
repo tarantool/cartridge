@@ -43,6 +43,13 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           statistics: stat?.statistics,
           vshardGroupBucketsCount,
           filterMatching: server.meta?.filterMatching,
+          vshardStorageRebalancer: server.boxinfo?.vshard_storage?.rebalancer_enabled
+            ? 'instance'
+            : server.rebalancer === true
+            ? 'true'
+            : server.rebalancer === false
+            ? 'false'
+            : undefined,
         },
       };
     });

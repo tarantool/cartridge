@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { cx } from '@emotion/css';
 // @ts-ignore
-import { Button, Checkbox, FormField, LabeledInput, Modal, RadioButton } from '@tarantool.io/ui-kit';
+import { Button, Checkbox, FormField, LabeledInput, Modal, RadioButton, Select } from '@tarantool.io/ui-kit';
 
 import { GetClusterRole, Maybe, ServerListReplicasetServer, app } from 'src/models';
 
@@ -44,6 +44,12 @@ const serverMapCompose: (servers: ServerListReplicasetServer[]) => any = compose
   groupBy(({ uuid }: ServerListReplicasetServer) => uuid)
 );
 
+const rebalancerOptions = [
+  { value: 'unset', label: 'Unset' },
+  { value: 'true', label: 'True' },
+  { value: 'false', label: 'False' },
+];
+
 const ReplicasetAddOrEditForm = ({
   handleSubmit,
   handleReset,
@@ -79,6 +85,13 @@ const ReplicasetAddOrEditForm = ({
   const handleRoleCheck = useCallback(() => {
     setFieldValue('roles', knownRoles.length === values.roles.length ? [] : knownRoles.map(({ name }) => name));
   }, [setFieldValue, knownRoles, values.roles.length]);
+
+  const handleRebalancerCheck = useCallback(
+    (value: string) => {
+      setFieldValue('rebalancer', value === 'true' ? true : value === 'false' ? false : null);
+    },
+    [setFieldValue]
+  );
 
   const activeDependencies = useMemo(() => getRolesDependencies(values.roles, knownRoles), [values.roles, knownRoles]);
 
@@ -223,6 +236,15 @@ const ReplicasetAddOrEditForm = ({
             <Checkbox name="all_rw" onChange={handleChange} checked={values.all_rw}>
               Make all instances writeable
             </Checkbox>
+          </FormField>
+        )}
+        {values.roles.includes('vshard-storage') && (
+          <FormField className={styles.field} label="Rebalancer" largeMargins>
+            <Select
+              options={rebalancerOptions}
+              value={values.rebalancer === true ? 'true' : values.rebalancer === false ? 'false' : 'unset'}
+              onChange={handleRebalancerCheck}
+            />
           </FormField>
         )}
         {replicaset && (

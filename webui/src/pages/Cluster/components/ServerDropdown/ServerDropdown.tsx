@@ -16,6 +16,7 @@ const { $serverList, promoteServerToLeaderEvent, disableOrEnableServerEvent, set
 const { serverDetailsModalOpenedEvent } = cluster.serverDetails;
 const { serverExpelModalOpenEvent } = cluster.serverExpel;
 const { serverAddLabelModalOpenEvent } = cluster.addLabels;
+const { rebalancerModalOpenEvent } = cluster.rebalancerConfigure;
 
 export interface ServerDropdownProps {
   className?: string;
@@ -76,6 +77,15 @@ const ServerDropdown = ({
     }
   }, [server?.uuid, server?.electable]);
 
+  const handleRebalancer = useCallback(() => {
+    if (server?.uuid) {
+      rebalancerModalOpenEvent({
+        uuid: server.uuid,
+        rebalancer: server.rebalancer,
+      });
+    }
+  }, [server?.uuid, server?.rebalancer]);
+
   const handleEnableOrDisableServer = useCallback(() => {
     if (server?.uuid) {
       disableOrEnableServerEvent({
@@ -109,6 +119,11 @@ const ServerDropdown = ({
         <DropdownItem key="handleSetElectableServer" onClick={handleSetElectableServer}>
           {server?.electable === false ? 'Set as electable' : 'Set as non-electable'}
         </DropdownItem>,
+        server && replicaset?.roles?.includes('vshard-storage') && (
+          <DropdownItem key="handleSetElectableServer" onClick={handleRebalancer}>
+            Rebalancer: {server.rebalancer === true ? 'true' : server.rebalancer === false ? 'false' : 'unset'}
+          </DropdownItem>
+        ),
         <DropdownItem key="handleEnableDisableServer" onClick={handleEnableOrDisableServer}>
           {server?.disabled ? 'Enable server' : 'Disable server'}
         </DropdownItem>,
@@ -135,6 +150,7 @@ const ServerDropdown = ({
       handleEnableOrDisableServer,
       handleAddLabelForServer,
       handleShowExpelModal,
+      handleRebalancer,
     ]
   );
 
