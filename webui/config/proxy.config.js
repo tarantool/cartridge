@@ -24,6 +24,7 @@ const targets = [
   process.env.REACT_APP_SOAP_API_ENDPOINT,
   process.env.REACT_APP_CONFIG_ENDPOINT,
   process.env.REACT_APP_DOCS_ENDPOINT,
+  process.env.REACT_APP_MIGRATIONS_ENDPOINT,
 ];
 
 const defTargets = targets.filter(Boolean).reduce((config, target) => ((config[target] = proxyConfig), config), {});

@@ -16,7 +16,7 @@ const matchPath = (path, link) => {
 const updateLink = (path) => (menuItem) => ({ ...menuItem, selected: matchPath(path, menuItem.path) });
 
 const menuItems = {
-  cluster(enableUsersItem: ?boolean) {
+  cluster(enableUsersItem: ?boolean, enableMigrationsItem: ?boolean) {
     return [
       {
         label: 'Cluster',
@@ -70,6 +70,18 @@ const menuItems = {
           />
         ),
       },
+      ...(enableMigrationsItem
+        ? [
+            {
+              label: 'Migrations',
+              path: `/${PROJECT_NAME}/migrations`,
+              selected: false,
+              expanded: false,
+              loading: false,
+              icon: <IconCluster />,
+            },
+          ]
+        : []),
     ];
   },
 };
@@ -78,26 +90,29 @@ const menuInitialState = menuItems.cluster();
 
 export const menuReducer = (state: MenuItemType[] = menuInitialState, { type, payload }: FSA): MenuItemType[] => {
   switch (type) {
-    case 'ADD_CLUSTER_USERS_MENU_ITEM':
-      if (payload && payload.location && payload.location.pathname) {
-        return menuItems.cluster(true).map(updateLink(payload.location.pathname));
-      } else {
-        return state;
+    case 'UPDATE_CLUSTER_MENU_ITEMS': {
+      if (payload && payload.location) {
+        return menuItems.cluster(payload.users, payload.migrations).map(updateLink(payload.location.pathname || ''));
       }
 
-    case '@@router/LOCATION_CHANGE':
+      return state;
+    }
+
+    case '@@router/LOCATION_CHANGE': {
       if (payload && payload.location && payload.location.pathname) {
         return state.map(updateLink(payload.location.pathname));
-      } else {
-        return state;
       }
 
-    case 'RESET':
+      return state;
+    }
+
+    case 'RESET': {
       if (payload) {
         return menuInitialState.map(updateLink(payload.path));
-      } else {
-        return state;
       }
+
+      return state;
+    }
 
     default:
       return state;
