@@ -16,6 +16,8 @@ Unreleased
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Add the state provider status action on the failover controller modal.
+
 - Add the "Migrations" page.
 
 - Add "rebalancer_mode" and "rebalancer" options on web UI.

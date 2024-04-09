@@ -17,6 +17,7 @@ import {
   toFailoverMode,
   toFailoverStateProvider,
 } from './FailoverModalForm.types';
+import { FailoverModalFormStateProviderStatusAction } from './FailoverModalFormStateProviderStatusAction';
 
 import { styles } from './FailoverModalForm.styles';
 
@@ -193,7 +194,9 @@ const FailoverModalFormForm = ({
   handleChange,
   values,
   errors,
-}: FailoverFormFormikProps) => {
+  mode,
+  failover,
+}: FailoverFormFormikProps & FailoverFormProps) => {
   const { loading, pending, error } = useStore($failoverModal);
 
   const handleTabChange = useCallback(
@@ -390,6 +393,16 @@ const FailoverModalFormForm = ({
               value={values.state_provider}
               //@ts-ignore
               onChange={handleStateProviderChange}
+              topRightControls={
+                toFailoverMode(failover?.cluster?.failover_params?.mode ?? mode) === 'stateful'
+                  ? [
+                      <FailoverModalFormStateProviderStatusAction
+                        key="status"
+                        stateProvider={toFailoverStateProvider(failover?.cluster?.failover_params?.state_provider)}
+                      />,
+                    ]
+                  : undefined
+              }
             />
             {values.state_provider === 'tarantool' && (
               <div className={styles.inputs}>

@@ -2,7 +2,7 @@ import { forward } from 'effector';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';
-import { changeFailoverMutation, getFailoverParams } from 'src/store/request/queries.graphql';
+import { changeFailoverMutation, getFailoverParams, getStateProviderStatus } from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
@@ -10,11 +10,14 @@ import {
   $failover,
   $failoverModalError,
   $failoverModalVisible,
+  $stateProviderStatus,
   changeFailoverEvent,
   changeFailoverFx,
   failoverModalCloseEvent,
   failoverModalOpenEvent,
   getFailoverFx,
+  getStateProviderStatusFx,
+  stateProviderStatusGetEvent,
 } from '.';
 
 const { notifyEvent, notifyErrorEvent } = app;
@@ -23,6 +26,11 @@ const { trueL, passResultOnEvent, passErrorMessageOnEvent } = app.utils;
 forward({
   from: failoverModalOpenEvent,
   to: getFailoverFx,
+});
+
+forward({
+  from: stateProviderStatusGetEvent,
+  to: getStateProviderStatusFx,
 });
 
 forward({
@@ -49,6 +57,11 @@ forward({
 });
 
 forward({
+  from: getStateProviderStatusFx.failData,
+  to: notifyErrorEvent,
+});
+
+forward({
   from: getFailoverFx.fail,
   to: failoverModalCloseEvent,
 });
@@ -68,7 +81,15 @@ $failoverModalError
 
 $failoverModalVisible.on(failoverModalOpenEvent, trueL).reset(failoverModalCloseEvent).reset(clusterPageCloseEvent);
 
+$stateProviderStatus
+  .on(getStateProviderStatusFx.doneData, (_, payload) => {
+    return payload.cluster.failover_state_provider_status;
+  })
+  .reset(getStateProviderStatusFx, failoverModalCloseEvent, clusterPageCloseEvent);
+
 // effects
 getFailoverFx.use(() => graphql.fetch(getFailoverParams));
 
 changeFailoverFx.use((params) => graphql.fetch(changeFailoverMutation, params));
+
+getStateProviderStatusFx.use(() => graphql.fetch(getStateProviderStatus));
