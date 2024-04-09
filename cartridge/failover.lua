@@ -820,7 +820,7 @@ local function cfg(clusterwide_config, opts)
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
             synchro_demote()
-        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil, {only_enabled = true}) == 1 then
+        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
