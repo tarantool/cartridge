@@ -30,6 +30,9 @@ Changed
 
 - More strict validation for ``cartridge.is_healthy`` API function.
 
+- Update ``membership`` dependency to `2.4.4 <https://github.com/tarantool/membership/releases/tag/2.4.4>`_.
+
+
 -------------------------------------------------------------------------------
 [2.9.0] - 2024-03-06
 -------------------------------------------------------------------------------
