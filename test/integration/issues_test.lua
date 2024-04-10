@@ -10,7 +10,8 @@ g.before_all(function()
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
-        replicasets = {{
+        replicasets = {
+        {
             uuid = helpers.uuid('a'),
             roles = {},
             servers = {{
@@ -42,10 +43,21 @@ g.before_all(function()
         workdir = fio.pathjoin(g.cluster.datadir, 'to_be_expelled'),
         command = helpers.entrypoint('srv_basic'),
         cluster_cookie = g.cluster.cookie,
-        advertise_port = 13304,
-        http_port = 8084,
+        advertise_port = 13305,
+        http_port = 8085,
         replicaset_uuid = helpers.uuid('a'),
         instance_uuid = helpers.uuid('a', 'a', 4),
+    })
+
+    g.to_be_stopped = helpers.Server:new({
+        alias = 'to_be_stopped',
+        workdir = fio.pathjoin(g.cluster.datadir, 'to_be_stopped'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13306,
+        http_port = 8086,
+        replicaset_uuid = helpers.uuid('b'),
+        instance_uuid = helpers.uuid('b', 'b', 1),
     })
 
     g.alien = helpers.Server:new({
@@ -640,4 +652,38 @@ function g.test_expelled()
             replicaset_uuid = g.master.replicaset_uuid,
         },
     })
+
+    g.cluster.main_server:exec(function(uuid)
+        box.space._cluster.index.uuid:delete(uuid)
+    end, {g.to_be_expelled.instance_uuid})
+end
+
+function g.test_unhealthy_replicasets()
+    g.to_be_stopped:start()
+    g.to_be_stopped:join_cluster(g.cluster.main_server)
+    g.to_be_stopped:stop()
+
+    local rs_uuid = g.to_be_stopped.replicaset_uuid
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'critical',
+            topic = 'unhealthy_replicasets',
+            message = ('All instances are unhealthy in replicaset %s'):format(
+                rs_uuid),
+            replicaset_uuid = rs_uuid,
+            instance_uuid = box.NULL,
+        },
+    })
+
+    g.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').disable_servers({uuid})
+    end, {g.to_be_stopped.instance_uuid})
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
+    end)
+
+    g.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').enable_servers({uuid})
+    end, {g.to_be_stopped.instance_uuid})
 end

@@ -70,6 +70,10 @@
 -- * warning: "Raft leader idle is 10.000 on ... .
 --   Is raft leader alive and connection is healthy?"
 --
+-- Unhealthy replicasets:
+--
+-- * critical: "All instances are unhealthy in replicaset ... .
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -564,6 +568,36 @@ local function list_on_cluster()
         local box_info = box.info
         vars.instance_uuid = box_info.uuid
         vars.replicaset_uuid = box_info.cluster.uuid
+    end
+
+    -- Unhealthy replicasets
+    for rs_uuid, replicaset in pairs(topology_cfg.replicasets) do
+        local all_disabled = true
+        for _, uuid in ipairs(replicaset.master) do
+            local server = topology_cfg.servers[uuid]
+            if server ~= nil then
+                if not server.disabled then
+                    all_disabled = false
+                end
+                if topology.member_is_healthy(server.uri, uuid) then
+                    goto next_replicaset
+                end
+            end
+        end
+
+        if not all_disabled then
+            table.insert(ret, {
+                level = 'critical',
+                topic = 'unhealthy_replicasets',
+                replicaset_uuid = rs_uuid,
+                message = string.format(
+                    'All instances are unhealthy in replicaset %s',
+                    rs_uuid
+                )
+            })
+        end
+
+        ::next_replicaset::
     end
 
     -- Check clock desynchronization
