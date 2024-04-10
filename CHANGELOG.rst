@@ -36,6 +36,8 @@ Changed
 
 - Update ``membership`` dependency to `2.4.4 <https://github.com/tarantool/membership/releases/tag/2.4.4>`_.
 
+- Update ``ddl`` dependency to `1.7.0 <https://github.com/tarantool/ddl/releases/tag/1.7.0>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
