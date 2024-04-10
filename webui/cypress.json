@@ -4,6 +4,7 @@
   "defaultCommandTimeout": 10000,
   "viewportWidth": 1280,
   "viewportHeight": 768,
+  "video": false,
   "env": {
     "launcherHost": "127.0.0.1",
     "launcherPort": 3333,
