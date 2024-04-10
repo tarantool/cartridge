@@ -637,6 +637,17 @@ export const getFailoverParams = gql`
   }
 `;
 
+export const getStateProviderStatus = gql`
+  query getStateProviderStatus {
+    cluster {
+      failover_state_provider_status {
+        uri
+        status
+      }
+    }
+  }
+`;
+
 export const validateFilesQuery = gql`
   query validateConfig($sections: [ConfigSectionInput!]) {
     cluster {
