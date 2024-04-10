@@ -849,6 +849,15 @@ GraphQL request).
 
 |nbsp|
 
+You can also check state provider status in failover settings tab (it only works **after**
+stateful failover was enabled):
+
+..  image:: images/state-provider-status.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Raft failover (beta)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1453,6 +1462,24 @@ Cartridge displays cluster and instances issues in WebUI:
     * **warning**: "Raft leader idle is 10.000 on ... .
       Is raft leader alive and connection is healthy?"
 
+*   Unhealthy replicasets:
+
+    *   **critical**: "All instances are unhealthy in replicaset".
+
+    ..  image:: images/dead-replicaset-issue.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+    The issue is produced when all instances in the replicaset are unhealthy
+    and **not disabled**. You can disable both to get rid of the issue.
+
+    ..  image:: images/dead-replicaset.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
 
 *   Custom issues (defined by user):
 
@@ -1516,6 +1543,89 @@ And then choose one of the tabs to see various parameters:
 
 |nbsp|
 
+
+.. _rebalancer-control:
+
+-------------------------------------------------------------------------------
+Rebalancer control
+-------------------------------------------------------------------------------
+
+Cartridge provides a way to control VShard rebalancer via WebUI and GraphQL API.
+You can operate rebalancer mode and change rebalancer settings on each replicaset
+or instance. It can be useful to stop rebalancer or choose rebalancer instance manually.
+
+To change rebalancer mode, click on "Rebalancer mode" button next to "Failover" button
+and choose desired mode:
+
+..  image:: images/rebalancer-mode.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+To change rebalancer settings on replicaset, click on "Edit replicaset" button
+and then choose desired rebalancer state ("unset" means abcence of the value):
+
+..  image:: images/rebalancer-replicaset.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+To change rebalancer settings on instance, click on "..." button next to it:
+
+..  image:: images/rebalancer-instance-button.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+And then choose desired rebalancer state ("unset" means abcence of the value):
+
+..  image:: images/rebalancer-instance.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+You can see current settings and actual rebalancer state in WebUI. Black R means
+that rebalancer is ``true`` on this instance/replicaset, grey R means that rebalancer
+is ``false``  on this instance/replicaset, and green R means that rebalancer
+is running on this instance:
+
+..  image:: images/rebalancer-flags.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+See VShard documentation to get more information about rebalancer usage.
+
+.. _cartridge-migrations:
+
+-------------------------------------------------------------------------------
+Migrations
+-------------------------------------------------------------------------------
+
+Since Cartridge 2.10.0 when using ``migrations`` 1.0.0 or higher, you can use
+WebUI to monitor and control you migrations.
+
+At first, open migrations tab in the left menu. From here, you can see all migrations
+status and can start migrations.
+
+..  image:: images/migrations.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+After clicking on "Migration Up" button, you will see the result:
+
+..  image:: images/applied-migrations.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
 
 .. _cartridge-change-cookie:
 

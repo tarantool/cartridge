@@ -72,7 +72,7 @@
 --
 -- Unhealthy replicasets:
 --
--- * critical: "All instances are unhealthy in replicaset ... .
+-- * critical: "All instances are unhealthy in replicaset ... ".
 --
 -- Custom issues (defined by user):
 --

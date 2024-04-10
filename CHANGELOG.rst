@@ -46,7 +46,7 @@ Changed
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Swithing leadership when disabling leader in replicaset.
+- Switching leadership when disabling leader in replicaset.
 
 -------------------------------------------------------------------------------
 [2.9.0] - 2024-03-06
