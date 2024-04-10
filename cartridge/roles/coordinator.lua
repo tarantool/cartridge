@@ -26,25 +26,18 @@ vars:new('options', {
 
 -- The healthcheck function is put into vars for easier
 -- monkeypatching and further extending.
-vars:new('healthcheck', function(members, instance_uuid)
+vars:new('healthcheck', function(_, instance_uuid)
     checks('table', 'string')
     assert(vars.topology_cfg ~= nil)
     assert(vars.topology_cfg.servers ~= nil)
 
     local server = vars.topology_cfg.servers[instance_uuid]
-    if server == nil or not topology.not_disabled(instance_uuid, server) then
+    if server == nil or topology.disabled(instance_uuid, server) then
         return false
     end
-    local member = members[server.uri]
 
-    if member ~= nil
-    and (member.status == 'alive' or member.status == 'suspect')
-    and (member.payload.uuid == instance_uuid)
-    and (
-        member.payload.state == 'ConfiguringRoles' or
-        member.payload.state == 'RolesConfigured'
-    )
-    then
+    local res, _ = topology.member_is_healthy(server.uri, instance_uuid)
+    if res == true then
         return true
     end
 

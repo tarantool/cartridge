@@ -352,9 +352,6 @@ local function fencing_healthcheck()
     )
     for _, instance_uuid in ipairs(leaders_order) do
         local server = assert(topology_cfg.servers[instance_uuid])
-        if not topology.not_disabled(instance_uuid, server) then
-            goto continue
-        end
 
         local member = membership.get_member(server.uri)
 
@@ -823,7 +820,7 @@ local function cfg(clusterwide_config, opts)
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
             synchro_demote()
-        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil, {only_enabled = true}) == 1 then
+        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
@@ -919,7 +916,7 @@ local function cfg(clusterwide_config, opts)
         -- Raft failover can be enabled only on replicasets of 3 or more instances
         if vars.disable_raft_on_small_clusters
         and #topology.get_leaders_order(
-            topology_cfg, vars.replicaset_uuid, nil, {only_electable=false, only_enabled = true}) < 3
+            topology_cfg, vars.replicaset_uuid, nil, {only_electable = false, only_enabled = true}) < 3
         then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
