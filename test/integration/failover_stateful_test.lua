@@ -814,4 +814,26 @@ for group, uri in pairs(test_cases) do
     end
 end
 
+add('test_disable', function(g)
+    t.assert_equals(g.client:get_session():get_leaders(),
+    {
+        [router_uuid] = router_1_uuid,
+        [storage_uuid] = storage_1_uuid,
+    })
 
+    g.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').disable_servers({uuid})
+    end, {storage_1_uuid})
+
+    t.helpers.retrying({timeout = 20}, function()
+        t.assert_equals(g.client:get_session():get_leaders(),
+        {
+            [router_uuid] = router_1_uuid,
+            [storage_uuid] = storage_2_uuid,
+        })
+    end)
+
+    g.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').enable_servers({uuid})
+    end, {storage_1_uuid})
+end)
