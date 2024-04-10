@@ -540,8 +540,10 @@ function g.test_orphan_connect_timeout()
     )
     helpers.wish_state(g.master, 'ConnectingFullmesh')
 
+    local issues = helpers.list_cluster_issues(g.master)
+    table.sort(issues, function(a, b) return a.topic < b.topic end)
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(g.master), {{
+        t.assert_equals(issues, {{
             level = 'critical',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
@@ -549,7 +551,14 @@ function g.test_orphan_connect_timeout()
                 -- slave alias is unknown due to restart
                 " to localhost:13301 (master) isn't running",
             topic = 'replication',
-        }})
+        }, {
+            instance_uuid = box.NULL,
+            level = "critical",
+            message = "All instances are unhealthy in replicaset "..
+                "aaaaaaaa-0000-0000-0000-000000000000",
+            replicaset_uuid = helpers.uuid('a'),
+            topic = "unhealthy_replicasets",
+        }, })
     end)
 
     log.info('--------------------------------------------------------')
