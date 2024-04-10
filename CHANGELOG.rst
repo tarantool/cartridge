@@ -34,6 +34,11 @@ Changed
 
 - Update ``membership`` dependency to `2.4.4 <https://github.com/tarantool/membership/releases/tag/2.4.4>`_.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Swithing leadership when disabling leader in replicaset.
 
 -------------------------------------------------------------------------------
 [2.9.0] - 2024-03-06
