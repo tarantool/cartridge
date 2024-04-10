@@ -42,4 +42,4 @@ trap "kill %1" EXIT
 
 export NODE_ENV=production
 export BABEL_ENV=$NODE_ENV
-npx cypress "$@" -P webui/
+npx cypress@7.7.0 "$@" -P webui/
