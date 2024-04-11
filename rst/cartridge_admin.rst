@@ -661,14 +661,42 @@ To deactivate a set, do the following:
     away. You can monitor the current bucket number as described in the
     :ref:`data rebalancing section <cartridge-rebalance-data>`.
 
+.. _cartridge-disabling-instances:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Disabling instances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes when instances are not healthy, you may want to disable them
+to perform some operations on cluster (e.g. apply new cluster config).
+
+To disable an instance, click **...** next to it, then click **Disable server**:
+
+..  image:: images/disable-instance.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+Then instance will be marked as disabled and will not participate in cluster configuration:
+
+..  image:: images/disabled-instance.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+You can also disable an active leader, then the leader will be switched to another instance.
+
+..  note::
+
+    Don't forget to enable instance back after you fix them!
+
 .. _cartridge-expelling-instances:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Expelling instances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. // Describe how to disable instances when it's implemented in UI and
-.. // explain the difference.
 
 Once an instance is *expelled*, it can never participate in the cluster again as
 every instance will reject it.
@@ -1485,6 +1513,17 @@ Cartridge displays cluster and instances issues in WebUI:
 
     * Custom roles can announce more issues with their own level, topic
       and message. See `custom-role.get_issues`.
+
+*   Disable instances suggestion:
+
+    When some instances are unhealthy, Cartridge can suggest you to disable them:
+
+    ..  image:: images/disable-instances-suggestion.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
 
 .. _cartridge-compression-suggestions:
 
