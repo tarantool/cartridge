@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { sample } from 'effector';
 import { createGate } from 'effector-react';
-import { TypeOf, array, object, record, string } from 'zod';
+import { TypeOf, array, object, record, string, union, unknown } from 'zod';
 
 import { app } from 'src/models';
 import { getMigrationsStates, migrationsMove, migrationsUp } from 'src/store/request/app.requests';
 
 const schema = object({
   data: object({
-    applied: record(array(string())),
+    applied: union([record(array(string())), array(unknown())]),
   }),
 });
 
