@@ -32,37 +32,33 @@ export const MigrationsState = () => {
   const state = useStore(migrations.$migrationsState);
   const data = useMemo(
     () =>
-      Object.keys(state?.applied ?? {}).reduce((acc: { name: string; migrations: string }[], key) => {
-        const item = state?.applied?.[key];
-        if (item) {
-          acc.push({
-            name: key,
-            migrations: item.length > 0 ? item.join(', ') : '-',
-          });
-        }
-
-        return acc;
-      }, []),
-    [state?.applied]
-  );
-  const withWarning = useMemo(
-    () =>
-      Object.keys(state?.applied ?? {}).reduce(
-        (acc, key) => {
-          if (!acc.result) {
+      !state?.applied || Array.isArray(state?.applied)
+        ? []
+        : Object.keys(state.applied).reduce((acc: { name: string; migrations: string; hash: string }[], key) => {
             const item = state?.applied?.[key];
             if (item) {
-              const hash = [...item].sort().join(',');
-              acc.result = hash !== acc.hash;
-              acc.hash = hash;
+              acc.push({
+                name: key,
+                migrations: item.length > 0 ? item.join(', ') : '-',
+                hash: [...item].sort().join(','),
+              });
             }
-          }
 
-          return acc;
-        },
-        { result: false, hash: '' } as { result: boolean; hash: string }
-      ).result,
+            return acc;
+          }, []),
     [state?.applied]
+  );
+
+  const withWarning = useMemo(
+    () =>
+      data.reduce((acc, current, index, list) => {
+        if (acc || index <= 0) {
+          return acc;
+        }
+
+        return current.hash !== list[index - 1]?.hash;
+      }, false),
+    [data]
   );
 
   return (
