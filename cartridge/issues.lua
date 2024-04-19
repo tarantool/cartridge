@@ -110,6 +110,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
+local lua_api_topology = require('cartridge.lua-api.topology')
 local invalid_format = require('cartridge.invalid-format')
 local sync_spaces = require('cartridge.sync-spaces')
 
@@ -516,6 +517,20 @@ local function list_on_instance(opts)
         end
     end
 
+    if type(box.cfg) == 'table' and not fio.lstat(box.cfg.memtx_dir) then
+        table.insert(ret, {
+            level = 'critical',
+            topic = 'disk_error',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Disk error on instance %s',
+                instance_uuid
+            ),
+        })
+        vshard.storage.disable()
+    end
+
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
     for role_name, M in pairs(registry.list()) do
@@ -705,11 +720,16 @@ local function list_on_cluster()
         {uri_list = uri_list, timeout = 1}
     )
 
+    local disk_error_uuids = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
+            if issue.topic == 'disk_error' then
+                table.insert(disk_error_uuids, issue.instance_uuid)
+            end
         end
     end
+    lua_api_topology.disable_servers(disk_error_uuids)
 
     -- to use this counter in tarantool/metrics
     rawset(_G, '__cartridge_issues_cnt', #ret)
