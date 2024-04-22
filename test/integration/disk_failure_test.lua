@@ -59,19 +59,21 @@ function g.test_disk_failure_disable()
             helpers.list_cluster_issues(router)):totable()
 
         table.sort(issues, function(a, b) return a.instance_uuid < b.instance_uuid end)
-
-        t.assert_covers(issues,
-        {{
-        level = 'critical',
-        replicaset_uuid = sharded_storage_1.replicaset_uuid,
-        instance_uuid = sharded_storage_1.instance_uuid,
-        topic = 'disk_failure',
-        }, {
-        level = 'critical',
-        replicaset_uuid = simple_storage_1.replicaset_uuid,
-        instance_uuid = simple_storage_1.instance_uuid,
-        topic = 'disk_failure',
-        }})
+        local expected_issues = {
+            {
+                level = 'critical',
+                replicaset_uuid = sharded_storage_1.replicaset_uuid,
+                instance_uuid = sharded_storage_1.instance_uuid,
+                topic = 'disk_failure',
+            }, {
+                level = 'critical',
+                replicaset_uuid = simple_storage_1.replicaset_uuid,
+                instance_uuid = simple_storage_1.instance_uuid,
+                topic = 'disk_failure',
+            }
+        }
+        table.sort(expected_issues, function(a, b) return a.instance_uuid < b.instance_uuid end)
+        t.assert_covers(issues, expected_issues)
     end)
 
     local resp = router:graphql({
