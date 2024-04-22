@@ -1509,6 +1509,12 @@ Cartridge displays cluster and instances issues in WebUI:
 
     |nbsp|
 
+*   Disk failure:
+
+    * **critical**: "Disk error on instance ...". When you see this issue,
+      instances will be disabled (on instances with vshard, vshard storage will
+      also be disabled) and you need to fix the disk issue manually.
+
 *   Custom issues (defined by user):
 
     * Custom roles can announce more issues with their own level, topic

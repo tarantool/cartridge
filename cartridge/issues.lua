@@ -74,6 +74,10 @@
 --
 -- * critical: "All instances are unhealthy in replicaset ... ".
 --
+-- Disk failures:
+--
+-- * critical: "Disk error on instance ... ".
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -520,15 +524,14 @@ local function list_on_instance(opts)
     if type(box.cfg) == 'table' and not fio.lstat(box.cfg.memtx_dir) then
         table.insert(ret, {
             level = 'critical',
-            topic = 'disk_error',
+            topic = 'disk_failure',
             instance_uuid = instance_uuid,
             replicaset_uuid = replicaset_uuid,
             message = string.format(
-                'Disk error on instance %s',
+                'Disk error on instance %s. This issue stays until restart',
                 instance_uuid
             ),
         })
-        vshard.storage.disable()
     end
 
     -- add custom issues from each role
@@ -552,6 +555,7 @@ local function list_on_instance(opts)
     return ret
 end
 
+local disk_failure_cache = {}
 local function list_on_cluster()
     local state, err = confapplier.get_state()
     if state == 'Unconfigured' and lua_api_proxy.can_call()  then
@@ -720,16 +724,21 @@ local function list_on_cluster()
         {uri_list = uri_list, timeout = 1}
     )
 
-    local disk_error_uuids = {}
+    local disk_failure_uuids = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
-            if issue.topic == 'disk_error' then
-                table.insert(disk_error_uuids, issue.instance_uuid)
+            if issue.topic == 'disk_failure' then
+                table.insert(disk_failure_uuids, issue.instance_uuid)
+                disk_failure_cache[issue.instance_uuid] = issue
             end
         end
     end
-    lua_api_topology.disable_servers(disk_error_uuids)
+    for _, issue in pairs(disk_failure_cache) do
+        table.insert(ret, issue)
+    end
+
+    lua_api_topology.disable_servers(disk_failure_uuids)
 
     -- to use this counter in tarantool/metrics
     rawset(_G, '__cartridge_issues_cnt', #ret)

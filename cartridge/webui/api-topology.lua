@@ -303,6 +303,10 @@ local function disable_servers(_, args)
     return lua_api_topology.disable_servers(args.uuids)
 end
 
+local function enable_servers(_, args)
+    return lua_api_topology.enable_servers(args.uuids)
+end
+
 local function restart_replication(_, args)
     return lua_api_topology.restart_replication(args.uuids)
 end
@@ -435,6 +439,17 @@ local function init(graphql)
 
     graphql.add_mutation({
         prefix = 'cluster',
+        name = 'enable_servers',
+        doc = 'Enable listed servers by uuid',
+        args = {
+            uuids = gql_types.list(gql_types.string.nonNull),
+        },
+        kind = gql_types.list('Server'),
+        callback = module_name .. '.enable_servers',
+    })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
         name = 'restart_replication',
         doc = 'Restart replication on servers specified by uuid',
         args = {
@@ -500,6 +515,7 @@ return {
     edit_replicaset = edit_replicaset, -- deprecated
     expel_server = expel_server, -- deprecated
     disable_servers = disable_servers,
+    enable_servers = enable_servers,
     restart_replication = restart_replication,
 
     edit_topology = edit_topology,
