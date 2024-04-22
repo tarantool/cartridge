@@ -41,7 +41,7 @@ function g.test_disk_failure_disable()
 
     -- before disk failure everything is ok
     t.assert(sharded_storage_1:exec(function()
-        return vshard.storage.internal.is_enabled
+        return _G.vshard.storage.internal.is_enabled
     end))
 
     -- first DC disk is down
@@ -111,11 +111,11 @@ function g.test_disk_failure_disable()
     })
     -- first storage is disabled
     t.assert_not(sharded_storage_1:exec(function()
-        return vshard.storage.internal.is_enabled
+        return _G.vshard.storage.internal.is_enabled
     end))
     -- second storage is ok
     t.assert(sharded_storage_2:exec(function()
-        return vshard.storage.internal.is_enabled
+        return _G.vshard.storage.internal.is_enabled
     end))
 
     -- first DC disk is allright
@@ -141,6 +141,6 @@ function g.test_disk_failure_disable()
 
     -- vhshar is enabled again
     t.assert(sharded_storage_1:exec(function()
-        return vshard.storage.internal.is_enabled
+        return _G.vshard.storage.internal.is_enabled
     end))
 end

@@ -15,8 +15,6 @@ local lua_api_edit_topology = require('cartridge.lua-api.edit-topology')
 local ProbeServerError = errors.new_class('ProbeServerError')
 local RestartReplicationError = errors.new_class('RestartReplicationError')
 local RefineUriError = errors.new_class('RefineUriError')
-local DisableServerError = errors.new_class('DisableServerError')
-
 
 --- Get alias, uri and uuid of current instance.
 -- @function get_self

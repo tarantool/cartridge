@@ -185,7 +185,7 @@ local function disable_servers(_, _, info)
     return ret
 end
 
-local function enable_servers(_, _, info)
+local function enable_servers(_, _, _)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return nil
