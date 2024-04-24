@@ -738,7 +738,9 @@ local function list_on_cluster()
         table.insert(ret, issue)
     end
 
-    lua_api_topology.disable_servers(disk_failure_uuids)
+    if #disk_failure_uuids > 0 then
+        lua_api_topology.disable_servers(disk_failure_uuids)
+    end
 
     -- to use this counter in tarantool/metrics
     rawset(_G, '__cartridge_issues_cnt', #ret)
