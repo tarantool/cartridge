@@ -81,6 +81,8 @@ local function get_info(uri)
         local ok, storage_info = pcall(vshard and vshard.storage.info)
         local rebalancer_enabled = vshard and vshard.storage and
             vshard.storage.internal.rebalancer_fiber ~= nil
+        local storage_enabled = vshard and vshard.storage and
+            vshard.storage.internal.is_enabled
         if ok then
             storage_info = {
                 vshard_group = vshard_group,
@@ -91,6 +93,7 @@ local function get_info(uri)
                 buckets_pinned = storage_info.bucket.pinned,
                 buckets_sending = storage_info.bucket.sending,
                 rebalancer_enabled = rebalancer_enabled,
+                storage_enabled = storage_enabled,
             }
         else
             storage_info = box.NULL
