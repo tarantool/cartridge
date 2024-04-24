@@ -108,8 +108,7 @@ function g.test_errors()
         {{g.A2.instance_uuid}}
     )
     t.assert_covers(err, {
-        err = 'Server ' .. g.A2.instance_uuid .. ' is disabled,' ..
-            ' not suitable for restarting replication',
+        err = 'Server ' .. g.A2.instance_uuid .. ' is disabled',
     })
 
     g.A1:eval([[
