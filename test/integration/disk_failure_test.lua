@@ -120,12 +120,12 @@ function g.test_disk_failure_disable()
         return _G.vshard.storage.internal.is_enabled
     end))
 
-    -- first DC disk is allright
+    -- first DC disk is alright
     sharded_storage_1:exec(function()
-        package.loaded.fio.lstat = function () return true end
+        package.loaded.fio.lstat = function() return true end
     end)
     simple_storage_1:exec(function()
-        package.loaded.fio.lstat = function () return true end
+        package.loaded.fio.lstat = function() return true end
     end)
 
     -- enable it back
@@ -141,7 +141,7 @@ function g.test_disk_failure_disable()
         t.assert_equals(helpers.list_cluster_issues(router), {})
     end)
 
-    -- vhshar is enabled again
+    -- vshard is enabled again
     t.assert(sharded_storage_1:exec(function()
         return _G.vshard.storage.internal.is_enabled
     end))
