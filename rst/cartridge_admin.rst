@@ -688,6 +688,12 @@ Then instance will be marked as disabled and will not participate in cluster con
 
 You can also disable an active leader, then the leader will be switched to another instance.
 
+Disabling/enabling instances automatically call ``vshard.storage.disable()`` / ``vshard.storage.enable()``
+on instances with VShard storage enabled.
+
+Instances will be disabled automatically when a disk failure occurs
+(see "issues and suggestions" topic below for details).
+
 ..  note::
 
     Don't forget to enable instance back after you fix them!

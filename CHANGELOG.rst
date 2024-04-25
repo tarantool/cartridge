@@ -20,6 +20,17 @@ Added
   will be disabled automatically and the corresponding issue will be shown
   in the WebUI.
 
+- GraphQL API to enable previously disabled instances:
+  ``mutation { cluster { enable_servers(uuids: [...]) { } } }``.
+
+- ``storage_enabled`` field to boxinfo GraphQL API.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disabling/enabling instances automatically disables/enables VShard storages.
+
 -------------------------------------------------------------------------------
 [2.10.0] - 2024-04-10
 -------------------------------------------------------------------------------

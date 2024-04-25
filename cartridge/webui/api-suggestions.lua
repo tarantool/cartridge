@@ -46,15 +46,6 @@ local disable_servers_suggestion = gql_types.object({
     }
 })
 
-local enable_servers_suggestion = gql_types.object({
-    name = 'EnableServerSuggestion',
-    description =
-        'A suggestion to enable all disabled servers',
-    fields = {
-        uuid = gql_types.string.nonNull,
-    }
-})
-
 local restart_replication_suggestion = gql_types.object({
     name = 'RestartReplicationSuggestion',
     description =
@@ -185,25 +176,6 @@ local function disable_servers(_, _, info)
     return ret
 end
 
-local function enable_servers(_, _, _)
-    local topology_cfg = confapplier.get_readonly('topology')
-    if topology_cfg == nil then
-        return nil
-    end
-
-    local ret = {}
-
-    for _, uuid, _ in fun.filter(topology.disabled, topology_cfg.servers) do
-        table.insert(ret, {uuid = uuid})
-    end
-
-    if next(ret) == nil then
-        return nil
-    end
-
-    return ret
-end
-
 local function restart_replication(_, _, info)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -247,7 +219,6 @@ local function get_suggestions(_, _, info)
         refine_uri = refine_uri(nil, nil, info),
         force_apply = force_apply(nil, nil, info),
         disable_servers = disable_servers(nil, nil, info),
-        enable_servers = enable_servers(nil, nil, info),
         restart_replication = restart_replication(nil, nil, info),
     }
 end
@@ -265,8 +236,6 @@ local function init(graphql)
                 force_apply = gql_types.list(force_apply_suggestion.nonNull),
                 disable_servers =
                     gql_types.list(disable_servers_suggestion.nonNull),
-                enable_servers =
-                    gql_types.list(enable_servers_suggestion.nonNull),
                 restart_replication =
                     gql_types.list(restart_replication_suggestion.nonNull),
             }
