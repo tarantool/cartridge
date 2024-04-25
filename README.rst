@@ -142,11 +142,11 @@ Next steps
 See:
 
 * A more detailed
-  `getting started guide <https://www.tarantool.io/en/doc/latest/getting_started/getting_started_cartridge/>`_
+  `getting started guide <https://www.tarantool.io/en/doc/2.11/how-to/getting_started_cartridge/>`_
 * More
   `application examples <https://github.com/tarantool/examples>`_
-* `Cartridge documentation <https://www.tarantool.io/en/doc/latest/book/cartridge/>`_
-* `Cartridge API reference <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/>`_
+* `Cartridge documentation <https://www.tarantool.io/en/doc/2.11/book/cartridge/>`_
+* `Cartridge API reference <https://www.tarantool.io/en/doc/2.11/book/cartridge/cartridge_api/>`_
 
 --------------------------------------------------------------------------------
 Contributing
