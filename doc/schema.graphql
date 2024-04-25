@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Mon Apr 22 2024 18:25:04 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Apr 25 2024 14:01:07 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -131,11 +131,6 @@ input EditServerInput {
 type EditTopologyResult {
   replicasets: [Replicaset]!
   servers: [Server]!
-}
-
-"""A suggestion to enable all disabled servers"""
-type EnableServerSuggestion {
-  uuid: String!
 }
 
 type Error {
@@ -1091,9 +1086,8 @@ type StateProviderStatus {
 
 type Suggestions {
   force_apply: [ForceApplySuggestion!]
-  enable_servers: [EnableServerSuggestion!]
-  refine_uri: [RefineUriSuggestion!]
   restart_replication: [RestartReplicationSuggestion!]
+  refine_uri: [RefineUriSuggestion!]
   disable_servers: [DisableServerSuggestion!]
 }
 
