@@ -74,6 +74,10 @@
 --
 -- * critical: "All instances are unhealthy in replicaset ... ".
 --
+-- Disk failures:
+--
+-- * critical: "Disk error on instance ... ".
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -81,7 +85,7 @@
 --
 -- GraphQL request:
 --
--- You can get info about cluster issues using the following GrapQL request:
+-- You can get info about cluster issues using the following GraphQL request:
 --    {
 --        cluster {
 --            issues {
@@ -110,6 +114,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
+local lua_api_topology = require('cartridge.lua-api.topology')
 local invalid_format = require('cartridge.invalid-format')
 local sync_spaces = require('cartridge.sync-spaces')
 
@@ -516,6 +521,19 @@ local function list_on_instance(opts)
         end
     end
 
+    if type(box.cfg) == 'table' and not fio.lstat(box.cfg.memtx_dir) then
+        table.insert(ret, {
+            level = 'critical',
+            topic = 'disk_failure',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Disk error on instance %s. This issue stays until restart',
+                instance_uuid
+            ),
+        })
+    end
+
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
     for role_name, M in pairs(registry.list()) do
@@ -537,6 +555,7 @@ local function list_on_instance(opts)
     return ret
 end
 
+local disk_failure_cache = {}
 local function list_on_cluster()
     local state, err = confapplier.get_state()
     if state == 'Unconfigured' and lua_api_proxy.can_call()  then
@@ -705,10 +724,22 @@ local function list_on_cluster()
         {uri_list = uri_list, timeout = 1}
     )
 
+    local disk_failure_uuids = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
+            if issue.topic == 'disk_failure' then
+                table.insert(disk_failure_uuids, issue.instance_uuid)
+                disk_failure_cache[issue.instance_uuid] = issue
+            end
         end
+    end
+    for _, issue in pairs(disk_failure_cache) do
+        table.insert(ret, issue)
+    end
+
+    if #disk_failure_uuids > 0 then
+        lua_api_topology.disable_servers(disk_failure_uuids)
     end
 
     -- to use this counter in tarantool/metrics

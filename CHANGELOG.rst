@@ -12,6 +12,24 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disk failure check. If there is something wrong with the disk, the instance
+  will be disabled automatically and the corresponding issue will be shown
+  in the WebUI.
+
+- GraphQL API to enable previously disabled instances:
+  ``mutation { cluster { enable_servers(uuids: [...]) { } } }``.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disabling/enabling instances with ``disable_servers`` / ``enable_servers``
+  mutations automatically disables/enables VShard storages.
+
 -------------------------------------------------------------------------------
 [2.10.0] - 2024-04-10
 -------------------------------------------------------------------------------

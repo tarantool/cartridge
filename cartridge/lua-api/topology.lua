@@ -14,6 +14,7 @@ local lua_api_edit_topology = require('cartridge.lua-api.edit-topology')
 
 local ProbeServerError = errors.new_class('ProbeServerError')
 local RestartReplicationError = errors.new_class('RestartReplicationError')
+local RefineUriError = errors.new_class('RefineUriError')
 
 --- Get alias, uri and uuid of current instance.
 -- @function get_self
@@ -105,8 +106,65 @@ local function probe_server(uri)
     return true
 end
 
+local function get_uri_list(uuids, only_enabled)
+    if only_enabled == nil then
+        only_enabled = true
+    end
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil, RefineUriError:new(
+            "Current instance isn't bootstrapped yet"
+        )
+    end
+
+    local uri_list = {}
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid in ipairs(uuids) do
+        local srv = topology_cfg.servers[uuid]
+        if not srv then
+            return nil, RefineUriError:new(
+                'Server %s not in clusterwide config', uuid
+            )
+        elseif only_enabled and topology.disabled(uuid, srv) then
+            return nil, RefineUriError:new(
+                'Server %s is disabled', uuid
+            )
+        end
+
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+    return uri_list
+end
+
+
+local function __cartridge_set_vshard_disabled_state(state)
+    local vshard = rawget(_G, 'vshard')
+    if vshard == nil then
+        return
+    end
+    if state == true and vshard.storage.internal.is_enabled then
+        vshard.storage.disable()
+    elseif state == false and not vshard.storage.internal.is_enabled then
+        vshard.storage.enable()
+    end
+end
+rawset(_G, '__cartridge_set_vshard_disabled_state', __cartridge_set_vshard_disabled_state)
+
 local function __set_servers_disabled_state(uuids, state)
     checks('table', 'boolean')
+
+    local uri_list, err = get_uri_list(uuids, state)
+    if uri_list == nil then
+        return nil, err
+    end
+
+    pool.map_call(
+        '_G.__cartridge_set_vshard_disabled_state',
+        {state}, { uri_list = uri_list }
+    )
+
+
     local patch = {servers = {}}
 
     for _, uuid in pairs(uuids) do
@@ -158,31 +216,9 @@ end
 -- @treturn[2] table Error description
 local function restart_replication(uuids)
     checks('table')
-    local topology_cfg = confapplier.get_readonly('topology')
-
-    if topology_cfg == nil then
-        return nil, RestartReplicationError:new(
-            "Current instance isn't bootstrapped yet"
-        )
-    end
-
-    -- Prepare a server group to be operated
-    local uri_list = {}
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
-    for _, uuid in ipairs(uuids) do
-        local srv = topology_cfg.servers[uuid]
-        if not srv then
-            return nil, RestartReplicationError:new(
-                'Server %s not in clusterwide config', uuid
-            )
-        elseif topology.disabled(uuid, srv) then
-            return nil, RestartReplicationError:new(
-                'Server %s is disabled, not suitable' ..
-                ' for restarting replication', uuid
-            )
-        end
-
-        table.insert(uri_list, refined_uri_list[uuid])
+    local uri_list, err = get_uri_list(uuids)
+    if uri_list == nil then
+        return nil, err
     end
 
     local retmap, errmap = pool.map_call(

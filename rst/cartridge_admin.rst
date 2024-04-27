@@ -688,6 +688,15 @@ Then instance will be marked as disabled and will not participate in cluster con
 
 You can also disable an active leader, then the leader will be switched to another instance.
 
+Disabling/enabling instances automatically via GraphQL ``mutation { cluster { disable_servers(uuids: [...]) { } } }`` /
+``mutation { cluster { enable_servers(uuids: [...]) { } } }`` call ``vshard.storage.disable()`` /
+``vshard.storage.enable()`` on instances with VShard storage enabled.
+**Note** that simple disable of instances via ``edit_server`` button or GraphQL won't
+disable VShard storages.
+
+Instances will be disabled automatically when a disk failure occurs
+(see "issues and suggestions" topic below for details).
+
 ..  note::
 
     Don't forget to enable instance back after you fix them!
@@ -1508,6 +1517,12 @@ Cartridge displays cluster and instances issues in WebUI:
         :scale: 40%
 
     |nbsp|
+
+*   Disk failure:
+
+    * **critical**: "Disk error on instance ...". When you see this issue,
+      instances will be disabled (on instances with vshard, vshard storage will
+      also be disabled) and you need to fix the disk issue manually.
 
 *   Custom issues (defined by user):
 
