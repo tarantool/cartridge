@@ -1681,6 +1681,28 @@ After clicking on "Migration Up" button, you will see the result:
 
 |nbsp|
 
+
+.. _cartridge-ssl:
+
+-------------------------------------------------------------------------------
+SSL in Cartridge
+-------------------------------------------------------------------------------
+
+Tarantool Enterprise supports the use of SSL connections to encrypt client-server
+communications for increased security. To enable SSL in Cartridge for Replication
+and inner cluster communications, you can use environment variables or
+``cartridge.cfg`` options.
+
+To enable SSL in Cartridge, set ``transport`` param to ``ssl`` in ``cartridge.cfg``
+in your init file or add environment variable ``TARANTOOL_TRANSPORT=ssl``.
+You also need to add cfg options or environment variables for the next ssl options:
+``ssl_ciphers``, ``ssl_server_ca_file``, ``ssl_server_cert_file``, ``ssl_server_key_file``,
+``ssl_server_password``, ``ssl_client_ca_file``, ``ssl_client_cert_file``,
+``ssl_client_key_file``, ``ssl_client_password``. For details, see
+`this article
+<https://www.tarantool.io/ru/doc/latest/concepts/configuration/configuration_connections/#securing-connections-with-ssl>`_.
+
+
 .. _cartridge-change-cookie:
 
 -------------------------------------------------------------------------------
