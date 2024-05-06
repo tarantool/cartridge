@@ -30,6 +30,8 @@ Changed
 - Disabling/enabling instances with ``disable_servers`` / ``enable_servers``
   mutations automatically disables/enables VShard storages.
 
+- Update ``ddl`` dependency to `1.7.1 <https://github.com/tarantool/ddl/releases/tag/1.7.1>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
