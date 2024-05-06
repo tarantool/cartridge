@@ -6,7 +6,7 @@ source  = {
 }
 dependencies = {
     'lua >= 5.1',
-    'ddl == 1.7.0-1',
+    'ddl == 1.7.1-1',
     'http == 1.5.0-1',
     'checks == 3.3.0-1',
     'errors == 2.2.1-1',
