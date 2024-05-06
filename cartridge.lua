@@ -23,6 +23,7 @@ local http = require('http.server')
 local fiber = require('fiber')
 local socket = require('socket')
 local json = require('json')
+local digest = require('digest')
 local tarantool_version = require('tarantool').version
 
 local rpc = require('cartridge.rpc')
@@ -275,6 +276,34 @@ end
 --   env `TARANTOOL_UPLOAD_PREFIX`,
 --   args `--upload-prefix`)
 --
+
+-- @tparam ?boolean opts.enable_failover_suppressing
+--   Enable failover suppressing. It forces eventual failover
+--   to stop in case of constant switching.
+--   default: `false`, overridden by
+--   env `TARANTOOL_ENABLE_FAILOVER_SUPPRESSING`,
+--   args `--enable-failover-suppressing`)
+--
+-- @tparam ?boolean opts.enable_synchro_mode
+--   Allow to use sync spaces in Cartridge.
+--   default: `false`, overridden by
+--   env `TARANTOOL_ENABLE_SYNCHRO_MODE`,
+--   args `--enable-synchro-mode`)
+--
+-- @tparam ?boolean opts.disable_raft_on_small_clusters
+--   Disable Raft Failover on small clusters (where
+--   number of instances is less than 3)
+--   default: `true`, overridden by
+--   env `TARANTOOL_DISABLE_RAFT_ON_SMALL_CLUSTERS`,
+--   args `--disable-raft-on-small-clusters`)
+--
+-- @tparam ?boolean opts.set_cookie_hash_membership
+--   Set cookie hash instead of full cluster cookie
+--   as membership encryption key.
+--   default: `false`, overridden by
+--   env `TARANTOOL_SET_COOKIE_HASH_MEMBERSHIP`,
+--   args `--set-cookie-hash-membership`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -310,6 +339,7 @@ local function cfg(opts, box_opts)
         enable_sychro_mode = '?boolean',
         enable_synchro_mode = '?boolean',
         disable_raft_on_small_clusters = '?boolean',
+        set_cookie_hash_membership = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -645,8 +675,18 @@ local function cfg(opts, box_opts)
     if opts.alias == nil then
         opts.alias = args.instance_name
     end
+    local encryption_key = cluster_cookie.cookie()
 
-    membership.set_encryption_key(cluster_cookie.cookie())
+    if opts.set_cookie_hash_membership == true then
+        encryption_key = digest.md5_hex(encryption_key)
+    else
+        log.warn(
+            'Consider changing membership encryption key to cookie hash manually. ' ..
+            'set_cookie_hash_membership will be true by default in next releases.'
+        )
+    end
+
+    membership.set_encryption_key(encryption_key)
     membership.set_payload('alias', opts.alias)
 
     local probe_uri_opts, err = argparse.get_opts({probe_uri_timeout = 'number'})

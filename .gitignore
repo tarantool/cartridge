@@ -32,3 +32,4 @@ sandbox.lua
 *.xlog
 *.snap
 package.json
+*.log

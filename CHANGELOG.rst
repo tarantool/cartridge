@@ -23,6 +23,10 @@ Added
 - GraphQL API to enable previously disabled instances:
   ``mutation { cluster { enable_servers(uuids: [...]) { } } }``.
 
+- ``cartridge.cfg`` param ``set_cookie_hash_membership`` to set
+  cluster cookie hash as encryption key in membership instead of
+  plain cookie.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +45,12 @@ Fixed
 - Fix false positive warning in migrations UI.
 
 - Leader autoreturn doesn't try to return leadership to unhealthy leader anymore.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deprecated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Usage of plain cluster cookie as a membership encryption key by default.
 
 -------------------------------------------------------------------------------
 [2.10.0] - 2024-04-10
