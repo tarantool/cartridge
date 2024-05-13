@@ -38,6 +38,8 @@ Fixed
 
 - Fix false positive warning in migrations UI.
 
+- Leader autoreturn doesn't try to return leadership to unhealthy leader anymore.
+
 -------------------------------------------------------------------------------
 [2.10.0] - 2024-04-10
 -------------------------------------------------------------------------------

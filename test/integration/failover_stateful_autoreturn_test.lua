@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fiber = require('fiber')
 local t = require('luatest')
 local helpers = require('test.helper')
 
@@ -168,7 +169,7 @@ local function check_fiber(g, server_name, present)
     end, {present})
 end
 
-add('test_stateful_failover_autoreturn_fiber_present', function(g)
+add('test_fiber_present', function(g)
     check_fiber(g, 'coordinator', false)
     for _, v in ipairs{'leader', 'replica'} do
         check_fiber(g, v, true)
@@ -191,8 +192,8 @@ add('test_stateful_failover_autoreturn', function(g)
     end)
 end)
 
-for _, server in ipairs{'coordinator', 'leader'} do
-    add('test_stateful_failover_autoreturn_fails_no_' .. server, function(g)
+for _, server in ipairs({'coordinator', 'leader'}) do
+    add('test_fails_no_' .. server, function(g)
         helpers.retrying({}, function()
             local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
             t.assert(ok, err)
@@ -234,7 +235,7 @@ local function set_autoreturn(g, leader_autoreturn)
     end
 end
 
-add('test_stateful_failover_autoreturn_disable_no_fibers', function(g)
+add('test_disable_no_fibers', function(g)
     set_autoreturn(g, false)
     for _, v in ipairs{'coordinator', 'leader', 'replica'} do
         check_fiber(g, v, false)
@@ -242,3 +243,33 @@ add('test_stateful_failover_autoreturn_disable_no_fibers', function(g)
     set_autoreturn(g, true)
 end)
 
+add('test_failed_no_prime', function(g)
+    helpers.retrying({}, function()
+        local ok, err = g.cluster.main_server:eval(q_promote, {{[storage1_uuid] = storage1_2_uuid}})
+        t.assert(ok, err)
+    end)
+
+    helpers.retrying({}, function()
+        t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
+    end)
+
+    g.cluster:server('replica'):exec(function(uri)
+        local memberhsip = require('membership')
+        rawset(_G, '__get_member_prev', memberhsip.get_member)
+        package.loaded['membership'].get_member = function(advertise_uri)
+            local res = _G.__get_member_prev(uri)
+            if uri == advertise_uri then
+                res.status = 'unhealthy'
+            end
+            return res
+        end
+    end, {g.cluster:server('replica').advertise_uri})
+    fiber.sleep(5) -- enough to wait autoreturn fiber
+
+    t.assert_not_equals(g.cluster.main_server:eval(q_leadership), storage1_1_uuid)
+    t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
+
+    g.cluster:server('replica'):exec(function()
+        package.loaded['membership'].get_member = rawget(_G, '__get_member_prev')
+    end)
+end)

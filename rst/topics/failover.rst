@@ -162,7 +162,8 @@ You can also enable ``leader_autoreturn`` to return leadership to the
 first leader in ``failover_priority`` list after failover was triggered.
 It might be useful when you have active and passive data centers.
 The time before failover will try to return the leader is configured by
-``autoreturn_delay`` option in a failover configuration.
+``autoreturn_delay`` option in a failover configuration. Note that
+``leader_autoreturn`` won't work if the prime leader is unhealthy.
 
 Stateful failover automatically checks if there is a registered cluster
 in a state provider. Check is performed on a first stateful failover

@@ -22,6 +22,14 @@ local function enable(topology_cfg)
             if desired_leader_uuid ~= vars.instance_uuid then
                 log.info("Autoreturn: try to return leader %s in replicaset %s",
                     desired_leader_uuid, vars.replicaset_uuid)
+                local ok, _ = topology.member_is_healthy(
+                    topology_cfg.servers[desired_leader_uuid].uri,
+                    desired_leader_uuid
+                )
+                if ok == nil then
+                    log.error("Autoreturn: prime leader is unhealthy")
+                    goto continue
+                end
                 local client = vars.client
                 if client == nil
                 or client.session == nil
@@ -50,6 +58,7 @@ local function enable(topology_cfg)
                 end
             end
         end
+        ::continue::
     end
 end
 
