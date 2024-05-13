@@ -270,6 +270,6 @@ add('test_failed_no_prime', function(g)
     t.assert_equals(g.cluster.main_server:eval(q_leadership), storage1_2_uuid)
 
     g.cluster:server('replica'):exec(function()
-        package.loaded['membership'].get_member = rawget(_G, __get_member_prev)
+        package.loaded['membership'].get_member = rawget(_G, '__get_member_prev')
     end)
 end)
