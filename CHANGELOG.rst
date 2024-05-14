@@ -32,6 +32,8 @@ Changed
 
 - Update ``ddl`` dependency to `1.7.1 <https://github.com/tarantool/ddl/releases/tag/1.7.1>`_.
 
+- Update ``vshard`` dependency to `0.1.27 <https://github.com/tarantool/vshard/releases/tag/0.1.27>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
