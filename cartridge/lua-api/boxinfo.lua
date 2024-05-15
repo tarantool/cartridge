@@ -55,7 +55,7 @@ local function get_info(uri)
         if package.loaded['vshard-ee'] ~= nil then
             vshard = package.loaded['vshard-ee']
             vshard_version = vshard._VERSION .. ' EE'
-        else
+        elseif package.loaded['vshard'] ~= nil then
             vshard = package.loaded.vshard
             vshard_version = vshard._VERSION
         end
