@@ -356,7 +356,11 @@ local boxinfo_schema = {
                         description =
                             'Error details if instance is in' ..
                             ' failure state',
-                    }
+                    },
+                    vshard_version = {
+                        kind = gql_types.string,
+                        description = 'VShard version',
+                    },
                 }
             }).nonNull,
             membership = gql_types.object({

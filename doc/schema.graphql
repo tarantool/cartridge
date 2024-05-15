@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Apr 25 2024 14:01:07 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue May 14 2024 20:35:31 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -727,6 +727,9 @@ type ServerInfo {
 type ServerInfoCartridge {
   """Current instance state"""
   state: String!
+
+  """VShard version"""
+  vshard_version: String
 
   """Cartridge version"""
   version: String!
