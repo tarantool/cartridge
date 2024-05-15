@@ -143,6 +143,7 @@ export const serverDetailsFields = gql`
       cartridge {
         version
         vshard_version
+        ddl_version
       }
       membership {
         status

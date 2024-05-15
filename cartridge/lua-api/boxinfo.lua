@@ -51,7 +51,7 @@ local function get_info(uri)
         local membership_myself = require('membership').myself()
         local membership_options = require('membership.options')
 
-        local vshard, vshard_version
+        local vshard, vshard_version, ddl_version
         if package.loaded['vshard-ee'] ~= nil then
             vshard = package.loaded['vshard-ee']
             vshard_version = vshard._VERSION .. ' EE'
@@ -60,6 +60,11 @@ local function get_info(uri)
             vshard_version = vshard._VERSION
         end
 
+        if package.loaded['ddl-ee'] ~= nil then
+            ddl_version = require('ddl-ee.version') .. ' EE'
+        elseif package.loaded['vshard'] ~= nil then
+            ddl_version = require('ddl.version')
+        end
 
         local routers = vshard and vshard.router.internal.routers or {}
         local router_info = {}
@@ -201,6 +206,7 @@ local function get_info(uri)
             cartridge = {
                 version = require('cartridge').VERSION,
                 vshard_version = vshard_version,
+                ddl_version = ddl_version,
                 state = server_state,
                 error = server_error,
             },

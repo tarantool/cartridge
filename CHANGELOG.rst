@@ -42,6 +42,8 @@ Changed
 
 - Cartridge now uses ``vshard-ee`` instead of ``vshard`` if available.
 
+- Cartridge now uses ``ddl-ee`` instead of ``ddl`` if available.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

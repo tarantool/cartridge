@@ -361,6 +361,10 @@ local boxinfo_schema = {
                         kind = gql_types.string,
                         description = 'VShard version',
                     },
+                    ddl_version = {
+                        kind = gql_types.string,
+                        description = 'DDL version',
+                    },
                 }
             }).nonNull,
             membership = gql_types.object({
