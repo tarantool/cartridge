@@ -38,6 +38,12 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - Tarantool 2.10
      - Tarantool 2.11
      - Additional notes
+   * - Cartridge scm-1
+     - \+
+     - \+
+     - \+
+     - \+
+     - Cartridge uses enterprise versions of ``vshard`` and ``ddl`` if available
    * - Cartridge 2.11.0
      - \+
      - \+

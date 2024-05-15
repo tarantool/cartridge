@@ -12,6 +12,20 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- VShard and DDL versions are displayed in the WebUI.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Cartridge now uses ``vshard-ee`` instead of ``vshard`` if available.
+
+- Cartridge now uses ``ddl-ee`` instead of ``ddl`` if available.
+
 -------------------------------------------------------------------------------
 [2.11.0] - 2024-05-15
 -------------------------------------------------------------------------------
@@ -27,8 +41,6 @@ Added
 - GraphQL API to enable previously disabled instances:
   ``mutation { cluster { enable_servers(uuids: [...]) { } } }``.
 
-- VShard version is displayed in the WebUI.
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,10 +51,6 @@ Changed
 - Update ``ddl`` dependency to `1.7.1 <https://github.com/tarantool/ddl/releases/tag/1.7.1>`_.
 
 - Update ``vshard`` dependency to `0.1.27 <https://github.com/tarantool/vshard/releases/tag/0.1.27>`_.
-
-- Cartridge now uses ``vshard-ee`` instead of ``vshard`` if available.
-
-- Cartridge now uses ``ddl-ee`` instead of ``ddl`` if available.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
