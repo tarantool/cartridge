@@ -56,12 +56,13 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - \+
      - \+
      - Can't be downgraded to Cartridge 2.7.9 and lower
+       Contains a serious bug in ``membership``
    * - Cartridge 2.8.6
      - \+
      - \+
      - \+
      - \+
-     -
+     - Contains a serious bug in ``membership``
    * - Cartridge 2.8.5
      - \+
      - \+
