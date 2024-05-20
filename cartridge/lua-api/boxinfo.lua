@@ -53,16 +53,16 @@ local function get_info(uri)
 
         local vshard, vshard_version, ddl_version
         if package.loaded['vshard-ee'] ~= nil then
-            vshard = package.loaded['vshard-ee']
+            vshard = require('vshard-ee')
             vshard_version = vshard._VERSION .. ' EE'
         elseif package.loaded['vshard'] ~= nil then
-            vshard = package.loaded.vshard
+            vshard = require('vshard')
             vshard_version = vshard._VERSION
         end
 
-        if package.loaded['ddl-ee'] ~= nil then
-            ddl_version = require('ddl-ee.version') .. ' EE'
-        elseif package.loaded['ddl'] ~= nil then
+        if package.loaded['ddl-ee.version'] ~= nil then
+            ddl_version = require('ddl-ee') .. ' EE'
+        elseif package.loaded['ddl.version'] ~= nil then
             ddl_version = require('ddl.version')
         end
 
