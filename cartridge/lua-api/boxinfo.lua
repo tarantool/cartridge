@@ -61,7 +61,7 @@ local function get_info(uri)
         end
 
         if package.loaded['ddl-ee.version'] ~= nil then
-            ddl_version = require('ddl-ee') .. ' EE'
+            ddl_version = require('ddl-ee.version') .. ' EE'
         elseif package.loaded['ddl.version'] ~= nil then
             ddl_version = require('ddl.version')
         end
