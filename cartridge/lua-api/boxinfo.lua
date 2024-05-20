@@ -51,19 +51,21 @@ local function get_info(uri)
         local membership_myself = require('membership').myself()
         local membership_options = require('membership.options')
 
-        local vshard, vshard_version, ddl_version
-        if package.loaded['vshard-ee'] ~= nil then
-            vshard = require('vshard-ee')
+        local ok, vshard, vshard_version, ddl, ddl_version
+        ok, vshard = pcall(require, 'vshard-ee')
+        if ok then
             vshard_version = vshard._VERSION .. ' EE'
-        elseif package.loaded['vshard'] ~= nil then
+        else
             vshard = require('vshard')
             vshard_version = vshard._VERSION
         end
 
-        if package.loaded['ddl-ee.version'] ~= nil then
-            ddl_version = require('ddl-ee.version') .. ' EE'
-        elseif package.loaded['ddl.version'] ~= nil then
-            ddl_version = require('ddl.version')
+        ok, ddl = pcall(require, 'ddl-ee')
+        if ok then
+            ddl_version = ddl._VERSION .. ' EE'
+        else
+            ddl = require('ddl')
+            ddl_version = ddl._VERSION
         end
 
         local routers = vshard and vshard.router.internal.routers or {}
