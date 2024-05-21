@@ -1,5 +1,10 @@
 local log = require('log')
-local vshard = require('vshard')
+
+local ok, vshard = pcall(require, 'vshard-ee')
+if not ok then
+    vshard = require('vshard')
+end
+
 local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')

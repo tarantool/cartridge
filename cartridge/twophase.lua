@@ -46,6 +46,17 @@ vars:new('options', {
     apply_config_timeout = 10,
 })
 
+local function get_ddl_manager()
+    local ddl_manager
+    local ok, _ = pcall(require, 'ddl-ee')
+    if not ok then
+        ddl_manager = service_registry.get('ddl-manager')
+    else
+        ddl_manager = service_registry.get('ddl-manager-ee')
+    end
+    return ddl_manager
+end
+
 local function release_config_lock()
     local prepared_config = vars.prepared_config
     vars.prepared_config = nil
@@ -789,7 +800,7 @@ local function get_schema()
         )
     end
 
-    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ddl_manager = assert(get_ddl_manager())
     return ddl_manager.get_clusterwide_schema_yaml()
 end
 
@@ -809,7 +820,7 @@ local function set_schema(schema_yml)
         )
     end
 
-    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ddl_manager = assert(get_ddl_manager())
     local ok, err = ddl_manager.set_clusterwide_schema_yaml(schema_yml)
     if ok == nil then
         return nil, err

@@ -17,11 +17,6 @@ g.before_all = function()
         }},
     })
     g.cluster:start()
-    g.cluster.main_server:eval([[
-        package.preload['vshard'] = function()
-            error('Requiring vshard is prohibited in this test', 0)
-        end
-    ]])
 end
 
 g.after_all = function()

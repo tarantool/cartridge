@@ -286,7 +286,13 @@ local function validate_config(_, args)
     -- confapplier.validate_config as well but only for leaders. The
     -- following is used to perform the validation on non-leader instances.
     if patch['schema.yml'] and not require('cartridge.failover').is_leader() then
-        local ddl_manager = assert(service_registry.get('ddl-manager'))
+        local ddl_manager
+        local ok, _ = pcall(require, 'ddl-ee')
+        if not ok then
+            ddl_manager = assert(service_registry.get('ddl-manager'))
+        else
+            ddl_manager = assert(service_registry.get('ddl-manager-ee'))
+        end
         local ok, err = ddl_manager.check_schema_yaml(args.as_yaml)
         if not ok then
             if err.class_name == ddl_manager.CheckSchemaError.name then

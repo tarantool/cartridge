@@ -590,6 +590,10 @@ export type ServerInfoCartridge = {
   state: Scalars['String'];
   /** Cartridge version */
   version: Scalars['String'];
+  /** VShard version */
+  vshard_version?: Maybe<Scalars['String']>;
+  /** DDL version */
+  ddl_version?: Maybe<Scalars['String']>;
 };
 
 export type ServerInfoGeneral = {
@@ -1168,7 +1172,12 @@ export type ServerDetailsFieldsFragment = {
   labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
   boxinfo?: {
     __typename?: 'ServerInfo';
-    cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
+    cartridge: {
+      __typename?: 'ServerInfoCartridge';
+      version: string;
+      vshard_version: string | null;
+      ddl_version: string | null;
+    };
     membership: {
       __typename?: 'ServerInfoMembership';
       status?: string | null;
@@ -1296,7 +1305,12 @@ export type InstanceDataQuery = {
     labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
     boxinfo?: {
       __typename?: 'ServerInfo';
-      cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
+      cartridge: {
+        __typename?: 'ServerInfoCartridge';
+        version: string;
+        vshard_version: string | null;
+        ddl_version: string | null;
+      };
       membership: {
         __typename?: 'ServerInfoMembership';
         status?: string | null;
@@ -1457,7 +1471,12 @@ export type BoxInfoQuery = {
     labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
     boxinfo?: {
       __typename?: 'ServerInfo';
-      cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
+      cartridge: {
+        __typename?: 'ServerInfoCartridge';
+        version: string;
+        vshard_version: string | null;
+        ddl_version: string | null;
+      };
       membership: {
         __typename?: 'ServerInfoMembership';
         status?: string | null;

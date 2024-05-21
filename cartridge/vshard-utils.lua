@@ -13,7 +13,11 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
-local vshard_consts = require('vshard.consts')
+
+local ok, vshard_consts = pcall(require, 'vshard-ee.consts')
+if not ok then
+    vshard_consts = require('vshard.consts')
+end
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 

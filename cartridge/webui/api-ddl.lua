@@ -8,6 +8,17 @@ local module_name = 'cartridge.webui.api-ddl'
 local GetSchemaError = errors.new_class('GetSchemaError')
 local CheckSchemaError = errors.new_class('CheckSchemaError')
 
+local function get_ddl_manager()
+    local ddl_manager
+    local ok, _ = pcall(require, 'ddl-ee')
+    if not ok then
+        ddl_manager = service_registry.get('ddl-manager')
+    else
+        ddl_manager = service_registry.get('ddl-manager-ee')
+    end
+    return ddl_manager
+end
+
 local gql_type_schema = gql_types.object({
     name = 'DDLSchema',
     description = 'The schema',
@@ -35,7 +46,7 @@ local function graphql_get_schema()
         )
     end
 
-    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ddl_manager = assert(get_ddl_manager())
     return {as_yaml = ddl_manager.get_clusterwide_schema_yaml()}
 end
 
@@ -46,7 +57,7 @@ local function graphql_set_schema(_, args)
         )
     end
 
-    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ddl_manager = assert(get_ddl_manager())
     local ok, err = ddl_manager.set_clusterwide_schema_yaml(args.as_yaml)
     if ok == nil then
         return nil, err
@@ -62,7 +73,7 @@ local function graphql_check_schema(_, args)
         )
     end
 
-    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ddl_manager = assert(get_ddl_manager())
     local ok, err = ddl_manager.check_schema_yaml(args.as_yaml)
     if ok then
         return { error = box.NULL }

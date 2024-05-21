@@ -142,6 +142,8 @@ export const serverDetailsFields = gql`
     boxinfo {
       cartridge {
         version
+        vshard_version
+        ddl_version
       }
       membership {
         status
