@@ -1816,6 +1816,34 @@ perform next actions:
     #. If nothing had worked, try to carefully remove a broken instance from cluster
        and setup a new one.
 
+.. _cartridge-fix-config:
+
+-------------------------------------------------------------------------------
+Recover from OperationError caused by a broken instance configuration
+-------------------------------------------------------------------------------
+
+It's possible that some instances have entered OperationError state after
+successfully applying a new config. You can fix broken configuration with
+WebUI, but if don't have an access to it, you can try to return to the previous
+configuration or fix the broken one manually:
+
+..  code-block:: lua
+
+    local cartridge = require('cartridge')
+    local config_text = require('cartridge.utils').file_read('CONFIG_PATH') -- full path to a valid config file
+    cartridge.config_patch_clusterwide({['config_section.yml'] = config_text}) -- use config section name here
+
+For example, if you have a broken metrics configuration, you can try to fix it with:
+
+..  code-block:: lua
+
+    local config_text = [[
+    export:
+      - path: '/path_for_metrics'
+        format: 'json'
+    ]]
+    cartridge.config_patch_clusterwide({['metrics.yml'] = config_text})
+
 .. _cartridge-upgrading_schema:
 
 -------------------------------------------------------------------------------
