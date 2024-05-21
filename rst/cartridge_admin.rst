@@ -1764,6 +1764,30 @@ a broken cluster). To do it, perform next actions:
         local clusterwide_config = confapplier.get_active_config()
         return confapplier.apply_config(clusterwide_config)
 
+.. _cartridge-membership-change-encription-key:
+
+-------------------------------------------------------------------------------
+Changing membership encryption key
+-------------------------------------------------------------------------------
+
+Since Cartridge 2.11.0 you can use hash of cluster cookie instead
+of plian cookie as encryption key in membership.
+
+To migrate to this feature, perform next actions:
+
+#.  Set new encryption key on each instance:
+
+    ..  code-block:: lua
+
+        local cluster_cookie = require('cartridge.cluster-cookie')
+        local digest = require('digest')
+        local membership = require('membership')
+
+        membership.set_encryption_key(digest.md5_hex(cluster_cookie.cookie()))
+
+#.  Set param ``set_cookie_hash_membership`` in ``cartridge.cfg`` to ``true``
+    in your ``init.lua`` file, or use environment variables. Don't forget to
+    persist this setting.
 
 .. _cartridge-fix-config:
 
