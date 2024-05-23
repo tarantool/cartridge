@@ -1435,13 +1435,15 @@ Cartridge displays cluster and instances issues in WebUI:
 *   Failover:
 
     *   **warning**: "Can't obtain failover coordinator (...)";
-    *   **warning**: "There is no active failover coordinator";
+    *   **warning**: "There is no active failover coordinator"
+        -- all of the cooridinator instances are probably dead or unavailable;
     *   **warning**: "Failover is stuck on ...: Error fetching appointments (...)";
     *   **warning**: "Failover is stuck on ...: Failover fiber is dead" -- this is likely a bug;
 
 *   Switchover:
 
-    *   **warning**: "Consistency on ... isn't reached yet";
+    *   **warning**: "Consistency on ... isn't reached yet" -- wait for the switchover to finish
+        or try to restart an instance;
 
 *   Clock:
 
@@ -1451,15 +1453,18 @@ Cartridge displays cluster and instances issues in WebUI:
 
     *   **critical**: "Running out of memory on ..." -- when all 3 metrics
         ``items_used_ratio``, ``arena_used_ratio``, ``quota_used_ratio`` from
-        ``box.slab.info()`` exceed ``limits.fragmentation_threshold_critical``;
+        ``box.slab.info()`` exceed ``limits.fragmentation_threshold_critical``.
+        You need to add more memory to the instance;
 
     *   **warning**: "Memory is highly fragmented on ..." - when
         ``items_used_ratio > limits.fragmentation_threshold_warning`` and
-        both ``arena_used_ratio``, ``quota_used_ratio`` exceed critical limit;
+        both ``arena_used_ratio``, ``quota_used_ratio`` exceed critical limit.
+        You can restart the instance to defragment memory or change ``box.cfg.min_tuple_size`` or
+        ``box.cfg.slab_alloc_factor`` to reduce fragmentation;
 
 *   Configuration:
 
-    *   **warning**: "Configuration checksum mismatch on ...";
+    *   **warning**: "Configuration checksum mismatch on ..." -- config is probably corrupted somehow;
     *   **warning**: "Configuration is prepared and locked on ...";
     *   **warning**: "Advertise URI (...) differs from clusterwide config (...)";
     *   **warning**: "Configuring roles is stuck on ... and hangs for ... so far";
@@ -1483,14 +1488,19 @@ Cartridge displays cluster and instances issues in WebUI:
 
     *   various vshard alerts (see vshard docs for details);
 
-    *   **warning**: warning: "Group "..." wasn't bootstrapped: ...";
+    *   **warning**: "Group "..." wasn't bootstrapped: ...".
+        You need to bootstrap the group again;
 
-    *   **warning**: Vshard storages in replicaset %s marked as "all writable".
+    *   **warning**: "Vshard storages in replicaset ... marked as "all writable".
+        You can fix it by setting ``all_rw = false`` in the replicaset configuration;
 
 *   Alien members:
 
     *   **warning**: "Instance ... with alien uuid is in the membership" --
-        when two separate clusters share the same cluster cookie;
+        when two separate clusters share the same cluster cookie or
+        when two clustes have the same first 32 symbols of cluster cookie.
+        You need to change the cluster cookie on one of the clusters or set
+        ``set_cookie_hash_membership`` in ``cartridge.cfg`` to ``true``;
 
     ..  image:: images/cartridge-issues-alien-uuid.png
         :align: left
@@ -1501,11 +1511,13 @@ Cartridge displays cluster and instances issues in WebUI:
 *   Expelled instances:
 
     * **warning**: "Replicaset ... has expelled instance ... in box.space._cluster" -
-      when instance was expelled from replicaset, but still remains in box.space._cluster;
+      when instance was expelled from replicaset, but still remains in box.space._cluster.
+      You need to remove it manually;
 
 *   Deprecated space format:
 
-    * **warning**: "Instance ... has spaces with deprecated format: space1, ..."
+    * **warning**: "Instance ... has spaces with deprecated format: space1, ...". You need to
+      convert spaces to the new format;
 
 *   Raft issues:
 
