@@ -7,6 +7,7 @@ local fio = require('fio')
 local fun = require('fun')
 local log = require('log')
 local uuid = require('uuid')
+local digest = require('digest')
 
 local luatest = require('luatest')
 local utils = require('cartridge.utils')
@@ -43,6 +44,7 @@ end
 -- @string[opt] object.stateboard_entrypoint Command to run stateboard.
 -- @tab[opt] object.zone_distances Vshard distances between zones.
 -- @number[opt] object.swim_period SWIM protocol period in seconds.
+-- @bool[opt] object.auth_enabled Enable authentication.
 -- @return object
 function Cluster:new(object)
     checks('table', {
@@ -58,6 +60,7 @@ function Cluster:new(object)
         stateboard_entrypoint = '?string',
         zone_distances = '?table',
         swim_period = '?number',
+        auth_enabled = '?boolean',
     })
     --- Replicaset config.
     -- @table @replicaset_config
@@ -125,6 +128,9 @@ function Cluster:initialize()
         for i, server_config in ipairs(replicaset_config.servers) do
             if self.env then
                 server_config.env = fun.chain(self.env, server_config.env or {}):tomap()
+            end
+            if self.auth_enabled then
+                server_config.auth_enabled = true
             end
             table.insert(self.servers, self:build_server(server_config, replicaset_config, i))
         end
