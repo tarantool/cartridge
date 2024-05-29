@@ -7,7 +7,6 @@ local fio = require('fio')
 local fun = require('fun')
 local log = require('log')
 local uuid = require('uuid')
-local digest = require('digest')
 
 local luatest = require('luatest')
 local utils = require('cartridge.utils')
