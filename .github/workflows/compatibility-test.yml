@@ -23,8 +23,20 @@ jobs:
           - tarantool: '1.10'
             cartridge: '2.8.6'
             downgrade: true
-          - tarantool: '2.10'
-            cartridge: '2.8.6'
+          - tarantool: '1.10'
+            cartridge: '2.9.0'
+            downgrade: true
+          - tarantool: '1.10'
+            cartridge: '2.10.0'
+            downgrade: true
+          - tarantool: '1.10'
+            cartridge: '2.11.0'
+            downgrade: true
+          - tarantool: '1.10'
+            cartridge: '2.12.0'
+            downgrade: true
+          - tarantool: '2.11'
+            cartridge: '2.12.0'
             downgrade: true
     runs-on: ubuntu-20.04
     env:
