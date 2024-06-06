@@ -8,6 +8,13 @@ local fio = require('fio')
 local luatest = require('luatest')
 local yaml = require('yaml')
 local checks = require('checks')
+local digest = require('digest')
+
+local function bauth(username, password)
+    local auth_data = string.format("%s:%s", username, password)
+    local b64_data = digest.base64_encode(auth_data)
+    return {authorization = 'Basic ' .. b64_data}
+end
 
 --- Build server object.
 -- @function new
@@ -53,6 +60,8 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
     ssl_client_cert_file = '?string',
     ssl_client_key_file = '?string',
     ssl_client_password = '?string',
+
+    auth_enabled = '?boolean',
 }):tomap()
 
 function Server:initialize()
@@ -229,6 +238,9 @@ function Server:graphql(request, http_options)
     end
 
     http_options = table.copy(http_options) or {}
+    if self.auth_enabled then
+        http_options.http = { headers = bauth('admin', self.cluster_cookie) }
+    end
     http_options.json = {
         query = request.query,
         variables = request.variables,
