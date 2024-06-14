@@ -1640,7 +1640,8 @@ You can operate rebalancer mode and change rebalancer settings on each replicase
 or instance. It can be useful to stop rebalancer or choose rebalancer instance manually.
 
 To change rebalancer mode, click on "Rebalancer mode" button next to "Failover" button
-and choose desired mode:
+and choose desired mode (default mode is "auto" -- it's the same as rebalancer mode in
+previous versions):
 
 ..  image:: images/rebalancer-mode.png
     :align: left
