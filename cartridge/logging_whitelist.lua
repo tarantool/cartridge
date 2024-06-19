@@ -4,13 +4,17 @@ local cartridge_opts = {
     'auth_backend_name',
     'auth_enabled',
     'bucket_count',
-    'rebalancer_mode',
     'console_sock',
+    'disable_raft_on_small_clusters',
+    'enable_failover_suppressing',
+    'enable_synchro_mode',
     'http_enabled',
     'http_host',
     'http_port',
+    'rebalancer_mode',
     'roles',
     'roles_reload_allowed',
+    'set_cookie_hash_membership',
     'swim_broadcast',
     'upgrade_schema',
     'upload_prefix',
@@ -20,6 +24,7 @@ local cartridge_opts = {
     'webui_enforce_root_redirect',
     'webui_prefix',
     'workdir',
+
 }
 
 local box_opts = {

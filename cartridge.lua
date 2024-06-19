@@ -64,6 +64,8 @@ if not ok then
     VERSION = 'unknown'
 end
 
+local cartridge_opts
+
 --- Vshard storage group configuration.
 --
 -- Every vshard storage must be assigned to a group.
@@ -276,7 +278,6 @@ end
 --   env `TARANTOOL_UPLOAD_PREFIX`,
 --   args `--upload-prefix`)
 --
-
 -- @tparam ?boolean opts.enable_failover_suppressing
 --   Enable failover suppressing. It forces eventual failover
 --   to stop in case of constant switching.
@@ -304,9 +305,14 @@ end
 --   env `TARANTOOL_SET_COOKIE_HASH_MEMBERSHIP`,
 --   args `--set-cookie-hash-membership`)
 --
+-- @tparam ?boolean opts.rebalancer_mode
+--   Rebalancer mode for vshard cluster. See vshard doc for more details.
+--   env `TARANTOOL_REBALANCER_MODE`,
+--   args `--rebalancer-mode`)
+--
 -- @tparam ?table box_opts
---   tarantool extra box.cfg options (e.g. memtx_memory),
---   that may require additional tuning
+--   tarantool extra box.cfg options (e.g. force_recovery),
+--   that may require additional tuning on startup.
 --
 -- @return[1] true
 -- @treturn[2] nil
@@ -984,6 +990,7 @@ local function cfg(opts, box_opts)
         confapplier.log_bootinfo()
     end
 
+    --[[global]] cartridge_opts = opts
     if rawget(_G, '__TEST') ~= true then
         local crg_opts_to_logs = table.deepcopy(opts)
 
@@ -1022,6 +1029,16 @@ return {
     -- @refer cartridge.topology.cluster_is_healthy
     -- @function is_healthy
     is_healthy = topology.cluster_is_healthy,
+
+    --- Get cartridge opts.
+    -- It's like calling **box.cfg** without arguments, but returns cartridge opts.
+    --
+    -- @function get_opts
+    -- @treturn[1] table Catridge opts
+    -- @treturn[2] nil If cartridge opts are not set
+    get_opts = function()
+        return table.deepcopy(cartridge_opts)
+    end,
 
 --- Global functions.
 -- @section globals
