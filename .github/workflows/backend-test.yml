@@ -43,6 +43,12 @@ jobs:
         with:
           tarantool-version: '1.10'
 
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
+
       # Setup luacheck and ldoc
       - name: Cache rocks
         uses: actions/cache@v4
@@ -119,6 +125,12 @@ jobs:
           install-prefix: etcd-${{ matrix.etcd }}
 
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
+
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
 
       # Setup luatest
       - name: Cache rocks
