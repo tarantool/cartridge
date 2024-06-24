@@ -235,8 +235,10 @@ jobs:
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
-      -
-        run: tt rocks install luatest 1.0.1
+      - 
+        run: |
+          source tarantool-enterprise/env.sh
+          tt rocks install luatest 1.0.1
 
       # Setup pytest
       - name: Cache pytest
