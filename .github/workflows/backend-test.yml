@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Skip building frontend in tarantoolctl rocks make
+  # Skip building frontend in tt rocks make
   CMAKE_DUMMY_WEBUI: true
   # Prerequisite for some etcd-related tests
   ETCD_PATH: etcd-v2.3.8/etcd
@@ -52,8 +52,8 @@ jobs:
           key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
       -
         run: |
-          tarantoolctl rocks install luacheck
-          tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
+          tt rocks install luacheck
+          tt rocks install ldoc --server=https://tarantool.github.io/LDoc/
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup graphql cli
@@ -69,10 +69,10 @@ jobs:
 
       # Run tests
       - run: .rocks/bin/luacheck .
-      - name: Run tarantoolctl rocks make
+      - name: Run tt rocks make
         run: |
           . ./venv/bin/activate
-          tarantoolctl rocks make
+          tt rocks make
         env:
           CMAKE_LDOC_FIND_REQUIRED: 'YES'
           CMAKE_SPHINX_FIND_REQUIRED: 'YES'
@@ -80,7 +80,7 @@ jobs:
       - run: cmake -DJUST_CHECK=YES -P rst/BuildUML.cmake
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
 
   run-tests:
     strategy:
@@ -128,7 +128,7 @@ jobs:
           path: .rocks/
           key: test-rocks-${{ hashFiles('*.rockspec') }}-03
       -
-        run: tarantoolctl rocks install luatest 1.0.1
+        run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup pytest
@@ -147,9 +147,9 @@ jobs:
       # Setup optional rocks
       - name: Install metrics
         if: matrix.metrics != ''
-        run: tarantoolctl rocks install metrics ${{ matrix.metrics }}
+        run: tt rocks install metrics ${{ matrix.metrics }}
 
-      - run: tarantoolctl rocks make
+      - run: tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
@@ -170,7 +170,7 @@ jobs:
           pytest -v
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
 
   tests-ee:
     if: |
@@ -222,7 +222,7 @@ jobs:
 
       # Setup luatest
       -
-        run: tarantoolctl rocks install luatest 1.0.1
+        run: tt rocks install luatest 1.0.1
 
       # Setup pytest
       - name: Cache pytest
@@ -237,7 +237,7 @@ jobs:
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
-      - run: tarantoolctl rocks make
+      - run: tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
@@ -258,4 +258,4 @@ jobs:
           pytest -v
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
