@@ -235,7 +235,7 @@ jobs:
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
-      - 
+      - name: 'Install luatest'
         run: |
           source tarantool-enterprise/env.sh
           tt rocks install luatest 1.0.1
@@ -253,7 +253,10 @@ jobs:
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
-      - run: tt rocks make
+      - name: 'tt rocks make'
+        run: |
+          source tarantool-enterprise/env.sh
+          tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
