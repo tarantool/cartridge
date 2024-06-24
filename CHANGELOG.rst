@@ -18,6 +18,13 @@ Changed
 
 - Update ``membership`` dependency to `2.4.5 <https://github.com/tarantool/membership/releases/tag/2.4.5>`_.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``cartirdge.get_opts()`` function to get current Cartridge options.
+
+- More logging cartridge options on start.
 
 -------------------------------------------------------------------------------
 [2.12.1] - 2024-06-06
