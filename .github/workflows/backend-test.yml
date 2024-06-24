@@ -221,8 +221,10 @@ jobs:
       - name: Add SDK to PATH and set TARANTOOL_SDK_PATH variable
         run: |
           SDK_PATH="$(realpath tarantool-enterprise)"
+          TT_CLI_REPO_ROCKS="$(realpath tarantool-enterprise)/rocks"
           echo "${SDK_PATH}" >> ${GITHUB_PATH}
           echo "TARANTOOL_SDK_PATH=${SDK_PATH}" >> ${GITHUB_ENV}
+          echo "TT_CLI_REPO_ROCKS=${TT_CLI_REPO_ROCKS}" >> ${GITHUB_ENV}
 
       - name: Set up etcd
         uses: tarantool/actions/setup-etcd@master
@@ -233,8 +235,10 @@ jobs:
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
-      -
-        run: tt rocks install luatest 1.0.1
+      - 
+        run: |
+          source tarantool-enterprise/env.sh
+          tt rocks install luatest 1.0.1
 
       # Setup pytest
       - name: Cache pytest
