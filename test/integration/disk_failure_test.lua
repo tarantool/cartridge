@@ -10,6 +10,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
+        use_vshard = true,
         replicasets = { {
                 alias = 'router',
                 roles = {'vshard-router'},
@@ -46,10 +47,12 @@ function g.test_disk_failure_disable()
 
     -- first DC disk is down
     sharded_storage_1:exec(function()
-        package.loaded.fio.lstat = function () return false end
+        rawset(_G, 'old_lstat', package.loaded.fio.lstat)
+        package.loaded.fio.lstat = function () return nil end
     end)
     simple_storage_1:exec(function()
-        package.loaded.fio.lstat = function () return false end
+        rawset(_G, 'old_lstat', package.loaded.fio.lstat)
+        package.loaded.fio.lstat = function () return nil end
     end)
 
     -- check disabled instances
@@ -122,10 +125,10 @@ function g.test_disk_failure_disable()
 
     -- first DC disk is alright
     sharded_storage_1:exec(function()
-        package.loaded.fio.lstat = function() return true end
+        package.loaded.fio.lstat = _G.old_lstat
     end)
     simple_storage_1:exec(function()
-        package.loaded.fio.lstat = function() return true end
+        package.loaded.fio.lstat = _G.old_lstat
     end)
 
     -- enable it back
