@@ -37,6 +37,7 @@ vars:new('routers', {
 })
 
 vars:new('issues', {})
+vars:new('enable_alerting', false)
 
 -- Human readable router name for logging
 -- Isn't exposed in public API
@@ -79,7 +80,14 @@ local function on_disconnect()
 end
 
 local function init(_)
-    local limit = require('cartridge.argparse').get_opts({connections_limit = 'number'}).connections_limit
+    local opts, _ = require('cartridge.argparse').get_opts({
+        connections_limit = 'number',
+        add_vshard_router_alerts_to_issues = 'boolean',
+    })
+    if opts.add_vshard_router_alerts_to_issues ~= nil then
+        vars.enable_alerting = opts.add_vshard_router_alerts_to_issues
+    end
+    local limit = opts.connections_limit
     if limit == nil then
         return
     end
@@ -291,6 +299,23 @@ local function bootstrap()
     return true
 end
 
+local function get_issues()
+    local issues = table.deepcopy(vars.issues)
+    if vshard.router.info == nil or not vars.enable_alerting then
+        return issues
+    end
+    for _, alert in ipairs(vshard.router.info().alerts) do
+        if alert[2] ~= nil then
+            table.insert(issues, {
+                level = 'warning',
+                topic = 'vshard',
+                message = alert[2],
+            })
+        end
+    end
+    return issues
+end
+
 return {
     role_name = 'vshard-router',
     implies_router = true,
@@ -299,8 +324,11 @@ return {
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     stop = stop,
-    get_issues = function() return vars.issues end,
+    get_issues = get_issues,
 
     get = get,
     bootstrap = bootstrap,
+    get_alerts = function()
+        return vshard and vshard.router and vshard.router.info and vshard.router.info().alerts or {}
+    end,
 }

@@ -26,6 +26,7 @@ vars:new('vshard_cfg')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 vars:new('issues', {})
+vars:new('enable_alerting', false)
 local _G_vshard_backup
 
 local function apply_config(conf, opts)
@@ -66,6 +67,13 @@ local function init()
     local box_info = box.info
     vars.instance_uuid = box_info.uuid
     vars.replicaset_uuid = box_info.cluster.uuid
+
+    local opts, err = require('cartridge.argparse').get_opts({
+        add_vshard_storage_alerts_to_issues = 'boolean',
+    })
+    if err == nil then
+        vars.enable_alerting = opts.add_vshard_storage_alerts_to_issues
+    end
 end
 
 local function on_apply_config(_, state)
@@ -109,6 +117,23 @@ local function stop()
     _G_vshard_backup = nil
 end
 
+local function get_issues()
+    local issues = table.deepcopy(vars.issues)
+    if vshard.storage.info == nil or not vars.enable_alerting then
+        return issues
+    end
+    for _, alert in ipairs(vshard.storage.info().alerts) do
+        if alert[2] ~= nil then
+            table.insert(issues, {
+                level = 'warning',
+                topic = 'vshard',
+                message = alert[2],
+            })
+        end
+    end
+    return issues
+end
+
 return {
     role_name = 'vshard-storage',
     implies_storage = true,
@@ -117,5 +142,5 @@ return {
     on_apply_config = on_apply_config,
     init = init,
     stop = stop,
-    get_issues = function() return vars.issues end,
+    get_issues = get_issues,
 }

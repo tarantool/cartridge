@@ -50,6 +50,10 @@
 -- * various vshard alerts (see vshard docs for details);
 -- * warning: "Group "..." wasn't bootstrapped: ...";
 -- * warning: Vshard storages in replicaset %s marked as "all writable".
+-- You can enable extra vshard issues by setting
+-- `TARANTOOL_ADD_VSHARD_STORAGE_ALERTS_TO_ISSUES=true/TARANTOOL_ADD_VSHARD_ROUTER_ALERTS_TO_ISSUES=true`
+-- or with `--add-vshard-storage-alerts-to-issues/--add-vshard-router-alerts-to-issues` command-line argument.
+-- It's recommended to enable router alerts in production.
 --
 -- Alien members:
 --
