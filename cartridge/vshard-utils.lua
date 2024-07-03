@@ -13,6 +13,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
+local rpc = require('cartridge.rpc')
 
 local ok, vshard_consts = pcall(require, 'vshard-ee.consts')
 if not ok then
@@ -146,20 +147,32 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
             end
             local master_uri = servers_old[master_uuid].uri
 
-            local buckets_count, err = errors.netbox_call(
+            local buckets_count, _ = errors.netbox_call(
                 pool.connect(master_uri, {wait_connected = false}),
                 'vshard.storage.buckets_count', nil, {timeout = 1}
             )
 
             if buckets_count == nil then
-                error(err)
+                -- vshard storage is probably off
+                -- so we need to call a router to get the alerts
+                local alerts, err = rpc.call('vshard-router', 'get_alerts')
+                if alerts == nil then
+                    error(err)
+                end
+                for _, alert in ipairs(alerts) do
+                    if alert[1] == 'UNKNOWN_BUCKETS' then
+                        error(alert[2] ..
+                            '. Please make sure that all buckets are safe ' ..
+                            'before making any changes')
+                    end
+                end
+            else
+                ValidateConfigError:assert(
+                    buckets_count == 0,
+                    "replicasets[%s] rebalancing isn't finished yet",
+                    replicaset_uuid
+                )
             end
-
-            ValidateConfigError:assert(
-                buckets_count == 0,
-                "replicasets[%s] rebalancing isn't finished yet",
-                replicaset_uuid
-            )
         end
 
     end
