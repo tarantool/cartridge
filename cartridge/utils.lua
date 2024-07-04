@@ -14,10 +14,7 @@ local digest = require('digest')
 
 local tarantool = require('tarantool')
 
-local ok, semver = pcall(require, 'vshard-ee.version')
-if not ok then
-    semver = require('vshard.version')
-end
+local semver = require('vshard.version')
 
 local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')

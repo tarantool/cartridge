@@ -34,17 +34,10 @@ vars:new('roles_by_module_name', {})
 vars:new('implicit_roles')
 vars:new('pause', false)
 
-local ddl_role_name
-local ok, _ = pcall(require, 'ddl-ee')
-if ok then
-    ddl_role_name = 'cartridge.roles.ddl-manager-ee'
-else
-    ddl_role_name = 'cartridge.roles.ddl-manager'
-end
 -- Don't put it as default var value to allow overriding
 -- after hot-reload (hypothetically)
 vars.implicit_roles = {
-    ddl_role_name,
+    'cartridge.roles.ddl-manager',
     'cartridge.roles.coordinator',
 }
 
