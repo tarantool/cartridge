@@ -10,6 +10,9 @@ local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
 local vars = require('cartridge.vars').new('cartridge.boxinfo')
 
+local vshard_version = require('vshard')._VERSION
+local ddl_version = require('ddl')._VERSION
+
 vars:new('webui_prefix', nil)
 vars:new('http_host', nil)
 vars:new('http_port', nil)
@@ -51,24 +54,9 @@ local function get_info(uri)
         local membership_myself = require('membership').myself()
         local membership_options = require('membership.options')
 
-        local ok, vshard, vshard_version, ddl, ddl_version
-        ok, vshard = pcall(require, 'vshard-ee')
-        if ok then
-            vshard_version = vshard._VERSION .. ' EE'
-        else
-            vshard = require('vshard')
-            vshard_version = vshard._VERSION
-        end
+        local vshard = require('vshard')
 
-        ok, ddl = pcall(require, 'ddl-ee')
-        if ok then
-            ddl_version = ddl._VERSION .. ' EE'
-        else
-            ddl = require('ddl')
-            ddl_version = ddl._VERSION
-        end
-
-        local routers = vshard and vshard.router.internal.routers or {}
+        local routers = vshard.router.internal.routers or {}
         local router_info = {}
         if next(routers) ~= nil then
             for group, router in pairs(routers) do

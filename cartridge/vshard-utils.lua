@@ -15,10 +15,7 @@ local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local rpc = require('cartridge.rpc')
 
-local ok, vshard_consts = pcall(require, 'vshard-ee.consts')
-if not ok then
-    vshard_consts = require('vshard.consts')
-end
+local vshard_consts = require('vshard.consts')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 

@@ -1,9 +1,6 @@
 local log = require('log')
 
-local ok, vshard = pcall(require, 'vshard-ee')
-if not ok then
-    vshard = require('vshard')
-end
+local vshard = require('vshard')
 
 local checks = require('checks')
 
