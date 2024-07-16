@@ -40,7 +40,7 @@ The fastest way to build the project is to skip building the Web UI:
 
 .. code-block:: bash
 
-    CMAKE_DUMMY_WEBUI=true tarantoolctl rocks make
+    CMAKE_DUMMY_WEBUI=true tt rocks make
 
 But if you want to build the frontend too, you'll also need
 ``nodejs`` >= 12 and ``npm`` >= 6, see instructions
@@ -52,8 +52,8 @@ and ``sphinx`` tools are installed:
 .. code-block:: bash
 
     pip install -r rst/requirements.txt
-    tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
-    tarantoolctl rocks make
+    tt rocks install ldoc --server=https://tarantool.github.io/LDoc/
+    tt rocks make
 
 --------------------------------------------------------------------------------
 Running a demo cluster
@@ -75,10 +75,10 @@ or via the binary protocol:
 
 .. code-block:: bash
 
-    tarantoolctl connect admin@localhost:3301
+    tt connect admin@localhost:3301
 
     # or via console socket
-    # tarantoolctl connect unix/:./tmp/run/cartridge.srv-1.control
+    # tt connect unix/:./tmp/run/cartridge.srv-1.control
 
 If you also need the stateful failover mode, launch an external state provider
 |--| ``stateboard``:
@@ -102,8 +102,8 @@ Running tests
 .. code-block:: bash
 
     # Backend
-    tarantoolctl rocks install luacheck
-    tarantoolctl rocks install luatest 1.0.0
+    tt rocks install luacheck
+    tt rocks install luatest 1.0.0
     .rocks/bin/luacheck .
     .rocks/bin/luatest -v
 
@@ -113,8 +113,8 @@ Running tests
     ./cypress-test.sh
 
     # Collect coverage
-    tarantoolctl rocks install luacov
-    tarantoolctl rocks install luacov-console
+    tt rocks install luacov
+    tt rocks install luacov-console
     .rocks/bin/luatest -v --coverage
     .rocks/bin/luacov-console `pwd`
     .rocks/bin/luacov-console -s

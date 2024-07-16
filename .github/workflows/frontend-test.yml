@@ -3,8 +3,8 @@ name: Frontend Test
 on:
   push:
     paths-ignore:
-      - 'rst/**'
-      - '.github/workflows/*-translation.yml'
+      - "rst/**"
+      - ".github/workflows/*-translation.yml"
   workflow_dispatch:
 
 env:
@@ -23,12 +23,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '16.8.0'
+          node-version: "16.8.0"
 
       - uses: tarantool/setup-tarantool@v3
         with:
-          tarantool-version: '2.6'
+          tarantool-version: "2.6"
 
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
       ##################################################################
       # Setup rocks
       - name: Cache rocks
@@ -37,8 +42,7 @@ jobs:
         with:
           path: .rocks/
           key: webui-rocks-${{ hashFiles('*.rockspec') }}-03
-      -
-        run: tarantoolctl rocks install luatest 1.0.1
+      - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       ##################################################################
@@ -71,8 +75,7 @@ jobs:
             ./node_modules
             ~/.cache/Cypress
           key: cypress-7.7.0-${{ runner.os }}-02
-      -
-        run: |
+      - run: |
           npm install cypress@7.7.0
           npx cypress verify
         if: >
@@ -81,11 +84,11 @@ jobs:
 
       ##################################################################
 
-      - run: tarantoolctl rocks make
+      - run: tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
-      - name: 'Stop Mono server'
+      - name: "Stop Mono server"
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
       - if: matrix.script == 'frontend'
@@ -123,4 +126,4 @@ jobs:
 
       ##################################################################
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
