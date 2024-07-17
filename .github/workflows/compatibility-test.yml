@@ -3,12 +3,12 @@ name: Compatibility Test
 on:
   push:
     paths-ignore:
-      - 'rst/**'
-      - '.github/workflows/*-translation.yml'
+      - "rst/**"
+      - ".github/workflows/*-translation.yml"
   workflow_dispatch:
 
 env:
-  # Skip building frontend in tarantoolctl rocks make
+  # Skip building frontend in tt rocks make
   CMAKE_DUMMY_WEBUI: true
 
 jobs:
@@ -16,27 +16,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10']
-        cartridge: ['1.2.0', '2.3.0', '2.4.0', '2.5.1', '2.6.0']
+        tarantool: ["1.10"]
+        cartridge: ["1.2.0", "2.3.0", "2.4.0", "2.5.1", "2.6.0"]
         downgrade: [null]
         include:
-          - tarantool: '1.10'
-            cartridge: '2.8.6'
+          - tarantool: "1.10"
+            cartridge: "2.8.6"
             downgrade: true
-          - tarantool: '1.10'
-            cartridge: '2.9.0'
+          - tarantool: "1.10"
+            cartridge: "2.9.0"
             downgrade: true
-          - tarantool: '1.10'
-            cartridge: '2.10.0'
+          - tarantool: "1.10"
+            cartridge: "2.10.0"
             downgrade: true
-          - tarantool: '1.10'
-            cartridge: '2.11.0'
+          - tarantool: "1.10"
+            cartridge: "2.11.0"
             downgrade: true
-          - tarantool: '1.10'
-            cartridge: '2.12.0'
+          - tarantool: "1.10"
+            cartridge: "2.12.0"
             downgrade: true
-          - tarantool: '2.11'
-            cartridge: '2.12.0'
+          - tarantool: "2.11"
+            cartridge: "2.12.0"
             downgrade: true
     runs-on: ubuntu-20.04
     env:
@@ -47,7 +47,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: tarantool/setup-tarantool@v3
         with:
-          tarantool-version: '${{ matrix.tarantool }}'
+          tarantool-version: "${{ matrix.tarantool }}"
+
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
 
       # Setup older cartridge for compatibility.cartridge_upgrade_test
       - name: Cache ${{ env.CARTRIDGE_OLDER_PATH }}
@@ -61,7 +67,7 @@ jobs:
         run: |
           mkdir -p ${{ env.CARTRIDGE_OLDER_PATH }}
           pushd ${{ env.CARTRIDGE_OLDER_PATH }}
-          tarantoolctl rocks install cartridge ${{ env.CARTRIDGE_OLDER_VERSION }}
+          tt rocks install cartridge ${{ env.CARTRIDGE_OLDER_VERSION }}
           popd
 
       # Setup luatest
@@ -71,12 +77,11 @@ jobs:
         with:
           path: .rocks/
           key: compat-rocks-${{ hashFiles('*.rockspec') }}-03
-      -
-        run: tarantoolctl rocks install luatest 1.0.1
+      - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
-      - run: tarantoolctl rocks make
+      - run: tt rocks make
       - run: .rocks/bin/luatest -v -p compatibility.*
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge

@@ -4,13 +4,13 @@ on:
   workflow_call:
     inputs:
       artifact_name:
-        description: 'The name of the tarantool build artifact'
+        description: "The name of the tarantool build artifact"
         default: ubuntu-focal
         required: false
         type: string
 
 env:
-  # Skip building frontend in `tarantoolctl rocks make`.
+  # Skip building frontend in `tt rocks make`.
   CMAKE_DUMMY_WEBUI: true
   # Prerequisite for some etcd-related tests.
   ETCD_VERSION: v2.3.8
@@ -19,21 +19,25 @@ jobs:
   run_tests:
     runs-on: ubuntu-20.04
     steps:
-      - name: 'Clone the cartridge module'
+      - name: "Clone the cartridge module"
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/cartridge
 
       # Setup tarantool
-      - name: 'Download the tarantool build artifact'
+      - name: "Download the tarantool build artifact"
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-      - name: 'Install tarantool'
+      - name: "Install tarantool"
         # TODO(ylobankov): Install package dependencies. Now we're lucky: all
         # dependencies are already there.
         run: sudo dpkg -i tarantool*.deb
-
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
       - name: Set up etcd
         uses: tarantool/actions/setup-etcd@master
         with:
@@ -41,33 +45,33 @@ jobs:
           install-prefix: etcd-${{ env.ETCD_VERSION }}
 
       # Setup luatest
-      - name: 'Install luatest'
-        run: tarantoolctl rocks install luatest 1.0.1
+      - name: "Install luatest"
+        run: tt rocks install luatest 1.0.1
 
       # Setup pytest
       - uses: actions/setup-python@v5
         with:
           python-version: 3.7
-      - name: 'Install pytest'
+      - name: "Install pytest"
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
           pip install -r test/integration/requirements.txt
 
       # Setup cartridge
-      - name: 'Install cartridge'
-        run: tarantoolctl rocks make
+      - name: "Install cartridge"
+        run: tt rocks make
 
       # Stop Mono server. This server starts and listen to 8084 port that is
       # used for tests.
-      - name: 'Stop Mono server'
+      - name: "Stop Mono server"
         run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
       # Run tests
-      - name: 'Run luatest'
+      - name: "Run luatest"
         run: .rocks/bin/luatest -v -b
         env:
           ETCD_PATH: etcd-${{ env.ETCD_VERSION }}/etcd
-      - name: 'Run pytest'
+      - name: "Run pytest"
         run: |
           source ./pytest-venv/bin/activate
           pytest -v

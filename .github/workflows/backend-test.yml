@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Skip building frontend in tarantoolctl rocks make
+  # Skip building frontend in tt rocks make
   CMAKE_DUMMY_WEBUI: true
   # Prerequisite for some etcd-related tests
   ETCD_PATH: etcd-v2.3.8/etcd
@@ -43,6 +43,12 @@ jobs:
         with:
           tarantool-version: '1.10'
 
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
+
       # Setup luacheck and ldoc
       - name: Cache rocks
         uses: actions/cache@v4
@@ -52,8 +58,8 @@ jobs:
           key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
       -
         run: |
-          tarantoolctl rocks install luacheck
-          tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
+          tt rocks install luacheck
+          tt rocks install ldoc --server=https://tarantool.github.io/LDoc/
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup graphql cli
@@ -69,10 +75,10 @@ jobs:
 
       # Run tests
       - run: .rocks/bin/luacheck .
-      - name: Run tarantoolctl rocks make
+      - name: Run tt rocks make
         run: |
           . ./venv/bin/activate
-          tarantoolctl rocks make
+          tt rocks make
         env:
           CMAKE_LDOC_FIND_REQUIRED: 'YES'
           CMAKE_SPHINX_FIND_REQUIRED: 'YES'
@@ -80,7 +86,7 @@ jobs:
       - run: cmake -DJUST_CHECK=YES -P rst/BuildUML.cmake
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
 
   run-tests:
     strategy:
@@ -93,9 +99,9 @@ jobs:
           - tarantool: '2.11'
             etcd: 'v3.5.0'
             metrics: ''
-          - tarantool: '2.10'
+          - tarantool: '2.11'
             etcd: 'v2.3.8'
-            metrics: '1.0.0'
+            metrics: '1.2.0'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-python@v5
@@ -120,15 +126,21 @@ jobs:
 
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
+      - name: Setup tt
+        run: |
+          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          sudo apt install -y tt
+          tt version
+
       # Setup luatest
       - name: Cache rocks
         uses: actions/cache@v4
         id: cache-rocks
         with:
           path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: test-rocks-${{ hashFiles('*.rockspec') }}-04
       -
-        run: tarantoolctl rocks install luatest 1.0.1
+        run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup pytest
@@ -147,9 +159,9 @@ jobs:
       # Setup optional rocks
       - name: Install metrics
         if: matrix.metrics != ''
-        run: tarantoolctl rocks install metrics ${{ matrix.metrics }}
+        run: tt rocks install metrics ${{ matrix.metrics }}
 
-      - run: tarantoolctl rocks make
+      - run: tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
@@ -170,7 +182,7 @@ jobs:
           pytest -v
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
 
   tests-ee:
     if: |
@@ -209,8 +221,10 @@ jobs:
       - name: Add SDK to PATH and set TARANTOOL_SDK_PATH variable
         run: |
           SDK_PATH="$(realpath tarantool-enterprise)"
+          TT_CLI_REPO_ROCKS="$(realpath tarantool-enterprise)/rocks"
           echo "${SDK_PATH}" >> ${GITHUB_PATH}
           echo "TARANTOOL_SDK_PATH=${SDK_PATH}" >> ${GITHUB_ENV}
+          echo "TT_CLI_REPO_ROCKS=${TT_CLI_REPO_ROCKS}" >> ${GITHUB_ENV}
 
       - name: Set up etcd
         uses: tarantool/actions/setup-etcd@master
@@ -221,8 +235,10 @@ jobs:
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       # Setup luatest
-      -
-        run: tarantoolctl rocks install luatest 1.0.1
+      - name: 'Install luatest'
+        run: |
+          source tarantool-enterprise/env.sh
+          tt rocks install luatest 1.0.1
 
       # Setup pytest
       - name: Cache pytest
@@ -237,7 +253,10 @@ jobs:
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
-      - run: tarantoolctl rocks make
+      - name: 'tt rocks make'
+        run: |
+          source tarantool-enterprise/env.sh
+          tt rocks make
 
       # Stop Mono server. This server starts and listens to 8084 port that is
       # used for tests.
@@ -258,4 +277,4 @@ jobs:
           pytest -v
 
       # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+      - run: tt rocks remove cartridge
