@@ -1566,6 +1566,13 @@ Cartridge displays cluster and instances issues in WebUI:
       instances will be disabled (on instances with vshard, vshard storage will
       also be disabled) and you need to fix the disk issue manually.
 
+*   Disabled instances:
+
+    * **warning**: "Instance had Error and was disabled". Available only when
+      ``TARANTOOL_DISABLE_UNRECOVERABLE_INSTANCES`` is set to true.
+      When you see this issue, instances will be disabled and you need to fix
+      the issue manually.
+
 *   Custom issues (defined by user):
 
     * Custom roles can announce more issues with their own level, topic

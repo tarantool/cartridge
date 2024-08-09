@@ -50,6 +50,9 @@ Added
 
 - More logging cartridge options on start.
 
+- New option ``TARANTOOL_DISABLE_UNRECOVERABLE_INSTANCES`` to automatically disable
+  instances with state ``InitError`` or ``BootError``.
+
 -------------------------------------------------------------------------------
 [2.12.1] - 2024-06-06
 -------------------------------------------------------------------------------

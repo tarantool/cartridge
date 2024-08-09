@@ -872,6 +872,16 @@ local function cfg(opts, box_opts)
 
     issues.set_limits(issue_limits)
 
+    local res, err = argparse.get_opts({
+        disable_unrecoverable_instances = 'boolean',
+    })
+
+    if err ~= nil then
+        return nil, err
+    end
+
+    issues.disable_unrecoverable(res.disable_unrecoverable_instances)
+
     if opts.upload_prefix ~= nil then
         local path = opts.upload_prefix
         if not path:startswith('/') then
