@@ -82,6 +82,10 @@
 --
 -- * critical: "Disk error on instance ... ".
 --
+-- Disabled instances:
+--
+-- * warning: "Instance had Error and was disabled"
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -149,6 +153,7 @@ local limits_ranges = {
 }
 
 vars:new('limits', default_limits)
+vars:new('disable_unrecoverable', false)
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
@@ -694,8 +699,8 @@ local function list_on_cluster()
         end
     end
 
-    -- Check aliens in membership
-
+    -- Check aliens in membership and unrecoverable instances
+    local unrecoverable_uuids = {}
     for uri, member in membership.pairs() do
         local uuid = member.payload.uuid
         if member.status == 'alive'
@@ -711,8 +716,30 @@ local function list_on_cluster()
                 )
             })
         end
+        local state = member.payload.state
+        if vars.disable_unrecoverable
+        and (state == 'InitError' or state == 'BootError')
+        then
+            for k, v in pairs(topology_cfg.servers) do
+                if v.uri == uri then
+                    uuid = k
+                    goto uuid_found
+                end
+            end
+            ::uuid_found::
+            table.insert(unrecoverable_uuids, uuid)
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'autodisable',
+                instance_uuid = uuid,
+                message = string.format(
+                    'Instance %s had %s and was disabled',
+                    describe(uri),
+                    state
+                )
+            })
+        end
     end
-
 
     -- Get each instance issues (replication, failover, memory usage)
 
@@ -728,22 +755,26 @@ local function list_on_cluster()
         {uri_list = uri_list, timeout = 1}
     )
 
-    local disk_failure_uuids = {}
+    local uuids_to_disable = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
             if issue.topic == 'disk_failure' then
-                table.insert(disk_failure_uuids, issue.instance_uuid)
+                table.insert(uuids_to_disable, issue.instance_uuid)
                 disk_failure_cache[issue.instance_uuid] = issue
             end
         end
     end
+
     for _, issue in pairs(disk_failure_cache) do
         table.insert(ret, issue)
     end
 
-    if #disk_failure_uuids > 0 then
-        lua_api_topology.disable_servers(disk_failure_uuids)
+    if vars.disable_unrecoverable then
+        uuids_to_disable = fun.chain(uuids_to_disable, unrecoverable_uuids):totable()
+    end
+    if #uuids_to_disable > 0 then
+        lua_api_topology.disable_servers(uuids_to_disable)
     end
 
     -- to use this counter in tarantool/metrics
@@ -820,4 +851,7 @@ return {
     default_limits = default_limits,
     validate_limits = validate_limits,
     set_limits = set_limits,
+    disable_unrecoverable = function(disable)
+        vars.disable_unrecoverable = disable
+    end,
 }
