@@ -1698,6 +1698,48 @@ is running on this instance:
 
 See VShard documentation to get more information about rebalancer usage.
 
+.. _zones-distances:
+
+-------------------------------------------------------------------------------
+Setting instances zones
+-------------------------------------------------------------------------------
+
+Cartridge provides a way to set zones for VShard requests.
+To set zones, click on "Server details" button and then choose desired
+zone or create a new one:
+
+..  image:: images/set-zone.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+OR
+
+set zone with Lua API or GraphQL request:
+
+..  code-block:: lua
+
+    require('cartridge').admin_edit_topology({servers = {{uuid = uuid, zone = 'your_zone'}}})
+
+
+Then you can add zone distances configuration. Simply create a new config file called
+``zone_distances.yml`` and add your distances:
+
+..  code-block:: yaml
+
+    zone1:
+      zone2: 1 # distance between zone1 and zone2
+      zone3: 2
+    zone2:
+      zone3: 1
+      # all missing distances are considered as 0
+
+Now all of your balanced (``vshard.router.callbro`` and ``vshard.router.callbre``)
+requests will be balanced between nearest zones.
+Note that ``callbro`` prefers nearest (in terms of zone distances) masters, and
+``callbre`` prefers nearest replicas.
+
 .. _cartridge-migrations:
 
 -------------------------------------------------------------------------------
