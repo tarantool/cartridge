@@ -720,24 +720,29 @@ local function list_on_cluster()
         if vars.disable_unrecoverable
         and (state == 'InitError' or state == 'BootError')
         then
-            for k, v in pairs(topology_cfg.servers) do
-                if v.uri == uri then
-                    uuid = k
-                    goto uuid_found
+            if uuid == nil then
+                for k, v in pairs(topology_cfg.servers) do
+                    if v.uri == uri then
+                        uuid = k
+                        goto uuid_found
+                    end
                 end
             end
+
             ::uuid_found::
-            table.insert(unrecoverable_uuids, uuid)
-            table.insert(ret, {
-                level = 'warning',
-                topic = 'autodisable',
-                instance_uuid = uuid,
-                message = string.format(
-                    'Instance %s had %s and was disabled',
-                    describe(uri),
-                    state
-                )
-            })
+            if uuid ~= nil then -- still no uuid, skipping
+                table.insert(unrecoverable_uuids, uuid)
+                table.insert(ret, {
+                    level = 'warning',
+                    topic = 'autodisable',
+                    instance_uuid = uuid,
+                    message = string.format(
+                        'Instance %s had %s and was disabled',
+                        describe(uri),
+                        state
+                    )
+                })
+            end
         end
     end
 
