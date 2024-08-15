@@ -334,7 +334,7 @@ local function list_on_instance(opts)
                     "Raft leader idle is %f on %s. "..
                     "Is raft leader alive and connection is healthy?",
                     leader_idle,
-                    instance_uuid
+                    describe(self_uri)
                 )
             }
             table.insert(ret, issue)
@@ -538,7 +538,7 @@ local function list_on_instance(opts)
             replicaset_uuid = replicaset_uuid,
             message = string.format(
                 'Disk error on instance %s. This issue stays until restart',
-                instance_uuid
+                describe(self_uri)
             ),
         })
     end
