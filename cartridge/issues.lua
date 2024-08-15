@@ -530,17 +530,8 @@ local function list_on_instance(opts)
         end
     end
 
-    if type(box.cfg) == 'table' and not fio.lstat(box.cfg.memtx_dir) then
-        table.insert(ret, {
-            level = 'critical',
-            topic = 'disk_failure',
-            instance_uuid = instance_uuid,
-            replicaset_uuid = replicaset_uuid,
-            message = string.format(
-                'Disk error on instance %s. This issue stays until restart',
-                describe(self_uri)
-            ),
-        })
+    if type(box.cfg) == 'table' then
+        membership.set_payload('disk_failure', not fio.lstat(box.cfg.memtx_dir))
     end
 
     -- add custom issues from each role
@@ -564,7 +555,6 @@ local function list_on_instance(opts)
     return ret
 end
 
-local disk_failure_cache = {}
 local function list_on_cluster()
     local state, err = confapplier.get_state()
     if state == 'Unconfigured' and lua_api_proxy.can_call()  then
@@ -699,8 +689,8 @@ local function list_on_cluster()
         end
     end
 
-    -- Check aliens in membership and unrecoverable instances
-    local unrecoverable_uuids = {}
+    -- Check aliens in membership, unrecoverable instances and disk_failures
+    local uuids_to_disable = {}
     for uri, member in membership.pairs() do
         local uuid = member.payload.uuid
         if member.status == 'alive'
@@ -731,7 +721,7 @@ local function list_on_cluster()
 
             ::uuid_found::
             if uuid ~= nil then -- still no uuid, skipping
-                table.insert(unrecoverable_uuids, uuid)
+                table.insert(uuids_to_disable, uuid)
                 table.insert(ret, {
                     level = 'warning',
                     topic = 'autodisable',
@@ -743,6 +733,19 @@ local function list_on_cluster()
                     )
                 })
             end
+        end
+
+        if member.payload.disk_failure then
+            table.insert(ret, {
+                level = 'critical',
+                topic = 'disk_failure',
+                instance_uuid = uuid,
+                message = string.format(
+                    'Disk error on instance %s',
+                    describe(uri)
+                ),
+            })
+            table.insert(uuids_to_disable, uuid)
         end
     end
 
@@ -760,24 +763,12 @@ local function list_on_cluster()
         {uri_list = uri_list, timeout = 1}
     )
 
-    local uuids_to_disable = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
-            if issue.topic == 'disk_failure' then
-                table.insert(uuids_to_disable, issue.instance_uuid)
-                disk_failure_cache[issue.instance_uuid] = issue
-            end
         end
     end
 
-    for _, issue in pairs(disk_failure_cache) do
-        table.insert(ret, issue)
-    end
-
-    if vars.disable_unrecoverable then
-        uuids_to_disable = fun.chain(uuids_to_disable, unrecoverable_uuids):totable()
-    end
     if #uuids_to_disable > 0 then
         lua_api_topology.disable_servers(uuids_to_disable)
     end

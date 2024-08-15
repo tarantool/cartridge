@@ -57,7 +57,7 @@ function g.test_disk_failure_disable()
 
     -- check disabled instances
     -- only two issue is produced
-    t.helpers.retrying({}, function()
+    t.helpers.retrying({timeout = 10}, function()
         local issues = fun.map(function(x) x.message = nil; return x end,
             helpers.list_cluster_issues(router)):totable()
 
@@ -65,12 +65,10 @@ function g.test_disk_failure_disable()
         local expected_issues = {
             {
                 level = 'critical',
-                replicaset_uuid = sharded_storage_1.replicaset_uuid,
                 instance_uuid = sharded_storage_1.instance_uuid,
                 topic = 'disk_failure',
             }, {
                 level = 'critical',
-                replicaset_uuid = simple_storage_1.replicaset_uuid,
                 instance_uuid = simple_storage_1.instance_uuid,
                 topic = 'disk_failure',
             }
@@ -79,41 +77,44 @@ function g.test_disk_failure_disable()
         t.assert_covers(issues, expected_issues)
     end)
 
-    local resp = router:graphql({
-        query = [[
-            {
-                servers {
-                    uri
-                    disabled
+    t.helpers.retrying({}, function()
+        local resp = router:graphql({
+            query = [[
+                {
+                    servers {
+                        uri
+                        disabled
+                    }
                 }
-            }
-        ]]
-    })
+            ]]
+        })
 
-    table.sort(resp['data']['servers'], function(a, b) return a.uri < b.uri end)
+        table.sort(resp['data']['servers'], function(a, b) return a.uri < b.uri end)
 
-    t.assert_items_equals(resp['data']['servers'], {
-        {
-            uri = 'localhost:13301',
-            disabled = false,
-        },
-        {
-            uri = 'localhost:13302',
-            disabled = true,
-        },
-        {
-            uri = 'localhost:13303',
-            disabled = false,
-        },
-        {
-            uri = 'localhost:13304',
-            disabled = true,
-        },
-        {
-            uri = 'localhost:13305',
-            disabled = false,
-        },
-    })
+        t.assert_items_equals(resp['data']['servers'], {
+            {
+                uri = 'localhost:13301',
+                disabled = false,
+            },
+            {
+                uri = 'localhost:13302',
+                disabled = true,
+            },
+            {
+                uri = 'localhost:13303',
+                disabled = false,
+            },
+            {
+                uri = 'localhost:13304',
+                disabled = true,
+            },
+            {
+                uri = 'localhost:13305',
+                disabled = false,
+            },
+        })
+    end)
+
     -- first storage is disabled
     t.assert_not(sharded_storage_1:exec(function()
         return _G.vshard.storage.internal.is_enabled
@@ -137,12 +138,6 @@ function g.test_disk_failure_disable()
             cluster { enable_servers(uuids: ["%s", "%s"]) { uri } }
         }
     ]]):format(sharded_storage_1.instance_uuid, simple_storage_1.instance_uuid)})
-
-    -- restart router to remove issues
-    router:restart()
-    t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(router), {})
-    end)
 
     -- vshard is enabled again
     t.assert(sharded_storage_1:exec(function()

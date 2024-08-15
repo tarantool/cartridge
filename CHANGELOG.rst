@@ -37,6 +37,8 @@ Changed
 
 - uuids in issues replaces with instance names and uris.
 
+- Use ``membership`` instead of cache in ``disk_failure`` issues
+
 -------------------------------------------------------------------------------
 [2.12.2] - 2024-06-24
 -------------------------------------------------------------------------------
