@@ -446,9 +446,8 @@ function g.test_election_leader_high_idle()
         {
             level = 'warning',
             topic = 'raft',
-            message = ("Raft leader idle is 10.000000 on %s. "..
-                "Is raft leader alive and connection is healthy?"):
-                format(g.master.instance_uuid),
+            message = "Raft leader idle is 10.000000 on localhost:13301 (master). "..
+                "Is raft leader alive and connection is healthy?",
             instance_uuid = g.master.instance_uuid,
             replicaset_uuid = g.master.replicaset_uuid,
         },
