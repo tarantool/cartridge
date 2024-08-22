@@ -21,6 +21,8 @@ local function set_webui_prefix(prefix)
     vars.webui_prefix = prefix
 end
 
+local rocks_cache = {}
+
 --- Retrieve `box.cfg` and `box.info` of a remote server.
 -- @function get_info
 -- @local
@@ -126,6 +128,16 @@ local function get_info(uri)
             listen = box_cfg.listen.uri or box_cfg.listen[1].uri
         end
 
+        if next(rocks_cache) == nil then
+            local rocks = box.internal.feedback_daemon:generate_feedback().rocks
+            rocks.cartridge = nil
+            rocks.ddl = nil
+            rocks.vshard = nil
+            for rock_name, rock_version in pairs(rocks) do
+                table.insert(rocks_cache, ("%s == %s"):format(rock_name, rock_version))
+            end
+        end
+
         local ret = {
             general = {
                 version = (package and (package .. ' ') or '') .. box_info.version,
@@ -197,6 +209,7 @@ local function get_info(uri)
                 version = require('cartridge').VERSION,
                 vshard_version = vshard_version,
                 ddl_version = ddl_version,
+                rocks = rocks_cache,
                 state = server_state,
                 error = server_error,
             },

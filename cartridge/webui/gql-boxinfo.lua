@@ -365,6 +365,10 @@ local boxinfo_schema = {
                         kind = gql_types.string,
                         description = 'DDL version',
                     },
+                    rocks = {
+                        kind = gql_types.list(gql_types.string),
+                        description = 'List of rocks and their versions',
+                    },
                 }
             }).nonNull,
             membership = gql_types.object({

@@ -144,6 +144,7 @@ export const serverDetailsFields = gql`
         version
         vshard_version
         ddl_version
+        rocks
       }
       membership {
         status
