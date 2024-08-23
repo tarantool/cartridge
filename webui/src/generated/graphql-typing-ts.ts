@@ -594,6 +594,8 @@ export type ServerInfoCartridge = {
   vshard_version?: Maybe<Scalars['String']>;
   /** DDL version */
   ddl_version?: Maybe<Scalars['String']>;
+  /** Rocks versions */
+  rocks?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
 export type ServerInfoGeneral = {
@@ -1177,6 +1179,7 @@ export type ServerDetailsFieldsFragment = {
       version: string;
       vshard_version: string | null;
       ddl_version: string | null;
+      rocks: Array<string | null> | null;
     };
     membership: {
       __typename?: 'ServerInfoMembership';
@@ -1310,6 +1313,7 @@ export type InstanceDataQuery = {
         version: string;
         vshard_version: string | null;
         ddl_version: string | null;
+        rocks: Array<string | null> | null;
       };
       membership: {
         __typename?: 'ServerInfoMembership';
@@ -1476,6 +1480,7 @@ export type BoxInfoQuery = {
         version: string;
         vshard_version: string | null;
         ddl_version: string | null;
+        rocks: Array<string | null> | null;
       };
       membership: {
         __typename?: 'ServerInfoMembership';

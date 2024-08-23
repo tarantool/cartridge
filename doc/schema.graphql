@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Wed May 15 2024 19:16:51 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Aug 22 2024 19:23:56 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -739,6 +739,9 @@ type ServerInfoCartridge {
 
   """DDL version"""
   ddl_version: String
+
+  """List of rocks and their versions"""
+  rocks: [String]
 }
 
 type ServerInfoGeneral {

@@ -617,6 +617,8 @@ export type ServerInfoCartridge = {|
   vshard_version?: $ElementType<Scalars, 'String'>,
   /** DDL version */
   ddl_version?: $ElementType<Scalars, 'String'>,
+  /** Rocks Versions */
+  rocks?: ?Array<?$ElementType<Scalars, 'String'>>,
 |};
 
 export type ServerInfoGeneral = {|
@@ -1065,7 +1067,7 @@ export type ServerDetailsFieldsFragment = ({
       ...{ __typename?: 'ServerInfo' },
     ...{| cartridge: ({
         ...{ __typename?: 'ServerInfoCartridge' },
-      ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: * |}>
+      ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: * , rocks?: * |}>
     }), membership: ({
         ...{ __typename?: 'ServerInfoMembership' },
       ...$Pick<ServerInfoMembership, {| status?: *, incarnation?: *, PROTOCOL_PERIOD_SECONDS?: *, ACK_TIMEOUT_SECONDS?: *, ANTI_ENTROPY_PERIOD_SECONDS?: *, SUSPECT_TIMEOUT_SECONDS?: *, NUM_FAILURE_DETECTION_SUBGROUPS?: * |}>
@@ -1122,7 +1124,7 @@ export type InstanceDataQuery = ({
         ...{ __typename?: 'ServerInfo' },
       ...{| cartridge: ({
           ...{ __typename?: 'ServerInfoCartridge' },
-        ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: * |}>
+        ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: *, rocks?: * |}>
       }), membership: ({
           ...{ __typename?: 'ServerInfoMembership' },
         ...$Pick<ServerInfoMembership, {| status?: *, incarnation?: *, PROTOCOL_PERIOD_SECONDS?: *, ACK_TIMEOUT_SECONDS?: *, ANTI_ENTROPY_PERIOD_SECONDS?: *, SUSPECT_TIMEOUT_SECONDS?: *, NUM_FAILURE_DETECTION_SUBGROUPS?: * |}>
@@ -1228,7 +1230,7 @@ export type BoxInfoQuery = ({
         ...{ __typename?: 'ServerInfo' },
       ...{| cartridge: ({
           ...{ __typename?: 'ServerInfoCartridge' },
-        ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: * |}>
+        ...$Pick<ServerInfoCartridge, {| version: *, vshard_version?: *, ddl_version?: *, rocks?: * |}>
       }), membership: ({
           ...{ __typename?: 'ServerInfoMembership' },
         ...$Pick<ServerInfoMembership, {| status?: *, incarnation?: *, PROTOCOL_PERIOD_SECONDS?: *, ACK_TIMEOUT_SECONDS?: *, ANTI_ENTROPY_PERIOD_SECONDS?: *, SUSPECT_TIMEOUT_SECONDS?: *, NUM_FAILURE_DETECTION_SUBGROUPS?: * |}>
