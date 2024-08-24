@@ -211,10 +211,10 @@ Then :ref:`start the instances <cartridge-run>`, for example using
 
 .. important::
 
-``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
-    This guide uses ``cartridge-cli`` as a native tool for Cartridge applications
-    development. However, we encourage you to switch to ``tt`` in order to simplify
-    the migration to Tarantool 3.0 and newer versions.
+   ``cartridge-cli`` is deprecated in favor of the :ref:`tt CLI utility <tt-cli>`.
+   This guide uses ``cartridge-cli`` as a native tool for Cartridge applications
+   development. However, we encourage you to switch to ``tt`` in order to simplify
+   the migration to Tarantool 3.0 and newer versions.
 
 And bootstrap the cluster.
 You can do this via the Web interface which is available at
@@ -1597,9 +1597,9 @@ Cartridge displays cluster and instances issues in WebUI:
 
 .. _cartridge-compression-suggestions:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Compression suggestions (Enterprise only)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Since Tarantool Enterprise supporting compression, Cartridge can check if
 you have spaces where you can use compression.
@@ -1901,7 +1901,7 @@ perform next actions:
     #. If nothing had worked, try to carefully remove a broken instance from cluster
        and setup a new one.
 
-.. _cartridge-fix-config:
+.. _operation-error-recover:
 
 -------------------------------------------------------------------------------
 Recover from OperationError caused by a broken instance configuration
