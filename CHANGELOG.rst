@@ -18,6 +18,8 @@ Added
 
 - Rocks versions are shown in the WebUI.
 
+- New issue about doubled buckets (can be enabled with TARANTOOL_CHECK_DOUBLED_BUCKETS=true).
+
 -------------------------------------------------------------------------------
 [2.12.3] - 2024-08-16
 -------------------------------------------------------------------------------
