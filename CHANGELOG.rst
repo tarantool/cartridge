@@ -26,6 +26,8 @@ Added
 
 - SSL support to HTTP server.
 
+- New issue about doubled buckets (can be enabled with TARANTOOL_CHECK_DOUBLED_BUCKETS=true).
+
 -------------------------------------------------------------------------------
 [2.12.4] - 2024-09-16
 -------------------------------------------------------------------------------

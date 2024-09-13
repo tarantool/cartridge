@@ -50,6 +50,8 @@
 -- * various vshard alerts (see vshard docs for details);
 -- * warning: "Group "..." wasn't bootstrapped: ...";
 -- * warning: Vshard storages in replicaset %s marked as "all writable".
+-- * warning: "Cluster has ... doubled buckets. Call
+--   require('cartridge.vshard-utils').find_doubled_buckets() for details";
 -- You can enable extra vshard issues by setting
 -- `TARANTOOL_ADD_VSHARD_STORAGE_ALERTS_TO_ISSUES=true/TARANTOOL_ADD_VSHARD_ROUTER_ALERTS_TO_ISSUES=true`
 -- or with `--add-vshard-storage-alerts-to-issues/--add-vshard-router-alerts-to-issues` command-line argument.
@@ -125,6 +127,7 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 local lua_api_topology = require('cartridge.lua-api.topology')
 local invalid_format = require('cartridge.invalid-format')
 local sync_spaces = require('cartridge.sync-spaces')
+local vshard_utils = require('cartridge.vshard-utils')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
@@ -154,6 +157,9 @@ local limits_ranges = {
 
 vars:new('limits', default_limits)
 vars:new('disable_unrecoverable', false)
+vars:new('check_doubled_buckets', false)
+vars:new('check_doubled_buckets_period', 24*60*60) -- 24 hours
+
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
@@ -565,6 +571,8 @@ local function list_on_instance(opts)
 end
 
 local disk_failure_cache = {}
+local doubled_buckets_count_cache = 0
+local last_doubled_buckets_check = fiber.time()
 local function list_on_cluster()
     local state, err = confapplier.get_state()
     if state == 'Unconfigured' and lua_api_proxy.can_call()  then
@@ -746,6 +754,28 @@ local function list_on_cluster()
         end
     end
 
+    if vars.check_doubled_buckets == true
+    and last_doubled_buckets_check + vars.check_doubled_buckets_period > fiber.time()
+    then
+        local doubled_buckets = vshard_utils.find_doubled_buckets() or {}
+        doubled_buckets_count_cache = 0
+        for _ in pairs(doubled_buckets) do
+            doubled_buckets_count_cache = doubled_buckets_count_cache + 1
+        end
+        last_doubled_buckets_check = fiber.time()
+    end
+
+    if doubled_buckets_count_cache > 0 then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'vshard',
+            message = string.format(
+                "Cluster has %d doubled buckets. " ..
+                "Call require('cartridge.vshard-utils').find_doubled_buckets() for details",
+                doubled_buckets_count_cache
+            )
+        })
+    end
     -- Get each instance issues (replication, failover, memory usage)
 
     local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
@@ -858,5 +888,11 @@ return {
     set_limits = set_limits,
     disable_unrecoverable = function(disable)
         vars.disable_unrecoverable = disable
+    end,
+    check_doubled_buckets = function(check, period)
+        vars.check_doubled_buckets = check
+        if period ~= nil then
+            vars.check_doubled_buckets_period = period
+        end
     end,
 }
