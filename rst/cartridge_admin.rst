@@ -1518,6 +1518,14 @@ Cartridge displays cluster and instances issues in WebUI:
     *   **warning**: "Vshard storages in replicaset ... marked as "all writable".
         You can fix it by setting ``all_rw = false`` in the replicaset configuration;
 
+    *   **warning**: "Cluster has ... doubled buckets. Call require('cartridge.vshard-utils').find_doubled_buckets() for details"
+        -- you need to call ``require('cartridge.vshard-utils').find_doubled_buckets()`` to get more info
+        and then remove all duplicated data manually and then use ``vshard.storage.bucket_force_drop(bucket_id)``
+        to remove the bucket. See https://github.com/tarantool/vshard/issues/412 for details.
+        This issue is disabled by default. You can enable it by setting
+        ``TARANTOOL_CHECK_DOUBLED_BUCKETS=true`` and then chech will run once a
+        ``TARANTOOL_CHECK_DOUBLED_BUCKETS_PERIOD`` (default is 24 hours);
+
     You can enable extra vshard issues by setting
     ``TARANTOOL_ADD_VSHARD_STORAGE_ALERTS_TO_ISSUES=true/TARANTOOL_ADD_VSHARD_ROUTER_ALERTS_TO_ISSUES=true``
     or with ``--add-vshard-storage-alerts-to-issues/--add-vshard-router-alerts-to-issues`` command-line argument.
