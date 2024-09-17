@@ -20,7 +20,7 @@ Unreleased
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``vshard`` dependency to `0.1.28 <https://github.com/tarantool/vshard/releases/tag/0.1.28>`_.
+- Update ``vshard`` dependency to `0.1.29 <https://github.com/tarantool/vshard/releases/tag/0.1.29>`_.
 - Update ``http`` dependency to `1.6.0 <https://github.com/tarantool/http/releases/tag/1.6.0>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
