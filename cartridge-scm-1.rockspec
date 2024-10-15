@@ -10,7 +10,7 @@ dependencies = {
     'http == 1.6.0-1',
     'checks == 3.3.0-1',
     'errors == 2.2.1-1',
-    'vshard == 0.1.29-1',
+    'vshard == 0.1.30-1',
     'membership == 2.4.5-1',
     'frontend-core == 8.2.2-1',
     'cartridge-metrics-role == 0.1.1',
