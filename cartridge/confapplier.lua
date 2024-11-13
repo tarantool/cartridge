@@ -678,6 +678,9 @@ local function boot_instance(clusterwide_config)
     local box_info = box.info
     vars.instance_uuid = box_info.uuid
     vars.replicaset_uuid = box_info.cluster.uuid
+    if box_info.uuid == "00000000-0000-0000-0000-000000000000" or box_info.uuid == nil then
+        error('Nil UUID in membership')
+    end
     membership.set_payload('uuid', box_info.uuid)
 
     if topology_cfg.servers == nil
