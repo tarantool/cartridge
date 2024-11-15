@@ -17,6 +17,7 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``vshard`` dependency to `0.1.30 <https://github.com/tarantool/vshard/releases/tag/0.1.30>`_.
+- Update ``http`` dependency to `1.7.0 <https://github.com/tarantool/http/releases/tag/1.7.0>`_.
 
 -------------------------------------------------------------------------------
 [2.12.4] - 2024-09-16
