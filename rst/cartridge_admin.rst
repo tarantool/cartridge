@@ -1793,7 +1793,7 @@ SSL in Cartridge
 -------------------------------------------------------------------------------
 
 Tarantool Enterprise supports the use of SSL connections to encrypt client-server
-communications for increased security. To enable SSL in Cartridge for Replication
+communications for increased security. To enable SSL in Cartridge for replication
 and inner cluster communications, you can use environment variables or
 ``cartridge.cfg`` options.
 
@@ -1805,6 +1805,20 @@ You also need to add cfg options or environment variables for the next ssl optio
 ``ssl_client_key_file``, ``ssl_client_password``. For details, see
 `this article
 <https://www.tarantool.io/ru/doc/latest/concepts/configuration/configuration_connections/#securing-connections-with-ssl>`_.
+
+To enable http encryption, use environment variables:
+
+*   ``TARANTOOL_HTTP_SSL_CERT_FILE``;
+
+*   ``TARANTOOL_HTTP_SSL_KEY_FILE``;
+
+*   ``TARANTOOL_HTTP_SSL_PASSWORD``;
+
+*   ``TARANTOOL_HTTP_SSL_PASSWORD_FILE``;
+
+*   ``TARANTOOL_HTTP_SSL_CA_FILE``;
+
+*   ``TARANTOOL_HTTP_SSL_CIPHERS``.
 
 
 .. _cartridge-change-cookie:
