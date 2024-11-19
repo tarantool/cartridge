@@ -191,8 +191,8 @@ jobs:
     strategy:
       matrix:
         sdk-version: [
-          "gc64-2.11.2-0-r609",
-          "nogc64-2.11.2-0-r609",
+          "gc64-2.11.4-0-r658",
+          "nogc64-2.11.4-0-r658",
           ]
         etcd: ['v2.3.8', 'v3.5.0']
       fail-fast: false
