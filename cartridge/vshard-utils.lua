@@ -617,6 +617,50 @@ local function can_bootstrap_group(group_name, vsgroup)
     return true
 end
 
+-- see https://github.com/tarantool/vshard/issues/412 for details
+local function find_doubled_buckets()
+    if roles.get_role('vshard-router') == nil then
+        return false
+    end
+    local vshard = require('vshard')
+
+    local BUCKET_COUNT = vshard.router.bucket_count()
+    local all_buckets = {}
+    for id = 1, BUCKET_COUNT do
+        all_buckets[id] = {
+            count = 0,
+            info = {},
+            uuids = {},
+        }
+    end
+
+    local routes = vshard.router.routeall()
+    for _, replicaset in pairs(routes) do
+        local buckets, err = replicaset:callro(
+            'vshard.storage.buckets_info', {}, {timeout = 5}
+        )
+        if err then
+            return nil, err
+        end
+
+        for id, bucket in pairs(buckets) do
+            all_buckets[id].count = all_buckets[id].count + 1
+            table.insert(all_buckets[id].uuids, replicaset.uuid)
+            table.insert(all_buckets[id].info, bucket)
+        end
+    end
+
+    local intersection = {}
+    for id = 1, BUCKET_COUNT do
+        if all_buckets[id].count > 1 then
+            intersection[id] = all_buckets[id]
+        end
+    end
+
+    return intersection
+  end
+
+
 local function can_bootstrap()
     if roles.get_role('vshard-router') == nil then
         return false
@@ -764,6 +808,7 @@ return {
     can_bootstrap = can_bootstrap,
     edit_vshard_options = edit_vshard_options,
     patch_zone_distances = patch_zone_distances,
+    find_doubled_buckets = find_doubled_buckets,
 
     init = init,
 }

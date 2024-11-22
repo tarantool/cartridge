@@ -893,6 +893,8 @@ local function cfg(opts, box_opts)
 
     local res, err = argparse.get_opts({
         disable_unrecoverable_instances = 'boolean',
+        check_doubled_buckets = 'boolean',
+        check_doubled_buckets_period = 'number',
     })
 
     if err ~= nil then
@@ -900,6 +902,7 @@ local function cfg(opts, box_opts)
     end
 
     issues.disable_unrecoverable(res.disable_unrecoverable_instances)
+    issues.check_doubled_buckets(res.check_doubled_buckets, res.check_doubled_buckets_period)
 
     if opts.upload_prefix ~= nil then
         local path = opts.upload_prefix
