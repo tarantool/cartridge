@@ -785,9 +785,28 @@ local function cfg(opts, box_opts)
         opts.webui_enabled = true
     end
     if opts.http_enabled then
+        local ssl_opts, err = argparse.get_opts({
+            http_ssl_cert_file = 'string',
+            http_ssl_key_file = 'string',
+            http_ssl_password = 'string',
+            http_ssl_password_file = 'string',
+            http_ssl_ca_file = 'string',
+            http_ssl_ciphers = 'string',
+        })
+        if err ~= nil then
+            return nil, err
+        end
         local httpd = http.new(
             opts.http_host, opts.http_port,
-            { log_requests = false }
+            {
+                log_requests = false,
+                ssl_cert_file = ssl_opts.http_ssl_cert_file,
+                ssl_key_file = ssl_opts.http_ssl_key_file,
+                ssl_password = ssl_opts.http_ssl_password,
+                ssl_password_file = ssl_opts.http_ssl_password_file,
+                ssl_ca_file = ssl_opts.http_ssl_ca_file,
+                ssl_ciphers = ssl_opts.http_ssl_ciphers,
+            }
         )
 
         local ok, err = HttpInitError:pcall(httpd.start, httpd)
