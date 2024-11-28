@@ -333,7 +333,7 @@ export const listQuery = gql`
         name
         value
       }
-      boxinfo {
+      boxinfo @include(if: $withStats) {
         general {
           ro
         }
