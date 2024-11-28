@@ -149,9 +149,10 @@ createTimeoutFx('ServerListTimeoutFx', {
   source: $serverList.map((state) => selectors.unConfiguredServerList(state).length > 0),
   timeout: (): number => app.variables.cartridge_refresh_interval(),
   effect: (counter: number, _, hasUnConfiguredServers): Promise<void> => {
-    return queryServerListFx({
-      withStats: counter % app.variables.cartridge_stat_period() === 0 || Boolean(hasUnConfiguredServers),
-    }).then(voidL);
+    const cnt = counter - 1;
+    const withStats =
+      cnt > -1 && (cnt % app.variables.cartridge_stat_period() === 0 || Boolean(hasUnConfiguredServers));
+    return queryServerListFx({ withStats }).then(voidL);
   },
 });
 
