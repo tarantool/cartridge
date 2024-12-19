@@ -12,10 +12,10 @@ local yaml = require('yaml').new()
 local fiber = require('fiber')
 local errors = require('errors')
 local checks = require('checks')
-local membership = require('membership')
 local uri_tools = require('uri')
 local socket = require('socket')
 local json = require('json')
+local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -292,6 +292,7 @@ local function apply_config(clusterwide_config)
     if failover.is_leader() then
         for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
             box.space._cluster.index.uuid:delete(uuid)
+            membership.mark_left(topology_cfg.servers[uuid].uri)
         end
     end
 

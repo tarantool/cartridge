@@ -24,6 +24,8 @@ Changed
 
 - Update ``membership`` dependency to `2.4.6 <https://github.com/tarantool/membership/releases/tag/2.4.6>`_.
 
+- Expelled instances are now marked as ``left`` in ``membership``.
+
 -------------------------------------------------------------------------------
 [2.13.0] - 2024-11-28
 -------------------------------------------------------------------------------
