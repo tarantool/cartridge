@@ -150,9 +150,9 @@ local function disable()
     and box_info.synchro.queue ~= nil
     and box_info.synchro.queue.owner ~= 0
     and box_info.synchro.queue.owner == box_info.id then
-        local err = pcall(box.ctl.demote)
-        if err ~= nil then
-            log.error('Failed to demote: %s', err)
+        local ok, err = pcall(box.ctl.demote)
+        if ok ~= true then
+            log.error('Failed to demote: %s', err or 'unknown')
         end
         return err
     end

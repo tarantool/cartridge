@@ -432,7 +432,7 @@ local function synchro_promote()
         local ok, err = pcall(box.ctl.promote)
         fiber.testcancel()
         if ok ~= true then
-            log.error('Failed to promote: %s', err)
+            log.error('Failed to promote: %s', err or 'unknown')
         end
         return err
     end
@@ -448,7 +448,7 @@ local function synchro_demote()
         local ok, err = pcall(box.ctl.demote)
         fiber.testcancel()
         if ok ~= true then
-            log.error('Failed to demote: %s', err)
+            log.error('Failed to demote: %s', err or 'unknown')
         end
         return err
     end
