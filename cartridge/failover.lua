@@ -429,9 +429,15 @@ local function synchro_promote()
     and not vars.failover_suppressed
     and box.ctl.promote ~= nil
     then
-        local err = box.ctl.promote()
-        if err ~= nil then
-            log.error('Failed to promote: %s', err)
+        local ok, err = pcall(box.ctl.promote)
+        if ok ~= true then
+            log.error('Failed to promote: %s', err or 'unknown')
+            return err
+        end
+        ok, err = pcall(fiber.testcancel)
+        if ok ~= true then
+            log.error('Fiber was cancelled in synchro_promote')
+            return err
         end
     end
 end
@@ -443,9 +449,15 @@ local function synchro_demote()
     and box_info.synchro.queue.owner ~= 0
     and box_info.synchro.queue.owner == box_info.id
     and box.ctl.demote ~= nil then
-        local err = box.ctl.demote()
-        if err ~= nil then
-            log.error('Failed to demote: %s', err)
+        local ok, err = pcall(box.ctl.demote)
+        if ok ~= true then
+            log.error('Failed to demote: %s', err or 'unknown')
+            return err
+        end
+        ok, err = pcall(fiber.testcancel)
+        if ok ~= true then
+            log.error('Fiber was cancelled in synchro_demote')
+            return err
         end
     end
 end
@@ -614,7 +626,10 @@ function reconfigure_all(active_leaders)
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
-        synchro_promote()
+        err = synchro_promote()
+        if err ~= nil then
+            error(err)
+        end
 
         local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
@@ -786,11 +801,23 @@ local function cfg(clusterwide_config, opts)
 
     -- disable raft if it was enabled
     if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
-        raft_failover.disable()
+        local err = raft_failover.disable()
+        if err ~= nil then
+            ApplyConfigError:new(
+                'Unable to disable Raft failover: %q',
+                err
+            )
+        end
     end
 
     if vars.mode == 'stateful' and failover_cfg.mode ~= 'stateful' and failover_cfg.mode ~= 'raft' then
-        synchro_demote()
+        local err = synchro_demote()
+        if err ~= nil then
+            ApplyConfigError:new(
+                'Unable to demote: %q',
+                err
+            )
+        end
     end
 
     if failover_cfg.mode == 'disabled' then
@@ -819,12 +846,25 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
-            synchro_demote()
+            local err = synchro_demote()
+            if err ~= nil then
+                ApplyConfigError:new(
+                    'Unable to demote: %q',
+                    err
+                )
+            end
+
         elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
-            synchro_demote()
+            local err = synchro_demote()
+            if err ~= nil then
+                ApplyConfigError:new(
+                    'Unable to demote: %q',
+                    err
+                )
+            end
         else
             vars.consistency_needed = true
         end
@@ -975,7 +1015,13 @@ local function cfg(clusterwide_config, opts)
     })
 
     vars.mode = failover_cfg.mode
-    synchro_promote()
+    err = synchro_promote()
+    if err ~= nil then
+        ApplyConfigError:new(
+            'Unable to promote: %q',
+            err
+        )
+    end
 
     return true
 end

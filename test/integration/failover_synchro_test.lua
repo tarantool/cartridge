@@ -16,8 +16,10 @@ local storage_2_uuid = h.uuid('b', 'b', 2)
 local storage_3_uuid = h.uuid('b', 'b', 3)
 
 local function setup_cluster(g)
+    local datadir = fio.tempdir()
+    g.logfile = fio.pathjoin(datadir, 'localhost-13303', 'storage-2.log')
     g.cluster = h.Cluster:new({
-        datadir = fio.tempdir(),
+        datadir = datadir,
         use_vshard = true,
         server_command = h.entrypoint('srv_raft'),
         cookie = h.random_cookie(),
@@ -47,6 +49,7 @@ local function setup_cluster(g)
                     },
                     {
                         instance_uuid = storage_2_uuid,
+                        env = {['TARANTOOL_LOG'] = g.logfile},
                     },
                     {
                         instance_uuid = storage_3_uuid,
@@ -216,8 +219,40 @@ local function stateful_test(g)
     res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
     t.assert_equals(res.status, 500)
 
+    -- return everything in place
     start_server(g, 'storage-1')
     start_server(g, 'storage-3')
+
+    h.retrying({timeout = 20}, function()
+        promote(g.cluster, storage_1_uuid)
+    end)
+end
+
+local function promote_errors_test(g)
+    g.cluster:wait_until_healthy()
+    local test_message = 'test promote error'
+    for _, alias in ipairs({'storage-1', 'storage-2', 'storage-3'}) do
+        g.cluster:server(alias):exec(function(test_message)
+            local old_promote = box.ctl.promote
+            rawset(box.ctl, 'promote', function()
+                error(test_message)
+            end)
+            rawset(_G, 'old_promote', old_promote)
+        end, {test_message})
+    end
+
+    pcall(promote, g.cluster, storage_2_uuid)
+
+    t.assert(g.cluster:server('storage-2'):grep_log(test_message, nil, {filename = g.logfile}), g.logfile)
+
+    for _, alias in ipairs({'storage-1', 'storage-2', 'storage-3'}) do
+        g.cluster:server(alias):exec(function()
+            rawset(box.ctl, 'promote', rawget(_G, 'old_promote'))
+        end)
+    end
+    h.retrying({timeout = 20}, function()
+        promote(g.cluster, storage_1_uuid)
+    end)
 end
 
 g_stateboard.before_all(function()
@@ -263,6 +298,7 @@ g_stateboard.before_all(function()
 end)
 
 g_stateboard.test_kill_master_stateboard = stateful_test
+g_stateboard.test_promote_errors = promote_errors_test
 
 g_stateboard.after_all(function(g)
     g.state_provider:stop()
@@ -313,6 +349,7 @@ g_etcd2.before_all(function()
 end)
 
 g_etcd2.test_kill_master = stateful_test
+g_etcd2.test_promote_errors = promote_errors_test
 
 g_etcd2.after_all(function(g)
     g.state_provider:stop()
