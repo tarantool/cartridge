@@ -145,7 +145,7 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
             local master_uri = servers_old[master_uuid].uri
 
             local buckets_count, _ = errors.netbox_call(
-                pool.connect(master_uri, {wait_connected = false}),
+                pool.connect(master_uri, {wait_connected = false, fetch_schema = false}),
                 'vshard.storage.buckets_count', nil, {timeout = 1}
             )
 
