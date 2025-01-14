@@ -100,5 +100,7 @@ function g.test_api()
         return membership.members()
     end)
 
-    t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left')
+    g.cluster.helpers.retrying({}, function ()
+        t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left')
+    end)
 end
