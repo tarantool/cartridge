@@ -93,4 +93,12 @@ function g.test_api()
         g.A1.net_box.space._cluster:select(),
         {{1, g.r1_uuid}, {3, g.r3_uuid}}
     )
+
+    -- Check explicitly that expelled leader has left membership. Just in case also.
+    local ret = g.A1:exec(function()
+        local membership = require('membership')
+        return membership.members()
+    end)
+
+    t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left')
 end
