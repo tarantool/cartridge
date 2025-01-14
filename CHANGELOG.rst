@@ -24,6 +24,8 @@ Changed
 
 - Update ``membership`` dependency to `2.4.6 <https://github.com/tarantool/membership/releases/tag/2.4.6>`_.
 
+- Cartridge doesn't fetch schema in inner ``pool.connect`` calls.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

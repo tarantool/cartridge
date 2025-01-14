@@ -49,7 +49,7 @@ local function call(function_name, ...)
     checks('string')
 
     local destination = get_destination()
-    local conn = pool.connect(destination, {wait_connected = false})
+    local conn = pool.connect(destination, {wait_connected = false, fetch_schema = false})
 
     -- Both get_topology and edit_topology API return recursive lua
     -- tables which can't be passed over netbox as is. So we transfer

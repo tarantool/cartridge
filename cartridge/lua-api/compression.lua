@@ -31,7 +31,7 @@ local function get_cluster_compression_info()
             if role == 'vshard-storage' then
                 local master = rpl.master
 
-                local conn, err = pool.connect(master.uri, {wait_connected = true})
+                local conn, err = pool.connect(master.uri, {wait_connected = true, fetch_schema = false})
                 if not conn or err ~= nil then
                     if err ~= nil then
                         log.error(err)
@@ -49,7 +49,7 @@ local function get_cluster_compression_info()
                 )
 
                 if storage_compression_info == nil or err ~= nil then
-                    if err ~=nil then
+                    if err ~= nil then
                         log.error(err)
                     end
                     table.insert(compression_info, {

@@ -192,7 +192,7 @@ local function bootstrap_group(group_name, vsgroup)
     for _, replicaset in pairs(info.replicasets or {}) do
         local uri = replicaset.master.uri
         local ready = errors.netbox_eval(
-            pool.connect(uri, {wait_connected = false}),
+            pool.connect(uri, {wait_connected = false, fetch_schema = false}),
             'return box.space._bucket ~= nil',
             {}, {timeout = 1}
         )

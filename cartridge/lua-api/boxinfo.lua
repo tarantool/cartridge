@@ -246,7 +246,7 @@ local function get_info(uri)
         return ret
     end
 
-    local conn, err = pool.connect(uri, {wait_connected = false})
+    local conn, err = pool.connect(uri, {wait_connected = false, fetch_schema = false})
     if not conn then
         return nil, err
     end

@@ -45,7 +45,7 @@ local function get_stat(uri)
         }
     end
 
-    local conn, err = pool.connect(uri, {wait_connected = false})
+    local conn, err = pool.connect(uri, {wait_connected = false, fetch_schema = false})
     if not conn then
         return nil, err
     end
