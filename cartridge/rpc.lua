@@ -146,8 +146,8 @@ local function get_connection(role_name, opts)
         prefer_local = '?boolean',
         leader_only = '?boolean',
         labels = '?table',
+        fetch_schema = '?boolean',
     })
-
     local candidates = get_candidates(role_name, {leader_only = opts.leader_only, labels = opts.labels})
     if next(candidates) == nil then
         if opts.labels then
@@ -174,7 +174,7 @@ local function get_connection(role_name, opts)
         num_candidates = num_candidates - 1
 
         uri = table.remove(candidates, n)
-        conn = pool.connect(uri, {wait_connected = false})
+        conn = pool.connect(uri, {wait_connected = false, fetch_schema = opts.fetch_schema})
     until conn:wait_connected() or num_candidates == 0
 
     if not conn:is_connected() then
