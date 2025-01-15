@@ -96,11 +96,11 @@ function g.test_api()
 
     -- Check explicitly that expelled leader has left membership. Just in case also.
 
-    g.cluster:retrying({}, function ()
+    g.cluster:retrying({timeout = 10}, function ()
         local ret = g.A1:exec(function()
             local membership = require('membership')
             return membership.members()
         end)
-        t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left')
+        t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left', ret)
     end)
 end
