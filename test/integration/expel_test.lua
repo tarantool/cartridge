@@ -9,7 +9,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = helpers.random_cookie(),
+        cookie = 'secret', --helpers.random_cookie(),
         replicasets = {{
             alias = 'A',
             roles = {},
@@ -95,12 +95,12 @@ function g.test_api()
     )
 
     -- Check explicitly that expelled leader has left membership. Just in case also.
-    local ret = g.A1:exec(function()
-        local membership = require('membership')
-        return membership.members()
-    end)
 
     g.cluster:retrying({}, function ()
+        local ret = g.A1:exec(function()
+            local membership = require('membership')
+            return membership.members()
+        end)
         t.assert_equals(ret[g.cluster:server('A-2').advertise_uri].status, 'left')
     end)
 end
