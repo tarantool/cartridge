@@ -295,8 +295,8 @@ local function apply_config(clusterwide_config)
         end
     end
 
-    box.cfg({replication_connect_quorum = 0})
     box.cfg({
+        replication_connect_quorum = 0,
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri,
