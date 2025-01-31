@@ -1139,6 +1139,11 @@ return {
     admin_get_uris = lua_api_topology.get_uris,
 
     --- .
+    --- @refer cartridge.lua-api.get-topology.get_topology
+    --- @function admin_get_topology
+    admin_get_topology = lua_api_topology.get_topology,
+
+    --- .
     -- @refer cartridge.lua-api.topology.probe_server
     -- @function admin_probe_server
     admin_probe_server = lua_api_topology.probe_server,
