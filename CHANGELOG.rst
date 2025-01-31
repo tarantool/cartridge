@@ -26,6 +26,8 @@ Changed
 
 - Cartridge doesn't fetch schema in inner ``pool.connect`` calls.
 
+- Update ``vshard`` dependency to `0.1.31 <https://github.com/tarantool/vshard/releases/tag/0.1.31>`_.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
