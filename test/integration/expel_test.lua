@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fun = require('fun')
 local t = require('luatest')
 local g = t.group()
 
@@ -39,7 +40,7 @@ g.before_all(function()
             expelled = true,
         }}})
     ]], {expelled.instance_uuid})
-
+    g.expelled_uri = expelled.advertise_uri
     g.A1:call('package.loaded.cartridge.admin_edit_topology',
         {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
 
@@ -49,6 +50,22 @@ g.after_all(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
 end)
+
+local function check_members(g, expected)
+    local to_check = fun.iter(expected):map(function(x) return x end):totable()
+    table.sort(to_check)
+    t.helpers.retrying({}, function()
+        local res = g.A1:exec(function()
+            local fun = require('fun')
+            local membership = require('membership')
+            local members = fun.iter(membership.members()):
+                map(function(x) return x end):totable()
+            table.sort(members)
+            return members
+        end)
+        t.assert_equals(res, to_check)
+    end)
+end
 
 function g.test_api()
     local ret = g.A1:eval('return box.info.replication')
@@ -93,4 +110,20 @@ function g.test_api()
         g.A1.net_box.space._cluster:select(),
         {{1, g.r1_uuid}, {3, g.r3_uuid}}
     )
+
+    local expected = {
+        [g.cluster:server('A-1').advertise_uri] = true,
+        [g.cluster:server('A-2').advertise_uri] = true,
+        [g.cluster:server('A-3').advertise_uri] = true,
+    }
+    table.sort(expected)
+
+    check_members(g, expected)
+
+    g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
+    g.A1:restart()
+
+    expected[g.expelled_uri] = nil
+
+    check_members(g, expected)
 end

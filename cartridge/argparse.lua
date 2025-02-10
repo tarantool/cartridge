@@ -117,6 +117,7 @@ local cluster_opts = {
     disable_raft_on_small_clusters = 'boolean', -- **boolean**
     enable_failover_suppressing = 'boolean', -- **boolean**
     set_cookie_hash_membership = 'boolean', -- **boolean**
+    exclude_expelled_members = 'boolean', -- **boolean**
 
     twophase_netbox_call_timeout = 'number', -- **number**
     twophase_upload_config_timeout = 'number', -- **number**
