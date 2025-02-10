@@ -44,10 +44,22 @@ g.before_all(function()
     g.A1:call('package.loaded.cartridge.admin_edit_topology',
         {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
 
+    g.standalone = helpers.Server:new({
+        alias = 'standalone',
+        workdir = fio.pathjoin(g.cluster.datadir, 'standalone'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13300,
+        http_port = 8080,
+        replicaset_uuid = helpers.uuid('b'),
+        instance_uuid = helpers.uuid('b', 'b', 1),
+    })
+    g.standalone:start()
 end)
 
 g.after_all(function()
     g.cluster:stop()
+    g.standalone:stop()
     fio.rmtree(g.cluster.datadir)
 end)
 
@@ -115,6 +127,7 @@ function g.test_api()
         [g.cluster:server('A-1').advertise_uri] = true,
         [g.cluster:server('A-2').advertise_uri] = true,
         [g.cluster:server('A-3').advertise_uri] = true,
+        [g.standalone.advertise_uri] = true,
     }
     table.sort(expected)
 
@@ -123,7 +136,12 @@ function g.test_api()
     g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
     g.A1:restart()
 
-    expected[g.expelled_uri] = nil
+    g.A1:exec(function(uri)
+        local membership = require('membership')
+        membership.remove_member(uri)
+    end, {g.expelled_uri})
 
+
+    expected[g.expelled_uri] = nil
     check_members(g, expected)
 end
