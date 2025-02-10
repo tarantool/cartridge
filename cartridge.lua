@@ -305,6 +305,12 @@ end
 --   env `TARANTOOL_SET_COOKIE_HASH_MEMBERSHIP`,
 --   args `--set-cookie-hash-membership`)
 --
+-- @tparam ?boolean opts.exclude_expelled_members
+--   Do not add expelled members to the membership.
+--   default: `false`, overridden by
+--   env `TARANTOOL_EXCLUDE_EXPELLED_MEMBERS`,
+--   args `--exclude-expelled-members`)
+--
 -- @tparam ?boolean opts.rebalancer_mode
 --   Rebalancer mode for vshard cluster. See vshard doc for more details.
 --   env `TARANTOOL_REBALANCER_MODE`,
@@ -346,6 +352,7 @@ local function cfg(opts, box_opts)
         enable_synchro_mode = '?boolean',
         disable_raft_on_small_clusters = '?boolean',
         set_cookie_hash_membership = '?boolean',
+        exclude_expelled_members = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -999,6 +1006,7 @@ local function cfg(opts, box_opts)
         enable_failover_suppressing = opts.enable_failover_suppressing,
         enable_synchro_mode = opts.enable_synchro_mode,
         disable_raft_on_small_clusters = opts.disable_raft_on_small_clusters,
+        exclude_expelled_members = opts.exclude_expelled_members,
 
         transport = opts.transport,
         ssl_ciphers = opts.ssl_ciphers,
