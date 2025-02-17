@@ -33,6 +33,9 @@ local function acquire_lock(session, lock_args)
     local resp, err = session.connection:request('PUT', '/lock',
         request_args
     )
+    if err ~= nil then
+        log.verbose('etcd2-client: acquire_lock: failed to acquire lock: %s', json.encode(err))
+    end
     if resp == nil then
         if err.etcd_code == etcd2.EcodeNodeExist then
             return false
@@ -58,6 +61,9 @@ local function acquire_lock(session, lock_args)
 
     local leaders_value
     local resp, err = session.connection:request('GET', '/leaders')
+    if err ~= nil then
+        log.verbose('etcd2-client: acquire_lock: failed to get leaders: %s', json.encode(err))
+    end
     if resp ~= nil then
         leaders_value = resp.node.value
     elseif err.etcd_code == etcd2.EcodeKeyNotFound then
@@ -69,6 +75,9 @@ local function acquire_lock(session, lock_args)
     local resp, err = session.connection:request('PUT', '/leaders',
         {value = leaders_value}
     )
+    if err ~= nil then
+        log.verbose('etcd2-client: acquire_lock: failed to renew leaders: %s', json.encode(err))
+    end
     if resp == nil then
         return nil, err
     end
@@ -127,6 +136,9 @@ local function set_leaders(session, updates)
             prevIndex = session.leaders_index,
         })
     end)
+    if err ~= nil then
+        log.verbose('etcd2-client: set_leaders: failed to set leaders: %s', json.encode(err))
+    end
 
     session._set_leaders_mutex:get()
 
@@ -173,8 +185,14 @@ local function delete_replicasets(session, replicasets)
             prevIndex = session.leaders_index,
         })
     end)
+    if err ~= nil then
+        log.verbose('etcd2-client: delete_replicasets: failed to set leaders: %s', json.encode(err))
+    end
     for _, replicaset_uuid in ipairs(replicasets) do
         session.connection:request('DELETE', '/vclockkeeper/'..replicaset_uuid)
+    end
+    if err ~= nil then
+        log.verbose('etcd2-client: delete_replicasets: failed to delete vclockkeepers: %s', json.encode(err))
     end
 
     session._set_leaders_mutex:get()
@@ -199,6 +217,9 @@ local function get_leaders(session)
     end
 
     local resp, err = session.connection:request('GET', '/leaders')
+    if err ~= nil then
+        log.verbose('etcd2-client: get_leaders: failed to get leaders: %s', json.encode(err))
+    end
     if resp ~= nil then
         return json.decode(resp.node.value)
     elseif err.etcd_code == etcd2.EcodeKeyNotFound then
@@ -216,6 +237,9 @@ local function get_coordinator(session)
     end
 
     local resp, err = session.connection:request('GET', '/lock')
+    if err ~= nil then
+        log.verbose('etcd2-client: get_coordinator: failed to get coordinator: %s', json.encode(err))
+    end
 
     if resp ~= nil then
         return json.decode(resp.node.value)
@@ -236,6 +260,7 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock,
         '/vclockkeeper/'..replicaset_uuid)
 
     if err ~= nil then
+        log.verbose('etcd2-client: set_vclockkeeper: failed to get vclockkeeper: %s', json.encode(err))
         if err.etcd_code == etcd2.EcodeKeyNotFound then
             request_args.prevExist = false
             goto set_vclockkeeper
@@ -273,7 +298,9 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock,
 
     local resp, err = session.connection:request('PUT',
         '/vclockkeeper/'.. replicaset_uuid, request_args)
-
+    if err ~= nil then
+        log.verbose('etcd2-client: set_vclockkeeper: failed to set vclockkeeper: %s', json.encode(err))
+    end
     if resp == nil then
         if err.etcd_code == etcd2.EcodeTestFailed then
             err.err = ('Vclockkeeper changed between calls - %s'):format(err.err)
@@ -299,6 +326,7 @@ local function get_vclockkeeper(session, replicaset_uuid)
         '/vclockkeeper/'..replicaset_uuid)
 
     if err ~= nil then
+        log.verbose('etcd2-client: get_vclockkeeper: failed to get vclockkeeper: %s', json.encode(err))
         if err.etcd_code == etcd2.EcodeKeyNotFound then
             return nil
         else
@@ -336,9 +364,12 @@ local function drop(session)
     session.lock_index = nil
     if lock_index ~= nil then
         pcall(function()
-            session.connection:request('DELETE', '/lock', {
+            local _, err = session.connection:request('DELETE', '/lock', {
                 prevIndex = lock_index,
             })
+            if err ~= nil then
+                log.verbose('etcd2-client: drop: failed to drop lock: %s', json.encode(err))
+            end
         end)
     end
 
@@ -411,6 +442,9 @@ local function longpoll(client, timeout)
         -- longpoll_index is the latest index received from etcd.
         if session.longpoll_index == nil then
             resp, err = session.connection:request('GET', '/leaders')
+            if err ~= nil then
+                log.verbose('etcd2-client: longpoll: failed to get leaders: %s', json.encode(err))
+            end
             -- After a simple GET we can be sure that the response
             -- represents the newest information at a given x-etcd-index
             if resp ~= nil then
@@ -423,6 +457,9 @@ local function longpoll(client, timeout)
                 wait = true,
                 waitIndex = session.longpoll_index + 1,
             }, {timeout = timeout})
+            if err ~= nil then
+                log.verbose('etcd2-client: longpoll: failed to longpoll: %s', json.encode(err))
+            end
             -- A GET with the waitIndex specified will return the next
             -- modifiedIndex (if it exists), but there may exist the
             -- newer one.
@@ -465,6 +502,9 @@ end
 local function check_quorum(client)
     local session = client:get_session()
     local resp, err = session.connection:request('GET', '/lock?quorum=true')
+    if err ~= nil then
+        log.verbose('etcd2-client: check_quorum: failed to check quorum: %s', json.encode(err))
+    end
     if resp ~= nil then
         return true
     elseif err.etcd_code == etcd2.EcodeKeyNotFound then
@@ -482,7 +522,9 @@ local function set_identification_string(client, new, prev)
 
     if not id_str_checked and prev == nil then
         local resp, err = session.connection:request('GET', '/identification_str')
-
+        if err ~= nil then
+            log.verbose('etcd2-client: set_identification_string: failed to get identification string: %s', json.encode(err))
+        end
         if resp and resp.node.value == new then
             id_str_checked = true
             return true
@@ -493,10 +535,16 @@ local function set_identification_string(client, new, prev)
         local resp, err = session.connection:request('PUT', '/identification_str', {
             prevExist = false, value = new,
         })
+        if err ~= nil then
+            log.verbose('etcd2-client: set_identification_string: failed to set identification string: %s', json.encode(err))
+        end
 
         if resp == nil then
             if err.etcd_code == etcd2.EcodeNodeExist then
                 local resp, get_err = session.connection:request('GET', '/identification_str')
+                if get_err ~= nil then
+                    log.verbose('etcd2-client: set_identification_string: failed to get identification string: %s', json.encode(get_err))
+                end
                 if resp and resp.node.value == new then
                     id_str_checked = true
                     return true
@@ -513,6 +561,9 @@ local function set_identification_string(client, new, prev)
         local resp, err = session.connection:request('PUT', '/identification_str', {
             prevValue = prev, value = new,
         })
+        if err ~= nil then
+            log.verbose('etcd2-client: set_identification_string: failed to set identification string: %s', json.encode(err))
+        end
         if resp == nil then
             if err.etcd_code == etcd2.EcodeTestFailed then
                 err.err = ('Identification string changed between calls'):format(err.err)
