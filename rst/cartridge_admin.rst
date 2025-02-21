@@ -1941,6 +1941,31 @@ perform next actions:
     #. If nothing had worked, try to carefully remove a broken instance from cluster
        and setup a new one.
 
+.. _force-instances-remove:
+
+-------------------------------------------------------------------------------
+Forcefully removing broken instances
+-------------------------------------------------------------------------------
+
+If it isn't possible to remove a broken instance from the cluster using WebUI or
+Lua API, you can try to remove it forcefully:
+
+#. Stop broken instances.
+
+#. Backup the instance's topology config (``config/topology.yml``) by copying it to
+   another directory -- it might be helpful if something goes wrong after force-reapplying.
+
+#. Choose a router and memorize its URI and HTTP port.
+
+#. Go to the router's config directory and edit the topology config file. Remove
+   the broken instances entrys (and the replicaset entry, if you want to remove
+   full replicaset) from the topology.
+
+#. Restart the router.
+
+#. Go to the router's WebUI and wait until ``force apply`` suggestion.
+   Then push the button to reapply config (repeat if failed).
+
 .. _operation-error-recover:
 
 -------------------------------------------------------------------------------
