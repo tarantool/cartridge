@@ -536,7 +536,8 @@ local function list_on_instance(opts)
         end
     end
 
-    if type(box.cfg) == 'table' and not fio.lstat(box.cfg.memtx_dir) then
+    local ok, err = fio.lstat(box.cfg.memtx_dir)
+    if type(box.cfg) == 'table' and not ok then
         table.insert(ret, {
             level = 'critical',
             topic = 'disk_failure',
@@ -547,6 +548,7 @@ local function list_on_instance(opts)
                 describe(self_uri)
             ),
         })
+        log.error('Disk error: %s', err)
     end
 
     -- add custom issues from each role
