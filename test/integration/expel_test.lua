@@ -15,6 +15,10 @@ g.before_all(function()
             alias = 'A',
             roles = {},
             servers = 3,
+        }, {
+            alias = 'B',
+            roles = {},
+            servers = 1,
         }},
     })
     g.cluster:start()
@@ -34,12 +38,15 @@ g.before_all(function()
     )
 
     expelled:stop()
-    g.A1:eval([[
+    g.A1:exec(function(uuid1, uuid2)
         package.loaded.cartridge.admin_edit_topology({servers = {{
-            uuid = ...,
+            uuid = uuid1,
+            expelled = true,
+        }, {
+            uuid = uuid2,
             expelled = true,
         }}})
-    ]], {expelled.instance_uuid})
+    end, {expelled.instance_uuid, g.cluster:server('B-1').instance_uuid})
     g.expelled_uri = expelled.advertise_uri
     g.A1:call('package.loaded.cartridge.admin_edit_topology',
         {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
@@ -124,9 +131,13 @@ function g.test_api()
     )
 
     local expected = {
+        -- second instance is space _cluster is expelled:
         [g.cluster:server('A-1').advertise_uri] = true,
         [g.cluster:server('A-2').advertise_uri] = true,
         [g.cluster:server('A-3').advertise_uri] = true,
+        -- expelled, but not stopped:
+        [g.cluster:server('B-1').advertise_uri] = true,
+        -- not in the cluster:
         [g.standalone.advertise_uri] = true,
     }
     table.sort(expected)
@@ -135,12 +146,6 @@ function g.test_api()
 
     g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
     g.A1:restart()
-
-    g.A1:exec(function(uri)
-        local membership = require('membership')
-        membership.remove_member(uri)
-    end, {g.expelled_uri})
-
 
     expected[g.expelled_uri] = nil
     check_members(g, expected)
