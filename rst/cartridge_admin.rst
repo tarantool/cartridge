@@ -1914,6 +1914,25 @@ To migrate to this feature, perform next actions:
     in your ``init.lua`` file, or use environment variables. Don't forget to
     persist this setting.
 
+.. _cartridge-membership-remove-expelled:
+
+-------------------------------------------------------------------------------
+Getting rid of expelled instances in membership
+-------------------------------------------------------------------------------
+
+Sometimes, expelled instances can remain in the membership, e. g. when they
+weren't finished correctly before being expelled. Those instances **can't**
+cause any harm, but they can be annoying when reading membership members list.
+If you are being bothered by those instances in membership, you can remove them
+with the option ``cartridge.cfg({exclude_expelled_members = true})`` or with env
+`TARANTOOL_EXCLUDE_EXPELLED_MEMBERS` or with command-line argument
+`--exclude-expelled-members`.
+
+Enabling this option will remove *stopped* expelled instances from the membership list.
+Note that *alive* expelled instances and any instances that have the same
+``membership_encryption_key`` and which can ping your cluster (like newly launched
+instances which are not in the topology yet) will remain in the membership list.
+
 .. _cartridge-fix-config:
 
 -------------------------------------------------------------------------------
