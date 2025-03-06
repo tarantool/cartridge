@@ -7,7 +7,6 @@
 
 local log = require('log')
 local fio = require('fio')
-local fun = require('fun')
 local yaml = require('yaml').new()
 local fiber = require('fiber')
 local errors = require('errors')
