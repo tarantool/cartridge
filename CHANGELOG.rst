@@ -18,6 +18,7 @@ Changed
 
 - Update ``membership`` dependency to `2.5.0 <https://github.com/tarantool/membership/releases/tag/2.5.0>`_.
 
+- Remove expelled instances in a single transaction.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
