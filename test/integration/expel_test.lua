@@ -147,6 +147,7 @@ function g.test_api()
     g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
     g.A1:restart()
 
+    -- now every instance except expelled and stopped should remain in membership 
     expected[g.expelled_uri] = nil
     check_members(g, expected)
 end

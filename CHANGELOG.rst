@@ -23,7 +23,7 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- New ``cartridge.cfg`` option ``exclude_expelled_members`` to exclude expelled
+- New option ``exclude_expelled_members`` to exclude expelled
   instances from the membership process.
 
 -------------------------------------------------------------------------------
