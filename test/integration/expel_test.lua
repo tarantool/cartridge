@@ -87,10 +87,12 @@ local function check_members(g, expected)
 end
 
 function g.test_api()
-    local ret = g.A1:eval('return box.info.replication')
-    t.assert_covers(ret[1], {id = 1, uuid = g.r1_uuid}, ret)
-    t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
-    t.assert_equals(ret[2], nil, ret)
+    t.helpers.retrying({}, function()
+        local ret = g.A1:eval('return box.info.replication')
+        t.assert_covers(ret[1], {id = 1, uuid = g.r1_uuid}, ret)
+        t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
+        t.assert_equals(ret[2], nil, ret)
+    end)
 
     t.helpers.retrying({}, function()
         local ret = g.A1:graphql({
@@ -147,7 +149,7 @@ function g.test_api()
     g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
     g.A1:restart()
 
-    -- now every instance except expelled and stopped should remain in membership 
+    -- now every instance except expelled and stopped should remain in membership
     expected[g.expelled_uri] = nil
     check_members(g, expected)
 end
