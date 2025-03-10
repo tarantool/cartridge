@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fun = require('fun')
 local t = require('luatest')
 local g = t.group()
 
@@ -14,6 +15,10 @@ g.before_all(function()
             alias = 'A',
             roles = {},
             servers = 3,
+        }, {
+            alias = 'B',
+            roles = {},
+            servers = 1,
         }},
     })
     g.cluster:start()
@@ -33,22 +38,53 @@ g.before_all(function()
     )
 
     expelled:stop()
-    g.A1:eval([[
+    g.A1:exec(function(uuid1, uuid2)
         package.loaded.cartridge.admin_edit_topology({servers = {{
-            uuid = ...,
+            uuid = uuid1,
+            expelled = true,
+        }, {
+            uuid = uuid2,
             expelled = true,
         }}})
-    ]], {expelled.instance_uuid})
-
+    end, {expelled.instance_uuid, g.cluster:server('B-1').instance_uuid})
+    g.expelled_uri = expelled.advertise_uri
     g.A1:call('package.loaded.cartridge.admin_edit_topology',
         {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
 
+    g.standalone = helpers.Server:new({
+        alias = 'standalone',
+        workdir = fio.pathjoin(g.cluster.datadir, 'standalone'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13300,
+        http_port = 8080,
+        replicaset_uuid = helpers.uuid('b'),
+        instance_uuid = helpers.uuid('b', 'b', 1),
+    })
+    g.standalone:start()
 end)
 
 g.after_all(function()
     g.cluster:stop()
+    g.standalone:stop()
     fio.rmtree(g.cluster.datadir)
 end)
+
+local function check_members(g, expected)
+    local to_check = fun.iter(expected):map(function(x) return x end):totable()
+    table.sort(to_check)
+    t.helpers.retrying({}, function()
+        local res = g.A1:exec(function()
+            local fun = require('fun')
+            local membership = require('membership')
+            local members = fun.iter(membership.members()):
+                map(function(x) return x end):totable()
+            table.sort(members)
+            return members
+        end)
+        t.assert_equals(res, to_check)
+    end)
+end
 
 function g.test_api()
     local ret = g.A1:eval('return box.info.replication')
@@ -93,4 +129,25 @@ function g.test_api()
         g.A1.net_box.space._cluster:select(),
         {{1, g.r1_uuid}, {3, g.r3_uuid}}
     )
+
+    local expected = {
+        -- second instance is space _cluster is expelled:
+        [g.cluster:server('A-1').advertise_uri] = true,
+        [g.cluster:server('A-2').advertise_uri] = true,
+        [g.cluster:server('A-3').advertise_uri] = true,
+        -- expelled, but not stopped:
+        [g.cluster:server('B-1').advertise_uri] = true,
+        -- not in the cluster:
+        [g.standalone.advertise_uri] = true,
+    }
+    table.sort(expected)
+
+    check_members(g, expected)
+
+    g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
+    g.A1:restart()
+
+    -- now every instance except expelled and stopped should remain in membership
+    expected[g.expelled_uri] = nil
+    check_members(g, expected)
 end

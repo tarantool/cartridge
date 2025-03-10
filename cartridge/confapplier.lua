@@ -7,7 +7,6 @@
 
 local log = require('log')
 local fio = require('fio')
-local fun = require('fun')
 local yaml = require('yaml').new()
 local fiber = require('fiber')
 local errors = require('errors')
@@ -61,6 +60,7 @@ vars:new('upgrade_schema', nil)
 vars:new('enable_failover_suppressing', nil)
 vars:new('enable_synchro_mode', nil)
 vars:new('disable_raft_on_small_clusters', nil)
+vars:new('exclude_expelled_members', nil)
 
 vars:new('transport', nil)
 vars:new('ssl_options', {
@@ -289,10 +289,17 @@ local function apply_config(clusterwide_config)
     set_state('ConfiguringRoles')
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
-    if failover.is_leader() then
-        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+    local allowed_uris = {}
+    for uuid, srv in pairs(topology_cfg.servers) do
+        if srv == 'expelled' and failover.is_leader() then
             box.space._cluster.index.uuid:delete(uuid)
+        elseif srv.uri ~= nil then
+            table.insert(allowed_uris, srv.uri)
         end
+    end
+
+    if vars.exclude_expelled_members then
+        membership.set_allowed_members(allowed_uris)
     end
 
     box.cfg({
@@ -787,6 +794,7 @@ local function init(opts)
         enable_failover_suppressing = '?boolean',
         enable_synchro_mode = '?boolean',
         disable_raft_on_small_clusters = '?boolean',
+        exclude_expelled_members = '?boolean',
 
         transport = '?string',
         ssl_ciphers = '?string',
@@ -810,6 +818,7 @@ local function init(opts)
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
     vars.enable_synchro_mode = opts.enable_synchro_mode
     vars.disable_raft_on_small_clusters = opts.disable_raft_on_small_clusters
+    vars.exclude_expelled_members = opts.exclude_expelled_members
     vars.transport = opts.transport
     vars.ssl_ciphers = opts.ssl_ciphers
     vars.ssl_server_ca_file = opts.ssl_server_ca_file
