@@ -290,7 +290,6 @@ local function apply_config(clusterwide_config)
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
     local allowed_uris = {}
-    box.begin()
     for uuid, srv in pairs(topology_cfg.servers) do
         if srv == 'expelled' and failover.is_leader() then
             box.space._cluster.index.uuid:delete(uuid)
@@ -298,7 +297,7 @@ local function apply_config(clusterwide_config)
             table.insert(allowed_uris, srv.uri)
         end
     end
-    box.commit()
+
     if vars.exclude_expelled_members then
         membership.set_allowed_members(allowed_uris)
     end
