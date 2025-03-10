@@ -87,12 +87,10 @@ local function check_members(g, expected)
 end
 
 function g.test_api()
-    t.helpers.retrying({}, function()
-        local ret = g.A1:eval('return box.info.replication')
-        t.assert_covers(ret[1], {id = 1, uuid = g.r1_uuid}, ret)
-        t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
-        t.assert_equals(ret[2], nil, ret)
-    end)
+    local ret = g.A1:eval('return box.info.replication')
+    t.assert_covers(ret[1], {id = 1, uuid = g.r1_uuid}, ret)
+    t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
+    t.assert_equals(ret[2], nil, ret)
 
     t.helpers.retrying({}, function()
         local ret = g.A1:graphql({
