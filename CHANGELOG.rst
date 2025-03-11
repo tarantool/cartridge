@@ -16,7 +16,7 @@ Unreleased
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``membership`` dependency to `2.5.0 <https://github.com/tarantool/membership/releases/tag/2.5.0>`_.
+- Update ``membership`` dependency to `2.5.1 <https://github.com/tarantool/membership/releases/tag/2.5.1>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
