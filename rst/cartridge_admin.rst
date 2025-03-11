@@ -2029,6 +2029,100 @@ This will automatically apply `box.schema.upgrade()
 <https://www.tarantool.io/en/doc/latest/book/admin/upgrades/#admin-upgrades>`_
 on the leader, according to the failover priority in the topology configuration.
 
+.. _cartridge-deploy-best-practices:
+
+-------------------------------------------------------------------------------
+Deploy best practices
+-------------------------------------------------------------------------------
+
+When deploying a Tarantool cluster, consider the following best practices:
+
+1.  **Preparation phase**.
+
+    * Prepare a backup of the cluster configuration (*mandatory*) and
+      data (*optionally*) before deploying a new version of the application. This will help you
+      to restore the cluster in case of any issues.
+
+    * Make sure that the cluster is healthy and you
+      have enough resources to perform the upgrade.
+
+    * Read the changelogs and release notes of the
+      new version to understand the changes and potential issues.
+
+    * Check the compatibility of the new version with your application.
+
+    * Make sure that you've tested the new version in a staging environment.
+
+    * Prepare environment variables and configuration files for the new version.
+
+    * Disable automatic failover during the upgrade.
+
+    * Prepare a rollback plan in case of any issues.
+
+    * Notify users about the upcoming maintenance.
+
+    * Prepare a maintenance window.
+
+    * Be prepared to take notes during the upgrade (that's really helpful when
+      you need help from the Tarantool engineers).
+
+2. **Expel phase (optional)**.
+
+    * If you want to expel some instances from the cluster, set their weights to 0 and then
+      stop them.
+
+    * Don't forget to remove the instances' data after expelling.
+
+    * Don't perform the expel phase and the upgrade phase at the same time.
+
+3. **Adding phase (optional)**.
+
+    * If you want to add some instances to the cluster, add them *without any roles*
+      and with *zero vshard weights*.
+
+    * Make sure that the new instances are healthy before setting the roles and
+      vshard weights.
+
+    * Don't perform the adding phase and the upgrade phase at the same time.
+
+4.  **Upgrade phase**.
+
+    * Perform the upgrade on the replicas first. Ensure that the replicas are
+      healthy and no issues are shown.
+
+    * If you have an opportunity, split the upgrade into several steps. For example,
+      upgrade the replicas from one server/logical group first, then the others.
+
+    * Change priority in the cluster to make the replicas leaders.
+
+    * Upgrade the leaders last.
+
+    * While upgrading the instances, make sure that there are no serious impact on
+      the requests in the cluster.
+
+    * In case of any issues, stop the upgrade and rollback to the previous version.
+
+5. **Post-deploy phase**
+
+        * Check the cluster health after the upgrade.
+
+        * Check the logs for any issues.
+
+        * Check the cluster configuration.
+
+        * Check the data consistency.
+
+        * Check the performance of the cluster.
+
+        * Check the replication status.
+
+        * Check the failover status.
+
+        * Check the alerts.
+
+        * Check the metrics.
+
+
 .. _cartridge-recovery:
 
 -------------------------------------------------------------------------------
