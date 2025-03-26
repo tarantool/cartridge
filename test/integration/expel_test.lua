@@ -56,12 +56,24 @@ g.before_all(function()
         workdir = fio.pathjoin(g.cluster.datadir, 'standalone'),
         command = helpers.entrypoint('srv_basic'),
         cluster_cookie = g.cluster.cookie,
-        advertise_port = 13300,
-        http_port = 8080,
+        advertise_port = 13305,
+        http_port = 8085,
         replicaset_uuid = helpers.uuid('b'),
         instance_uuid = helpers.uuid('b', 'b', 1),
     })
     g.standalone:start()
+
+    g.standalone_dead = helpers.Server:new({
+        alias = 'standalone_dead',
+        workdir = fio.pathjoin(g.cluster.datadir, 'standalone_dead'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13306,
+        http_port = 8086,
+        replicaset_uuid = helpers.uuid('c'),
+        instance_uuid = helpers.uuid('c', 'c', 1),
+    })
+    g.standalone_dead:start()
 end)
 
 g.after_all(function()
@@ -139,6 +151,7 @@ function g.test_api()
         [g.cluster:server('B-1').advertise_uri] = true,
         -- not in the cluster:
         [g.standalone.advertise_uri] = true,
+        [g.standalone_dead.advertise_uri] = true,
     }
     table.sort(expected)
 
@@ -146,8 +159,10 @@ function g.test_api()
 
     g.A1.env['TARANTOOL_EXCLUDE_EXPELLED_MEMBERS'] = 'true'
     g.A1:restart()
+    g.standalone_dead:stop()
 
     -- now every instance except expelled and stopped should remain in membership
     expected[g.expelled_uri] = nil
+    expected[g.standalone_dead.advertise_uri] = nil
     check_members(g, expected)
 end
