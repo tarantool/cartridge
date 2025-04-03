@@ -541,3 +541,40 @@ function g.test_quorum()
         t.assert_equals(client:check_quorum(), true)
     end)
 end
+
+
+function g.test_promote_after_close()
+    local non_existent_uri = 'http://127.0.0.1:14002'
+    local client = etcd2_client.new({
+        prefix = 'etcd2_client_test',
+        lock_delay = g.lock_delay,
+        -- here we should have two endpoints, the first one
+        -- is not available, so we request the next one
+        endpoints = {non_existent_uri, URI},
+        username = '',
+        password = '',
+        request_timeout = 1,
+    })
+    local session = client:get_session()
+
+    session.connection:request('PUT', '/lock', {value = true})
+
+    local httpc = package.loaded['http.client']
+    local old_request = httpc.request
+    rawset(package.loaded['http.client'], 'request', function(method, url, ...)
+        if url == non_existent_uri .. '/v2/keys/etcd2_client_test/lock' then
+            table.clear(session.connection.endpoints)
+            return {reason = 'Artificial error'}
+        end
+        return old_request(method, url, ...)
+
+    end)
+
+    -- previously here was error 'attempt to concatenate a nil value'
+    local ok, err = session.connection:request('GET', '/lock')
+    t.xfail_if(ok, 'Right order')
+    t.assert_equals(ok, nil)
+    t.assert_str_contains(err.err, 'Artificial error')
+
+    rawset(package.loaded['http.client'], 'request', old_request)
+end
