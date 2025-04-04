@@ -64,6 +64,10 @@ local function request(connection, method, path, args, opts)
             eidx = eidx % num_endpoints
         end
 
+        if #connection.endpoints ~= num_endpoints then
+            -- something may change during network yield
+            break
+        end
         local url = connection.endpoints[eidx] .. path
         local resp = httpc.request(method, url, body, http_opts)
 
