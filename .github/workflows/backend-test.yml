@@ -35,7 +35,7 @@ jobs:
         id: cache-venv
         with:
           path: ./venv
-          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
+          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-04
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
