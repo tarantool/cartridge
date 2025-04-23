@@ -15,7 +15,7 @@ env:
 
 jobs:
   misc:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -102,7 +102,7 @@ jobs:
           - tarantool: '2.11'
             etcd: 'v2.3.8'
             metrics: '1.2.0'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/setup-python@v5
         with:
@@ -187,7 +187,7 @@ jobs:
   tests-ee:
     if: |
       github.event_name == 'push'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         sdk-version: [
