@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.12.0'
 
-      - name: Upgrade pip and setuptools
+      - name: Install setuptools
         run: |
           python -m pip install --upgrade pip setuptools
 
@@ -36,6 +36,7 @@ jobs:
         with:
           path: ./venv
           key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-04
+
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -153,7 +154,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-04
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
@@ -250,7 +251,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-04
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
