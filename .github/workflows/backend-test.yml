@@ -159,7 +159,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-04
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-05
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
