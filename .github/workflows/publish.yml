@@ -45,7 +45,7 @@ jobs:
 
       - uses: tarantool/setup-tarantool@v3
         with:
-          tarantool-version: "2.5"
+          tarantool-version: "2.10"
       - name: Setup tt
         run: |
           curl -L https://tarantool.io/release/2/installer.sh | sudo bash
