@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CARTRIDGE_OLDER_PATH }}
-          key: ${{ env.CARTRIDGE_OLDER_PATH }}
+          key: ${{ env.CARTRIDGE_OLDER_PATH }}-1
       - name: Install ${{ env.CARTRIDGE_OLDER_PATH }}
         if: steps.cache-older-cartridge.outputs.cache-hit != 'true'
         run: |
