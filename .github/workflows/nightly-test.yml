@@ -39,7 +39,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: nightly-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: nightly-rocks-${{ hashFiles('*.rockspec') }}-04
       - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 

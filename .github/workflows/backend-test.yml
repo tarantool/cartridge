@@ -60,7 +60,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
+          key: misc-rocks-${{ hashFiles('*.rockspec') }}-03
       -
         run: |
           tt rocks install luacheck
@@ -73,7 +73,7 @@ jobs:
         id: cache-npm
         with:
           path: node_modules
-          key: npm-02
+          key: npm-03
       -
         run: npm install graphql-cli@3.0.14
         if: steps.cache-npm.outputs.cache-hit != 'true'
@@ -148,7 +148,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-04
+          key: test-rocks-${{ hashFiles('*.rockspec') }}-05
       -
         run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
@@ -225,7 +225,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: tarantool-enterprise
-          key: ${{ matrix.sdk-version }}
+          key: ${{ matrix.sdk-version }}-1
 
       - name: Download Tarantool SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
