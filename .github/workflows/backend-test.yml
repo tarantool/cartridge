@@ -265,9 +265,12 @@ jobs:
         with:
           path: ./pytest-venv
           key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-04
-      -
+
+      - name: Setup pytest
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
+          pip install --upgrade pip setuptools
+          pip install "cython<3.0.0" wheel
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
