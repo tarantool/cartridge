@@ -17,7 +17,7 @@ env:
 
 jobs:
   run_tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: "Clone the cartridge module"
         uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
       # Setup pytest
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: '3.12.0'
       - name: "Install pytest"
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate

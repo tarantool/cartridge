@@ -21,12 +21,6 @@ jobs:
         downgrade: [null]
         include:
           - tarantool: "1.10"
-            cartridge: "2.8.6"
-            downgrade: true
-          - tarantool: "1.10"
-            cartridge: "2.9.0"
-            downgrade: true
-          - tarantool: "1.10"
             cartridge: "2.10.0"
             downgrade: true
           - tarantool: "1.10"
@@ -38,10 +32,13 @@ jobs:
           - tarantool: "1.10"
             cartridge: "2.13.0"
             downgrade: true
-          - tarantool: "2.11"
-            cartridge: "2.13.0"
+          - tarantool: "1.10"
+            cartridge: "2.14.0"
             downgrade: true
-    runs-on: ubuntu-20.04
+          - tarantool: "2.11"
+            cartridge: "2.14.0"
+            downgrade: true
+    runs-on: ubuntu-22.04
     env:
       CARTRIDGE_OLDER_PATH: cartridge-${{ matrix.cartridge }}
       CARTRIDGE_OLDER_VERSION: ${{ matrix.cartridge }}-1
@@ -64,7 +61,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CARTRIDGE_OLDER_PATH }}
-          key: ${{ env.CARTRIDGE_OLDER_PATH }}
+          key: ${{ env.CARTRIDGE_OLDER_PATH }}-1
       - name: Install ${{ env.CARTRIDGE_OLDER_PATH }}
         if: steps.cache-older-cartridge.outputs.cache-hit != 'true'
         run: |
@@ -79,7 +76,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: compat-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: compat-rocks-${{ hashFiles('*.rockspec') }}-04
       - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 

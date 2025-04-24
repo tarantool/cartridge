@@ -18,7 +18,7 @@ jobs:
         script:
           - frontend
           # - cypress
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,7 +27,7 @@ jobs:
 
       - uses: tarantool/setup-tarantool@v3
         with:
-          tarantool-version: "2.6"
+          tarantool-version: "2.11"
 
       - name: Setup tt
         run: |
@@ -41,7 +41,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: webui-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: webui-rocks-${{ hashFiles('*.rockspec') }}-04
       - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: webui/node_modules/
-          key: node-modules-${{ hashFiles('webui/package-lock.json') }}
+          key: node-modules-${{ hashFiles('webui/package-lock.json') }}-1
 
       ##################################################################
       # Cachce webui bundle
@@ -61,7 +61,7 @@ jobs:
           path: |
             webui/build/bundle.lua
             webui/build/bundle.md5
-          key: webui-bundle
+          key: webui-bundle-1
 
       ##################################################################
       # Cache cypress
@@ -74,7 +74,7 @@ jobs:
           path: |
             ./node_modules
             ~/.cache/Cypress
-          key: cypress-7.7.0-${{ runner.os }}-02
+          key: cypress-7.7.0-${{ runner.os }}-03
       - run: |
           npm install cypress@7.7.0
           npx cypress verify

@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ["1.10", "2.7", "2.8"]
-    runs-on: ubuntu-20.04
+        tarantool: ["1.10", "2.11"]
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: tarantool/setup-tarantool@v3
@@ -39,7 +39,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: nightly-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: nightly-rocks-${{ hashFiles('*.rockspec') }}-04
       - run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 

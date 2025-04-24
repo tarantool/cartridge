@@ -15,7 +15,7 @@ env:
 
 jobs:
   misc:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +23,11 @@ jobs:
           node-version: '16.8.0'
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10.0'
+          python-version: '3.12.0'
+
+      - name: Install setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools
 
       # Setup sphinx
       - name: Cache pip packages
@@ -31,7 +35,8 @@ jobs:
         id: cache-venv
         with:
           path: ./venv
-          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
+          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-04
+
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -55,7 +60,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
+          key: misc-rocks-${{ hashFiles('*.rockspec') }}-03
       -
         run: |
           tt rocks install luacheck
@@ -68,7 +73,7 @@ jobs:
         id: cache-npm
         with:
           path: node_modules
-          key: npm-02
+          key: npm-03
       -
         run: npm install graphql-cli@3.0.14
         if: steps.cache-npm.outputs.cache-hit != 'true'
@@ -92,7 +97,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8', '2.10', '2.11']
+        tarantool: ['1.10', '2.10', '2.11']
         etcd: ['v2.3.8']
         metrics: ['']
         include:
@@ -102,11 +107,16 @@ jobs:
           - tarantool: '2.11'
             etcd: 'v2.3.8'
             metrics: '1.2.0'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9.8'
+          python-version: '3.12.0'
+
+      - name: Install setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools
+
       - uses: actions/checkout@v4
       - if: matrix.tarantool != 'latest'
         uses: tarantool/setup-tarantool@v3
@@ -138,7 +148,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-04
+          key: test-rocks-${{ hashFiles('*.rockspec') }}-05
       -
         run: tt rocks install luatest 1.0.1
         if: steps.cache-rocks.outputs.cache-hit != 'true'
@@ -149,10 +159,13 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
-      -
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-05
+
+      - name: Setup pytest
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
+          pip install --upgrade pip setuptools
+          pip install "cython<3.0.0" wheel
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
@@ -187,7 +200,7 @@ jobs:
   tests-ee:
     if: |
       github.event_name == 'push'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         sdk-version: [
@@ -199,7 +212,12 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9.8'
+          python-version: '3.12.0'
+
+      - name: Install setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools
+
       - uses: actions/checkout@v4
 
       - name: Cache Tarantool SDK
@@ -207,7 +225,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: tarantool-enterprise
-          key: ${{ matrix.sdk-version }}
+          key: ${{ matrix.sdk-version }}-1
 
       - name: Download Tarantool SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
@@ -246,10 +264,13 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
-      -
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-04
+
+      - name: Setup pytest
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
+          pip install --upgrade pip setuptools
+          pip install "cython<3.0.0" wheel
           pip install -r test/integration/requirements.txt
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
