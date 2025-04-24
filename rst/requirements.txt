@@ -9,3 +9,4 @@ sphinxcontrib-qthelp>=1.0.7
 alabaster>=0.7.14
 polib>=1.1.0
 docutils>=0.17
+pyyaml>=5.4.1
