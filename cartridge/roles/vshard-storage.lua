@@ -73,11 +73,14 @@ local function init()
     end
 end
 
+local function before_apply_config(_)
+    vshard.storage.disable()
+    return true
+end
+
 local function on_apply_config(_, state)
     if state == 'RolesConfigured' then
         vshard.storage.enable()
-    else
-        vshard.storage.disable()
     end
     return true
 end
@@ -136,6 +139,7 @@ return {
     implies_storage = true,
 
     apply_config = apply_config,
+    before_apply_config = before_apply_config,
     on_apply_config = on_apply_config,
     init = init,
     stop = stop,
