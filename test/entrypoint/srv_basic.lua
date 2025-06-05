@@ -6,7 +6,6 @@ _G.__TEST = true
 local log = require('log')
 local errors = require('errors')
 local cartridge = require('cartridge')
-local fun = require("fun")
 errors.set_deprecation_handler(function(err)
     log.error('Deprecated function was called')
     log.error('%s', err)

@@ -146,7 +146,7 @@ function g.test_disabled_on_failover()
         end)
     end)
 
-    local res = g.storage_master:exec(function()
+    local res = g.storage_replica:exec(function()
         local cartridge = require('cartridge')
         return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
     end)
