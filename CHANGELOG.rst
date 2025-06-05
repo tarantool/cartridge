@@ -23,7 +23,7 @@ Added
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- VShard storage now disables itself on failover step and while applying new config.
+- VShard storage now disables itself on failover step and while applying config.
 
 -------------------------------------------------------------------------------
 [2.15.3] - 2025-04-24

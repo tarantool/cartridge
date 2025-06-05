@@ -644,9 +644,7 @@ end
 -- @function before_apply_config
 -- @param table conf
 -- @param string state
--- @treturn[1] boolean true
--- @treturn[2] nil
--- @treturn[2] table Error description
+-- @return boolean true
 local function before_apply_config(conf)
     checks('table')
     if conf.__type == 'ClusterwideConfig' then
@@ -672,9 +670,7 @@ end
 -- @function on_apply_config
 -- @param table conf
 -- @param string state
--- @treturn[1] boolean true
--- @treturn[2] nil
--- @treturn[2] table Error description
+-- @return boolean true
 local function on_apply_config(conf, state)
     checks('table', 'string')
     if conf.__type == 'ClusterwideConfig' then

@@ -46,6 +46,15 @@
 -- @tparam table opts
 -- @tparam boolean opts.is_master
 
+--- Do additional job before the roles configuration applying.
+-- @function before_apply_config
+-- @param table conf Clusterwide configuration
+
+--- Do additional job after the roles configuration applying.
+-- @function on_apply_config
+-- @param table conf Clusterwide configuration
+-- @param string state Current instance state.
+
 --- Announce issues to be shown in the Cartridge WebUI.
 --
 -- The callback should return an array of issues, where every issue is
