@@ -19,18 +19,14 @@ Added
 - New role callback ``before_apply_config`` to run some code before applying
   configuration changes.
 
+- Env variable ``TARANTOOL_AUTO_DISABLE_VSHARD_STORAGE`` to automatically disable
+  VShard storage while applying config.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - VShard storage now is disabled before the end of the first apply_config.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Added
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Env variable ``TARANTOOL_AUTO_DISABLE_VSHARD_STORAGE`` to automatically disable
-  VShard storage while applying config.
 
 -------------------------------------------------------------------------------
 [2.15.3] - 2025-04-24
