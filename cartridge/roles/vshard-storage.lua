@@ -24,6 +24,7 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 vars:new('issues', {})
 vars:new('enable_alerting', false)
+vars:new('auto_disable', false)
 local _G_vshard_backup
 
 local function apply_config(conf, opts)
@@ -67,14 +68,20 @@ local function init()
 
     local opts, err = require('cartridge.argparse').get_opts({
         add_vshard_storage_alerts_to_issues = 'boolean',
+        auto_disable_vshard_storage = 'boolean',
     })
     if err == nil then
         vars.enable_alerting = opts.add_vshard_storage_alerts_to_issues
+        vars.auto_disable = opts.auto_disable_vshard_storage
     end
 end
 
+local first_apply = true
 local function before_apply_config(_)
-    vshard.storage.disable()
+    if first_apply or vars.auto_disable then
+        vshard.storage.disable()
+    end
+    first_apply = false
     return true
 end
 

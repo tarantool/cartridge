@@ -33,7 +33,7 @@ package.preload['mymodule'] = function()
     local validated = {}
     local master_switches = {}
 
-    local vshard_enabled = false
+    local vshard_enabled = {}
 
     if httpd ~= nil then
         httpd:route(
@@ -105,7 +105,7 @@ package.preload['mymodule'] = function()
 
             local vshard = package.loaded['vshard']
             if vshard ~= nil and vshard.storage ~= nil then
-                vshard_enabled = vshard.storage.internal.is_enabled
+                table.insert(vshard_enabled, vshard.storage.internal.is_enabled)
             end
         end,
         stop = function()

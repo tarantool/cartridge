@@ -1,17 +1,15 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group()
+local g = t.group('vshard_storage_disabling.auto')
 
 local helpers = require('test.helper')
-
 
 local function setup_replica_backoff_interval(srv)
     srv:exec(function()
         require('vshard.consts').REPLICA_BACKOFF_INTERVAL = 0.1
     end)
 end
-
-g.before_all = function()
+local function setup_cluster(g, auto_disable)
     t.skip_if(not helpers.tarantool_version_ge('1.10.1'))
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
@@ -34,33 +32,13 @@ g.before_all = function()
         }},
         env = {
             TARANTOOL_BUCKET_COUNT = 300,
+            TARANTOOL_AUTO_DISABLE_VSHARD_STORAGE = tostring(auto_disable),
         }
     })
     g.cluster:start()
     g.router = g.cluster:server('router-1')
     g.storage_master = g.cluster:server('storage-1')
     g.storage_replica = g.cluster:server('storage-2')
-
-    local test_schema = {
-        engine = 'memtx',
-        is_local = false,
-        temporary = false,
-        format = {
-            {name = 'bucket_id', type = 'unsigned', is_nullable = false},
-            {name = 'record_id', type = 'unsigned', is_nullable = false},
-        },
-        indexes = {{
-            name = 'pk', type = 'TREE', unique = true,
-            parts = {{path = 'record_id', is_nullable = false, type = 'unsigned'}},
-        },  {
-            name = 'bucket_id', type = 'TREE', unique = false,
-            parts = {{path = 'bucket_id', is_nullable = false, type = 'unsigned'}},
-        }},
-        sharding_key = {'record_id'},
-    }
-    g.cluster.main_server:call('cartridge_set_schema',
-        {require('yaml').encode({spaces = {test = test_schema}})}
-    )
 
     g.cluster:wait_until_healthy()
 
@@ -76,16 +54,13 @@ g.before_all = function()
         assert(#info.alerts == 0)
     end)
 end
+g.before_all = function()
+    setup_cluster(g, true)
+end
 
 g.after_all = function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
-
-g.after_each = function()
-    g.storage_master:exec(function()
-        box.space.test:truncate()
-    end)
 end
 
 local function inject_operation_error(srv)
@@ -132,9 +107,11 @@ local function set_failover(mode)
     end
 end
 
-function g.test_disabled_on_failover()
+g.before_test('test_disabled_on_failover', function ()
     set_failover('eventual')
+end)
 
+function g.test_disabled_on_failover()
     -- Break replica instance
     inject_operation_error(g.storage_replica)
 
@@ -150,23 +127,68 @@ function g.test_disabled_on_failover()
         local cartridge = require('cartridge')
         return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
     end)
-    t.assert_not(res)
+    for _, v in ipairs(res) do
+        t.assert_not(v)
+    end
+end
 
+g.after_test('test_disabled_on_failover', function ()
     g.storage_master:start()
     g.cluster:wait_until_healthy()
     dismiss_operation_error(g.storage_replica)
     set_failover('disabled')
-end
+end)
 
 function g.test_disabled_on_apply_config()
     apply_config(g.router)
-    t.assert_not(g.storage_master:exec(function()
+    local res = g.storage_master:exec(function()
         local cartridge = require('cartridge')
         return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
-    end))
+    end)
 
-    t.assert_not(g.storage_replica:exec(function()
+    for _, v in ipairs(res) do
+        t.assert_not(v)
+    end
+
+    local res = g.storage_replica:exec(function()
         local cartridge = require('cartridge')
         return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
-    end))
+    end)
+    for _, v in ipairs(res) do
+        t.assert_not(v)
+    end
+end
+
+
+local g_default = t.group('vshard_storage_disabling.default')
+
+g_default.before_all = function()
+    setup_cluster(g_default, false)
+end
+
+g_default.after_all = function()
+    g_default.cluster:stop()
+    fio.rmtree(g_default.cluster.datadir)
+end
+
+g_default.test_disabled_on_first_apply = function ()
+    local res = g_default.storage_master:exec(function()
+        local cartridge = require('cartridge')
+        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+    end)
+
+    t.assert_not(res[1])
+    for i = 2, #res do
+        t.assert(res[i])
+    end
+
+    local res = g_default.storage_replica:exec(function()
+        local cartridge = require('cartridge')
+        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+    end)
+
+    t.assert_not(res[1])
+    for i = 2, #res do
+        t.assert(res[i])
+    end
 end
