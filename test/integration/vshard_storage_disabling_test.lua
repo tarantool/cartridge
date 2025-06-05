@@ -1,6 +1,7 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('vshard_storage_disabling.auto')
+local g_auto = t.group('vshard_storage_disabling.auto')
+local g_default = t.group('vshard_storage_disabling.default')
 
 local helpers = require('test.helper')
 
@@ -54,14 +55,6 @@ local function setup_cluster(g, auto_disable)
         assert(#info.alerts == 0)
     end)
 end
-g.before_all = function()
-    setup_cluster(g, true)
-end
-
-g.after_all = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end
 
 local function inject_operation_error(srv)
     helpers.run_remotely(srv, function()
@@ -86,89 +79,104 @@ local function apply_config(srv)
     end)
 end
 
-local function set_failover(mode)
-    local response = g.cluster.main_server:graphql({
-        query = [[
-            mutation($mode: String) {
-                cluster {
-                    failover_params(
-                        mode: $mode
-                    ) {
-                        mode
+for _, case in pairs({{g_auto, true}, {g_default, false}}) do
+    local g, auto_disable = case[1], case[2]
+
+    local function set_failover(mode)
+        local response = g.cluster.main_server:graphql({
+            query = [[
+                mutation($mode: String) {
+                    cluster {
+                        failover_params(
+                            mode: $mode
+                        ) {
+                            mode
+                        }
                     }
                 }
-            }
-        ]],
-        variables = { mode = mode },
-        raise = false,
-    })
-    if response.errors then
-        error(response.errors[1].message, 2)
+            ]],
+            variables = { mode = mode },
+            raise = false,
+        })
+        if response.errors then
+            error(response.errors[1].message, 2)
+        end
     end
-end
 
-g.before_test('test_disabled_on_failover', function ()
-    set_failover('eventual')
-end)
+    g.before_all = function()
+        setup_cluster(g, auto_disable)
+    end
 
-function g.test_disabled_on_failover()
-    -- Break replica instance
-    inject_operation_error(g.storage_replica)
+    g.after_all = function()
+        g.cluster:stop()
+        fio.rmtree(g.cluster.datadir)
+    end
 
-    g.storage_master:stop()
+    g.before_test('test_disabled_on_failover', function()
+        set_failover('eventual')
+    end)
 
-    helpers.retrying({timeout = 30}, function()
-        g.storage_replica:exec(function()
-            assert(box.info.ro == false)
+    function g.test_disabled_on_failover()
+        -- Break replica instance
+        inject_operation_error(g.storage_replica)
+
+        g.storage_master:stop()
+
+        helpers.retrying({timeout = 30}, function()
+            g.storage_replica:exec(function()
+                assert(box.info.ro == false)
+            end)
         end)
-    end)
 
-    local res = g.storage_replica:exec(function()
-        local cartridge = require('cartridge')
-        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
-    end)
-    for _, v in ipairs(res) do
-        t.assert_not(v)
-    end
-end
-
-g.after_test('test_disabled_on_failover', function ()
-    g.storage_master:start()
-    g.cluster:wait_until_healthy()
-    dismiss_operation_error(g.storage_replica)
-    set_failover('disabled')
-end)
-
-function g.test_disabled_on_apply_config()
-    apply_config(g.router)
-    local res = g.storage_master:exec(function()
-        local cartridge = require('cartridge')
-        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
-    end)
-
-    for _, v in ipairs(res) do
-        t.assert_not(v)
+        local res = g.storage_replica:exec(function()
+            local cartridge = require('cartridge')
+            return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+        end)
+        if auto_disable then
+            for _, v in ipairs(res) do
+                t.assert_not(v)
+            end
+        else
+            local res = g.storage_replica:exec(function()
+                local vshard = rawget(_G, 'vshard')
+                return vshard.storage.internal.is_enabled
+            end)
+            t.assert_not(res)
+        end
     end
 
-    local res = g.storage_replica:exec(function()
-        local cartridge = require('cartridge')
-        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+    g.after_test('test_disabled_on_failover', function ()
+        g.storage_master:start()
+        g.cluster:wait_until_healthy()
+        dismiss_operation_error(g.storage_replica)
+        set_failover('disabled')
     end)
-    for _, v in ipairs(res) do
-        t.assert_not(v)
+
+    function g.test_disabled_on_apply_config()
+        inject_operation_error(g.storage_replica)
+        apply_config(g.router)
+
+        local res = g.storage_replica:exec(function()
+            local cartridge = require('cartridge')
+            return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+        end)
+        if auto_disable then
+            for _, v in ipairs(res) do
+                t.assert_not(v)
+            end
+        else
+            local res = g.storage_replica:exec(function()
+                local vshard = rawget(_G, 'vshard')
+                return vshard.storage.internal.is_enabled
+            end)
+            t.assert_not(res)
+        end
     end
-end
 
-
-local g_default = t.group('vshard_storage_disabling.default')
-
-g_default.before_all = function()
-    setup_cluster(g_default, false)
-end
-
-g_default.after_all = function()
-    g_default.cluster:stop()
-    fio.rmtree(g_default.cluster.datadir)
+    g.after_test('test_disabled_on_apply_config', function ()
+        dismiss_operation_error(g.storage_replica)
+        apply_config(g.router)
+    end)
 end
 
 g_default.test_disabled_on_first_apply = function ()
@@ -188,7 +196,4 @@ g_default.test_disabled_on_first_apply = function ()
     end)
 
     t.assert_not(res[1])
-    for i = 2, #res do
-        t.assert(res[i])
-    end
 end

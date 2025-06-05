@@ -88,6 +88,8 @@ end
 local function on_apply_config(_, state)
     if state == 'RolesConfigured' then
         vshard.storage.enable()
+    else
+        vshard.storage.disable()
     end
     return true
 end
