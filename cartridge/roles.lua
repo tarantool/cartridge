@@ -658,7 +658,11 @@ local function before_apply_config(conf)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then
             if type(role.M.before_apply_config) == 'function' then
-                ApplyConfigError:pcall(role.M.before_apply_config, conf)
+                local ok, err = ApplyConfigError:pcall(role.M.before_apply_config, conf)
+                if not ok then
+                    log.error('Failed to run before_apply_config for role %q: %s',
+                        role.role_name, err)
+                end
             end
         end
     end
@@ -684,7 +688,12 @@ local function on_apply_config(conf, state)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then
             if type(role.M.on_apply_config) == 'function' then
-                ApplyConfigError:pcall(role.M.on_apply_config, conf, state)
+                local ok, err = ApplyConfigError:pcall(role.M.on_apply_config, conf, state)
+                if not ok then
+                    log.error('Failed to run on_apply_config for role %q: %s',
+                        role.role_name, err)
+                    return nil, err
+                end
             end
         end
     end
