@@ -8,64 +8,58 @@ local buffer = require('buffer')
 local clock = require('clock')
 local errno = require('errno')
 
-pcall(
-    function()
-        ffi.cdef[[
-            typedef struct SSL_METHOD {} SSL_METHOD;
-            typedef struct SSL_CTX {} SSL_CTX;
-            typedef struct SSL {} SSL;
+pcall(ffi.cdef, 'typedef struct SSL_METHOD {} SSL_METHOD;')
+pcall(ffi.cdef, 'typedef struct SSL_CTX {} SSL_CTX;')
+pcall(ffi.cdef, 'typedef struct SSL {} SSL;')
 
-            const SSL_METHOD *TLS_server_method(void);
-            const SSL_METHOD *TLS_client_method(void);
+pcall(ffi.cdef, [[
+    const SSL_METHOD *TLS_server_method(void);
+    const SSL_METHOD *TLS_client_method(void);
 
-            SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
-            void SSL_CTX_free(SSL_CTX *);
+    SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
+    void SSL_CTX_free(SSL_CTX *);
 
-            int SSL_shutdown(SSL *ssl);
+    int SSL_shutdown(SSL *ssl);
 
-            int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
-            int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
-            void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
-            typedef int (*pem_passwd_cb)(char *buf, int size, int rwflag, void *userdata);
+    int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
+    int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+    void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
+    typedef int (*pem_passwd_cb)(char *buf, int size, int rwflag, void *userdata);
 
-            void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_passwd_cb cb);
+    void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_passwd_cb cb);
 
-            int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                            const char *CApath);
-            int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
-            void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
-                                    int (*verify_callback)(int, void *));
+    int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile, const char *CApath);
+    int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
+    void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, int (*verify_callback)(int, void *));
 
-            SSL *SSL_new(SSL_CTX *ctx);
-            void SSL_free(SSL *ssl);
+    SSL *SSL_new(SSL_CTX *ctx);
+    void SSL_free(SSL *ssl);
 
-            int SSL_set_fd(SSL *s, int fd);
+    int SSL_set_fd(SSL *s, int fd);
 
-            void SSL_set_connect_state(SSL *s);
-            void SSL_set_accept_state(SSL *s);
+    void SSL_set_connect_state(SSL *s);
+    void SSL_set_accept_state(SSL *s);
 
-            int SSL_write(SSL *ssl, const void *buf, int num);
-            int SSL_read(SSL *ssl, void *buf, int num);
+    int SSL_write(SSL *ssl, const void *buf, int num);
+    int SSL_read(SSL *ssl, void *buf, int num);
 
-            int SSL_pending(const SSL *ssl);
+    int SSL_pending(const SSL *ssl);
 
-            void ERR_clear_error(void);
-            char *ERR_error_string(unsigned long e, char *buf);
-            unsigned long ERR_peek_last_error(void);
+    void ERR_clear_error(void);
+    char *ERR_error_string(unsigned long e, char *buf);
+    unsigned long ERR_peek_last_error(void);
 
-            int SSL_get_error(const SSL *s, int ret_code);
+    int SSL_get_error(const SSL *s, int ret_code);
 
-            typedef socklen_t uint32;
-            int getsockopt(int sockfd, int level, int optname, void *optval,
-                            socklen_t *optlen);
+    typedef socklen_t uint32;
+    int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 
-            int setsockopt(int sockfd, int level, int optname,
-                            const void *optval, socklen_t optlen);
+    int setsockopt(int sockfd, int level, int optname,
+                   const void *optval, socklen_t optlen);
 
-            void *memmem(const void *haystack, size_t haystacklen,
-                    const void *needle, size_t needlelen);
-        ]]
-    end)
+    void *memmem(const void *haystack, size_t haystacklen,
+                 const void *needle, size_t needlelen);
+]])
 
 local function slice_wait(timeout, starttime)
     if timeout == nil then
