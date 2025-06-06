@@ -33,6 +33,8 @@ package.preload['mymodule'] = function()
     local validated = {}
     local master_switches = {}
 
+    local vshard_enabled = {}
+
     if httpd ~= nil then
         httpd:route(
             {
@@ -72,6 +74,7 @@ package.preload['mymodule'] = function()
         get_state = function() return state end,
         is_master = function() return master end,
         get_master_switches = function() return master_switches end,
+        was_vshard_enabled_on_apply = function() return vshard_enabled end,
         validate_config = function()
             table.insert(validated, true)
             return true
@@ -99,6 +102,11 @@ package.preload['mymodule'] = function()
             end
             master = opts.is_master
             table.remove(validated, #validated)
+
+            local vshard = package.loaded['vshard']
+            if vshard ~= nil and vshard.storage ~= nil then
+                table.insert(vshard_enabled, vshard.storage.internal.is_enabled)
+            end
         end,
         stop = function()
             state = 'stopped'

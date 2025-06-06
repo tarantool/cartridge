@@ -312,6 +312,21 @@ local function apply_config(mod)
     )
 end
 
+local function before_apply_config(mod)
+    checks('?table')
+    if mod == nil then
+        return true
+    end
+
+    local conf = vars.clusterwide_config:get_readonly()
+
+    if type(mod.before_apply_config) == 'function' then
+        local ok, err = ApplyConfigError:pcall(mod.before_apply_config, conf)
+        if not ok then
+            log.error('Role %q before_apply_config in failover failed: %s', mod.role_name, err and err.err or err)
+        end
+    end
+end
 
 local function on_apply_config(mod, state)
     checks('?table', 'string')
@@ -632,6 +647,12 @@ function reconfigure_all(active_leaders)
         end
 
         local state = 'RolesConfigured'
+
+        for _, role_name in ipairs(vars.all_roles) do
+            local mod = service_registry.get(role_name)
+            before_apply_config(mod)
+        end
+
         for _, role_name in ipairs(vars.all_roles) do
             local mod = service_registry.get(role_name)
             log.info('Applying "%s" role config from failover', role_name)

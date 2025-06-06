@@ -17,6 +17,7 @@ hotreload.whitelist_globals({
     "__module_vshard_util",
     "future_storage_call_result",
     "gc_bucket_f",
+    "__cartridge_vshard_first_apply_config",
 })
 
 vars:new('vshard_cfg')
@@ -24,6 +25,7 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 vars:new('issues', {})
 vars:new('enable_alerting', false)
+vars:new('auto_disable', false)
 local _G_vshard_backup
 
 local function apply_config(conf, opts)
@@ -67,10 +69,26 @@ local function init()
 
     local opts, err = require('cartridge.argparse').get_opts({
         add_vshard_storage_alerts_to_issues = 'boolean',
+        auto_disable_vshard_storage = 'boolean',
     })
     if err == nil then
         vars.enable_alerting = opts.add_vshard_storage_alerts_to_issues
+        vars.auto_disable = opts.auto_disable_vshard_storage
     end
+end
+
+-- A bit of rawget magic to avoid disabling vshard.storage
+-- after a hotreload
+if rawget(_G, '__cartridge_vshard_first_apply_config') == nil then
+    rawset(_G, '__cartridge_vshard_first_apply_config', true)
+end
+local function before_apply_config(_)
+    local first_apply = rawget(_G, '__cartridge_vshard_first_apply_config')
+    if first_apply or vars.auto_disable then
+        vshard.storage.disable()
+    end
+    rawset(_G, '__cartridge_vshard_first_apply_config', false)
+    return true
 end
 
 local function on_apply_config(_, state)
@@ -136,6 +154,7 @@ return {
     implies_storage = true,
 
     apply_config = apply_config,
+    before_apply_config = before_apply_config,
     on_apply_config = on_apply_config,
     init = init,
     stop = stop,

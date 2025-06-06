@@ -333,13 +333,14 @@ local function apply_config(clusterwide_config)
     local role_opts = {is_master = failover.is_leader()}
 
     local config = clusterwide_config:get_readonly()
+    pcall(roles.before_apply_config, config)
     local ok, err = roles.apply_config(config, role_opts)
     local state = 'RolesConfigured'
     if not ok then
         state = 'OperationError'
     end
     set_state(state, err)
-    roles.on_apply_config(config, state)
+    pcall(roles.on_apply_config, config, state)
 
     return ok, err
 end
