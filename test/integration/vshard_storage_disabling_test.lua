@@ -1,7 +1,7 @@
 local fio = require('fio')
 local t = require('luatest')
-local g_auto = t.group('vshard_storage_disabling.auto')
-local g_default = t.group('vshard_storage_disabling.default')
+local g_auto = t.group('integration.vshard_storage_disabling.auto')
+local g_default = t.group('integration.vshard_storage_disabling.default')
 
 local helpers = require('test.helper')
 
