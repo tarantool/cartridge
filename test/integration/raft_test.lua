@@ -899,3 +899,30 @@ g_appointments.test_leader_persists_after_config_apply = function()
         end
     end)
 end
+
+g_appointments.test_on_small_replicaset = function()
+    -- Check that if there are fewer than 3 instances in the replicaset,
+    -- the router behaves as in 'disabled' failover mode and appoints
+    -- the first (lexicographically) enabled instance as leader.
+
+    -- change master, 
+    g_appointments.cluster:retrying({}, function()
+        g_appointments.cluster:server('storage-2'):call('box.ctl.promote')
+    end)
+
+    h.retrying({}, function()
+        t.assert_equals(g_appointments.cluster:server('router-1'):eval(q_leadership), storage_2_uuid)
+    end)
+
+    -- Disable one instance to simulate a small replicaset (<3 instances)
+    g_appointments.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').disable_servers({uuid})
+    end, {storage_2_uuid})
+
+    h.wish_state(g_appointments.cluster:server('router-1'), 'RolesConfigured', 10)
+
+    h.retrying({}, function()
+        -- storage-1 should be appointed as leader on router, as in 'disabled' mode
+        t.assert_equals(g_appointments.cluster:server('router-1'):eval(q_leadership), storage_1_uuid)
+    end)
+end

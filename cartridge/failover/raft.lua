@@ -58,7 +58,22 @@ local function get_appointments(topology_cfg)
         ::next_rs::
     end
 
-    appointments[vars.replicaset_uuid] = vars.leader_uuid
+    -- If Raft is enabled but `disable_raft_on_small_clusters` is active,
+    -- and the replicaset has fewer than 3 instances,
+    -- Raft failover is considered disabled for this replicaset.
+    -- In this case, we appoint a leader as in 'disabled' failover mode.
+    for replicaset_uuid, _ in pairs(replicasets) do
+        local leaders = topology.get_leaders_order(
+            topology_cfg, replicaset_uuid, nil, {only_electable = false, only_enabled = true}
+        )
+        if vars.disable_raft_on_small_clusters and #leaders < 3 then
+            appointments[replicaset_uuid] = leaders[1]
+        end
+    end
+
+    if vars.leader_uuid ~= nil then
+        appointments[vars.replicaset_uuid] = vars.leader_uuid
+    end
     return appointments
 end
 
