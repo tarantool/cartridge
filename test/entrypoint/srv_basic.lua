@@ -32,6 +32,7 @@ package.preload['mymodule'] = function()
     local httpd = service_registry.get('httpd')
     local validated = {}
     local master_switches = {}
+    local leaders_history = {}
 
     if httpd ~= nil then
         httpd:route(
@@ -72,6 +73,7 @@ package.preload['mymodule'] = function()
         get_state = function() return state end,
         is_master = function() return master end,
         get_master_switches = function() return master_switches end,
+        get_leaders_history = function() return leaders_history end,
         validate_config = function()
             table.insert(validated, true)
             return true
@@ -99,6 +101,8 @@ package.preload['mymodule'] = function()
             end
             master = opts.is_master
             table.remove(validated, #validated)
+            local failover = require('cartridge.failover')
+            table.insert(leaders_history, failover.get_active_leaders())
         end,
         stop = function()
             state = 'stopped'
