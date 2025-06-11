@@ -8,6 +8,7 @@ local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
 local g_unelectable = t.group('integration.raft_unelectable')
 local g_disable = t.group('integration.raft_disabled_instances')
 local g_expel = t.group('integration.raft_expelled_instances')
+local g_appointments = t.group('integration.raft_appointments')
 local g_all_rw = t.group('integration.raft_all_rw')
 local h = require('test.helper')
 
@@ -341,6 +342,7 @@ g.test_kill_master = function()
 
     start_server('storage-1')
     start_server('storage-2')
+    g.cluster:wait_until_healthy()
 
     local after_2pc = get_2pc_count()
 
@@ -793,4 +795,107 @@ g_all_rw.test_raft_in_all_rw_mode_fails = function()
     t.assert_equals(g_all_rw.cluster.main_server:exec(function()
         return require('cartridge.confapplier').get_state()
     end), 'RolesConfigured')
+end
+
+----------------------------------------------------------------
+
+setup_group(g_appointments, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+            'myrole',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = {
+            {
+                instance_uuid = storage_1_uuid,
+            },
+            {
+                instance_uuid = storage_2_uuid,
+            },
+            {
+                instance_uuid = storage_3_uuid,
+            },
+        }
+    },
+})
+
+g_appointments.before_each(function()
+    t.assert_equals(set_failover_params(g_appointments, { mode = 'raft' }), { mode = 'raft' })
+end)
+
+g_appointments.after_each(function()
+    -- return original leader
+    g_appointments.cluster:retrying({}, function()
+        g_appointments.cluster:server('storage-1'):call('box.ctl.promote')
+    end)
+
+    h.retrying({}, function()
+        t.assert_equals(g_appointments.cluster:server('storage-1'):eval(q_leadership), storage_1_uuid)
+    end)
+end)
+
+g_appointments.test_leader_persists_after_config_apply = function()
+    -- There was a bug with leader selection when Raft failover was enabled
+    -- on replicasets with fewer than 3 instances.
+    -- Raft is disabled on such replicasets. These were often routers.
+    -- As a result, the wrong storages were elected as masters,
+    -- and vshard returned a NON_MASTER error.
+    -- The bug is reproduced as follows:
+    -- 1. Change the leader in the replica set
+    -- 2. After the leader change, the router learns about the new leader via membership
+    -- 3. Apply a config update, which triggers failover.cfg
+    -- 4. The router incorrectly determines the leader and sets the old master as the leader,
+    --    because it appears first in the topology (lexicographically), as in 'disabled' mode.
+
+    -- Step 1: change the leader in the replica set
+    g_appointments.cluster:retrying({}, function()
+        g_appointments.cluster:server('storage-2'):call('box.ctl.promote')
+    end)
+
+    local storage_rs_uuid = g_appointments.cluster:server('storage-1').replicaset_uuid
+
+    local leader_switched_index
+    -- Step 2: wait for the router to update the leader via membership after the master change
+    h.retrying({}, function()
+        local res = g_appointments.cluster:server('router-1'):exec(function()
+            local cartridge = require('cartridge')
+            return cartridge.service_get('myrole').get_leaders_history()
+        end)
+
+        leader_switched_index = #res
+        t.assert_equals(res[leader_switched_index][storage_rs_uuid], storage_2_uuid)
+    end)
+
+    -- Step 3: Apply new config to simulate a configuration change and trigger apply_config
+    g_appointments.cluster:server('router-1'):exec(function()
+        return require("cartridge").config_patch_clusterwide({uuid = require("uuid").str()})
+    end)
+
+    h.wish_state(g_appointments.cluster:server('router-1'), 'RolesConfigured', 10)
+
+    -- Step 4: Check the updated leaders on the router
+    -- Ensure the leader did not revert from storage-2 back to storage-1
+    h.retrying({}, function()
+        local res = g_appointments.cluster:server('router-1'):exec(function()
+            local cartridge = require('cartridge')
+            return cartridge.service_get('myrole').get_leaders_history()
+        end)
+
+        t.assert(#res > leader_switched_index, 'Wait for failover.cfg to be called again after config apply')
+        for i = leader_switched_index, #res do
+            local leader_list = res[i]
+            -- After the switch, storage-2 must remain the leader
+            t.assert_equals(leader_list[storage_rs_uuid], storage_2_uuid)
+        end
+    end)
 end

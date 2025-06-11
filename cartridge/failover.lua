@@ -958,7 +958,6 @@ local function cfg(clusterwide_config, opts)
         and #topology.get_leaders_order(
             topology_cfg, vars.replicaset_uuid, nil, {only_electable = false, only_enabled = true}) < 3
         then
-            first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
             raft_failover.disable()
         else
@@ -966,10 +965,10 @@ local function cfg(clusterwide_config, opts)
             if not ok then
                 return nil, err
             end
-            first_appointments = raft_failover.get_appointments(topology_cfg)
             log.info('Raft failover enabled')
         end
 
+        first_appointments = raft_failover.get_appointments(topology_cfg)
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
                 vars.membership_notification:wait()
