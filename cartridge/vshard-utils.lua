@@ -21,6 +21,7 @@ local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('default_bucket_count', 30000)
 vars:new('default_rebalancer_mode', 'auto')
+vars:new('default_connection_fetch_schema', true)
 vars:new('known_groups', nil
     --{
     --    [group_name] = {
@@ -34,6 +35,7 @@ vars:new('known_groups', nil
     --        sched_ref_quota = number,
     --        sched_move_quota = number,
     --        rebalancer_mode = string,
+    --        connection_fetch_schema = boolean,
     --    }
     --}
 )
@@ -277,6 +279,12 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
             '%s.sched_move_quota must be non-negative', field
         )
     end
+    if vsgroup_new.connection_fetch_schema ~= nil then
+        ValidateConfigError:assert(
+            type(vsgroup_new.connection_fetch_schema) == 'boolean',
+            '%s.connection_fetch_schema must be a boolean', field
+        )
+    end
     if vsgroup_old ~= nil then
         ValidateConfigError:assert(
             vsgroup_new.bucket_count == vsgroup_old.bucket_count,
@@ -299,6 +307,7 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['rebalancer_mode'] = true,
         ['sched_ref_quota'] = true,
         ['sched_move_quota'] = true,
+        ['connection_fetch_schema'] = true,
     }
     for k, _ in pairs(vsgroup_new) do
         if known_keys[k] == nil then
@@ -482,6 +491,10 @@ local function get_known_groups()
         if g.sched_move_quota == nil then
             g.sched_move_quota = vshard_consts.DEFAULT_SCHED_MOVE_QUOTA
         end
+
+        if g.connection_fetch_schema == nil then
+            g.connection_fetch_schema = vars.default_connection_fetch_schema
+        end
     end
 
     return vshard_groups
@@ -595,6 +608,7 @@ local function get_vshard_config(group_name, conf)
         collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
         rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
         rebalancer_mode = vshard_groups[group_name].rebalancer_mode,
+        connection_fetch_schema = vshard_groups[group_name].connection_fetch_schema,
         sharding = sharding,
         read_only = not failover.is_rw(),
         weights = zone_distances,
@@ -701,6 +715,7 @@ local function edit_vshard_options(group_name, vshard_options)
             rebalancer_mode = '?string',
             sched_ref_quota = '?number',
             sched_move_quota = '?number',
+            connection_fetch_schema = '?boolean',
         }
     )
     vshard_options.collect_lua_garbage = nil

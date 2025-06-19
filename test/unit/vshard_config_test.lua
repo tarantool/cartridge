@@ -174,6 +174,15 @@ vshard_groups:
     rebalancer_max_sending: 0
 ...]])
 
+check_config('vshard_groups["global"].connection_fetch_schema must be a boolean',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    connection_fetch_schema: "no"
+...]])
+
 check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
 [[---
 vshard_groups:

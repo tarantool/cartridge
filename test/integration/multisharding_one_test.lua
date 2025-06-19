@@ -59,6 +59,7 @@ local function get_vshard_groups(cluster)
                     rebalancer_max_receiving
                     rebalancer_max_sending
                     collect_lua_garbage
+                    connection_fetch_schema
                     sync_timeout
                     collect_bucket_garbage_interval
                     rebalancer_disbalance_threshold
@@ -76,6 +77,7 @@ local function edit_vshard_group(cluster, kv_args)
             $rebalancer_max_sending: Int
             $group: String!
             $collect_lua_garbage: Boolean
+            $connection_fetch_schema: Boolean
             $sync_timeout: Float
             $collect_bucket_garbage_interval: Float,
             $rebalancer_disbalance_threshold: Float
@@ -86,6 +88,7 @@ local function edit_vshard_group(cluster, kv_args)
                     rebalancer_max_receiving: $rebalancer_max_receiving
                     rebalancer_max_sending: $rebalancer_max_sending
                     collect_lua_garbage: $collect_lua_garbage
+                    connection_fetch_schema: $connection_fetch_schema
                     sync_timeout: $sync_timeout
                     collect_bucket_garbage_interval: $collect_bucket_garbage_interval
                     rebalancer_disbalance_threshold: $rebalancer_disbalance_threshold
@@ -96,6 +99,7 @@ local function edit_vshard_group(cluster, kv_args)
                     rebalancer_max_receiving
                     rebalancer_max_sending
                     collect_lua_garbage
+                    connection_fetch_schema
                     sync_timeout
                     collect_bucket_garbage_interval
                     rebalancer_disbalance_threshold
@@ -122,6 +126,7 @@ function g.test_api()
                 rebalancer_max_receiving
                 rebalancer_max_sending
                 collect_lua_garbage
+                connection_fetch_schema
                 sync_timeout
                 collect_bucket_garbage_interval
                 rebalancer_disbalance_threshold
@@ -143,6 +148,7 @@ function g.test_api()
     t.assert_equals(data['vshard_groups'][1]['bootstrapped'], true)
     t.assert_equals(data['vshard_groups'][1]['sched_ref_quota'], 300)
     t.assert_equals(data['vshard_groups'][1]['sched_move_quota'], 1)
+    t.assert_equals(data['vshard_groups'][1]['connection_fetch_schema'], true)
 
 
     local res = g.server:graphql(request)
@@ -154,6 +160,7 @@ function g.test_api()
         {
             ['collect_bucket_garbage_interval'] = box.NULL,
             ['collect_lua_garbage'] = false,
+            ['connection_fetch_schema'] = true,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 100,
             ['rebalancer_max_sending'] = 1,
@@ -208,6 +215,7 @@ function g.test_set_vshard_options_positive()
         ['name'] = 'default',
         ['bucket_count'] = 3000,
         ['bootstrapped'] = true,
+        ['connection_fetch_schema'] = true,
     })
 
     local res = edit_vshard_group(g.cluster, {
@@ -215,6 +223,7 @@ function g.test_set_vshard_options_positive()
         rebalancer_max_receiving = nil,
         rebalancer_max_sending = nil,
         sync_timeout = 25,
+        connection_fetch_schema = false,
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
         ['collect_bucket_garbage_interval'] = box.NULL,
@@ -226,6 +235,7 @@ function g.test_set_vshard_options_positive()
         ['name'] = 'default',
         ['bucket_count'] = 3000,
         ['bootstrapped'] = true,
+        ['connection_fetch_schema'] = false,
     })
 
     local res = get_vshard_groups(g.cluster)
@@ -240,6 +250,7 @@ function g.test_set_vshard_options_positive()
             ['name'] = 'default',
             ['bucket_count'] = 3000,
             ['bootstrapped'] = true,
+            ['connection_fetch_schema'] = false,
         }
     })
 end
