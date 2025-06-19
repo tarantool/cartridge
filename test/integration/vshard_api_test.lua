@@ -41,6 +41,7 @@ function g.test_get_cfg()
         default = {
             bucket_count = 3000,
             collect_lua_garbage = false,
+            connection_fetch_schema = true,
             read_only = false,
             rebalancer_disbalance_threshold = 1,
             rebalancer_mode = 'auto',
@@ -121,6 +122,7 @@ function g.test_get_cfg_multisharding()
         hot = {
             bucket_count = 30000,
             collect_lua_garbage = false,
+            connection_fetch_schema = true,
             read_only = false,
             rebalancer_disbalance_threshold = 1,
             rebalancer_mode = 'auto',
@@ -145,6 +147,7 @@ function g.test_get_cfg_multisharding()
         cold = {
             bucket_count = 2000,
             collect_lua_garbage = false,
+            connection_fetch_schema = true,
             read_only = false,
             rebalancer_disbalance_threshold = 1,
             rebalancer_max_receiving = 100,

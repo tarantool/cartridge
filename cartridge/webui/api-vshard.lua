@@ -61,6 +61,10 @@ local gql_type_vsgroup = gql_types.object({
             kind = gql_types.long.nonNull,
             description = 'Scheduler bucket move quota'
         },
+        connection_fetch_schema = {
+            kind = gql_types.boolean.nonNull,
+            description = 'Connection "fetch_schema" option'
+        },
     }
 })
 
@@ -178,6 +182,7 @@ local function init(graphql)
             rebalancer_mode = gql_types.string,
             sched_ref_quota = gql_types.long,
             sched_move_quota = gql_types.long,
+            connection_fetch_schema = gql_types.boolean,
         },
         kind = gql_type_vsgroup.nonNull,
         callback = module_name .. '.edit_vshard_options',
