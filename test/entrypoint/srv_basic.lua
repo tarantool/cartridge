@@ -34,6 +34,8 @@ package.preload['mymodule'] = function()
     local master_switches = {}
     local leaders_history = {}
 
+    local vshard_enabled = {}
+
     if httpd ~= nil then
         httpd:route(
             {
@@ -74,6 +76,7 @@ package.preload['mymodule'] = function()
         is_master = function() return master end,
         get_master_switches = function() return master_switches end,
         get_leaders_history = function() return leaders_history end,
+        was_vshard_enabled_on_apply = function() return vshard_enabled end,
         validate_config = function()
             table.insert(validated, true)
             return true
@@ -103,6 +106,11 @@ package.preload['mymodule'] = function()
             table.remove(validated, #validated)
             local failover = require('cartridge.failover')
             table.insert(leaders_history, failover.get_active_leaders())
+
+            local vshard = package.loaded['vshard']
+            if vshard ~= nil and vshard.storage ~= nil then
+                table.insert(vshard_enabled, vshard.storage.internal.is_enabled)
+            end
         end,
         stop = function()
             state = 'stopped'

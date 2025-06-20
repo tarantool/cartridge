@@ -682,21 +682,23 @@ g.test_sigstop = function()
     cluster:retrying({}, check_active_master, storage_1_uuid)
     t.assert_equals(get_master(replicaset_uuid), {storage_1_uuid, storage_1_uuid})
 
-    response = cluster.main_server:graphql({query = [[
-        {
-            servers {
-                uri
-                statistics { vshard_buckets_count }
+    t.helpers.retrying({}, function()
+        response = cluster.main_server:graphql({query = [[
+            {
+                servers {
+                    uri
+                    statistics { vshard_buckets_count }
+                }
             }
-        }
-    ]]})
+        ]]})
 
-    t.assert_items_equals(response.data.servers, {
-        {uri = cluster:server('storage-1').advertise_uri, statistics = {vshard_buckets_count = 3000}},
-        {uri = cluster:server('storage-2').advertise_uri, statistics = {vshard_buckets_count = 3000}},
-        {uri = cluster:server('storage-3').advertise_uri, statistics = {vshard_buckets_count = 3000}},
-        {uri = cluster:server('router-1').advertise_uri, statistics={vshard_buckets_count = box.NULL}}
-    })
+        t.assert_items_equals(response.data.servers, {
+            {uri = cluster:server('storage-1').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+            {uri = cluster:server('storage-2').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+            {uri = cluster:server('storage-3').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+            {uri = cluster:server('router-1').advertise_uri, statistics={vshard_buckets_count = box.NULL}}
+        })
+    end)
 
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(cluster.main_server), {})
