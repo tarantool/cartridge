@@ -12,6 +12,7 @@ more than one.
 
 Which instance will become a leader depends on topology settings and
 failover configuration.
+For more information about the failover configuration in Cartridge, see :ref:`Enabling automatic failover <cartridge-node-failure>`.
 
 An important topology parameter is the **failover priority** within
 a replica set. This is an ordered list of instances. By default, the first

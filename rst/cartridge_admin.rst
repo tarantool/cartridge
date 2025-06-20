@@ -927,7 +927,7 @@ Stateful failover
 
     The stateful failover mode with Tarantool Stateboard is **not recommended**
     for use on large clusters in production. If you have a high load production
-    cluster, use the stateful failover with ``etcd`` instead.
+    cluster, use the stateful failover with etcd instead.
 
 Leader appointments are polled from the external state provider.
 Decisions are made by one of the instances with the ``failover-coordinator``
@@ -938,6 +938,12 @@ role enabled. There are two options of external state provider:
 
 - etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
   API is supported**, so you can still use etcd v3 with ``ETCD_ENABLE_V2=true``.
+
+  ..  note::
+
+      etcd 3.6.0 and higher does not support the ``ETCD_ENABLE_V2`` option.
+      Use etcd versions below 3.6.0 to ensure that the stateful failover mode works correctly with etcd.
+
 
 To enable stateful failover:
 
