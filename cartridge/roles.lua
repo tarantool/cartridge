@@ -640,17 +640,45 @@ local function is_reload_forbidden()
     return vars.pause == true
 end
 
+--- Do additional job before the roles configuration applying.
+-- @function before_apply_config
+-- @param table conf
+-- @param string state
+-- @return boolean true
+local function before_apply_config(conf)
+    checks('table')
+    if conf.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to before_apply_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+
+    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local enabled_roles = get_enabled_roles(my_replicaset.roles)
+    for _, role in ipairs(vars.roles_by_number) do
+        if enabled_roles[role.role_name] then
+            if type(role.M.before_apply_config) == 'function' then
+                local ok, err = ApplyConfigError:pcall(role.M.before_apply_config, conf)
+                if not ok then
+                    log.error('Failed to run before_apply_config for role %q: %s',
+                        role.role_name, err)
+                end
+            end
+        end
+    end
+
+    return true
+end
+
 --- Do additional job after the roles configuration applying.
 -- @function on_apply_config
 -- @param table conf
 -- @param string state
--- @treturn[1] boolean true
--- @treturn[2] nil
--- @treturn[2] table Error description
+-- @return boolean true
 local function on_apply_config(conf, state)
     checks('table', 'string')
     if conf.__type == 'ClusterwideConfig' then
-        local err = "Bad argument #1 to apply_config" ..
+        local err = "Bad argument #1 to on_apply_config" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
@@ -660,7 +688,11 @@ local function on_apply_config(conf, state)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then
             if type(role.M.on_apply_config) == 'function' then
-                ApplyConfigError:pcall(role.M.on_apply_config, conf, state)
+                local ok, err = ApplyConfigError:pcall(role.M.on_apply_config, conf, state)
+                if not ok then
+                    log.error('Failed to run on_apply_config for role %q: %s',
+                        role.role_name, err)
+                end
             end
         end
     end
@@ -679,8 +711,10 @@ return {
 
     validate_config = validate_config,
     apply_config = apply_config,
+    before_apply_config = before_apply_config,
     on_apply_config = on_apply_config,
     reload = reload,
+
     stop = stop,
 
     forbid_reload = forbid_reload,

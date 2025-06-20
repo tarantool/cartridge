@@ -264,3 +264,24 @@ function g.test_vshard_storage_disable_on_failover()
 
     set_failover('disabled')
 end
+
+g.test_disabled_on_first_apply = function ()
+    local res = g.storage_master:exec(function()
+        local cartridge = require('cartridge')
+        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+    end)
+
+    -- last applied config
+    apply_config(g.router)
+
+    t.assert_not(res[1])
+    t.assert(res[#res], 'enabled on last apply')
+
+    res = g.storage_replica:exec(function()
+        local cartridge = require('cartridge')
+        return cartridge.service_get('myrole').was_vshard_enabled_on_apply()
+    end)
+
+    t.assert_not(res[1])
+    t.assert(res[#res], 'enabled on last apply')
+end
