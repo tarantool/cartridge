@@ -410,7 +410,7 @@ local function longpoll(client, timeout)
         local resp, err
         -- longpoll_index is the latest index received from etcd.
         if session.longpoll_index == nil then
-            resp, err = session.connection:request('GET', '/leaders')
+            resp, err = session.connection:request('GET', '/leaders?quorum=true')
             -- After a simple GET we can be sure that the response
             -- represents the newest information at a given x-etcd-index
             if resp ~= nil then
