@@ -85,6 +85,23 @@ local function make_decision(ctx, replicaset_uuid)
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
             ctx.decisions[replicaset_uuid] = decision
+            do
+                local prev = current_decision
+                local prev_leader_uuid = prev and prev.leader or 'none'
+                local prev_info = vars.topology_cfg.servers[prev_leader_uuid]
+                local prev_alias = prev_info and (prev_info.alias or '-') or '-'
+                local prev_uri = prev_info and (prev_info.uri or '-') or '-'
+
+                log.info(
+                    'Replicaset %s: previous leader %s (%s, %s), healthcheck failed, appoint new leader %s (%s)',
+                    replicaset_uuid,
+                    prev_leader_uuid,
+                    prev_alias,
+                    prev_uri,
+                    decision.leader,
+                    vars.topology_cfg.servers[decision.leader].uri
+                )
+            end
             return decision
         end
     end
@@ -378,10 +395,23 @@ local function appoint_leaders(leaders)
 
         local decision = pack_decision(leader_uuid)
         table.insert(updates, {replicaset_uuid, decision.leader})
-        log.info('Replicaset %s: appoint %s (%q) (manual)',
-            replicaset_uuid, decision.leader,
-            assert(servers[decision.leader]).uri
-        )
+        do
+            local prev = session.ctx.decisions[replicaset_uuid]
+            local prev_leader_uuid = prev and prev.leader or 'none'
+            local prev_info = servers[prev_leader_uuid]
+            local prev_alias = prev_info and (prev_info.alias or '-') or '-'
+            local prev_uri = prev_info and (prev_info.uri or '-') or '-'
+
+            log.info(
+                'Replicaset %s: previous leader %s (%s, %s), appoint new leader %s (%s) (manual)',
+                replicaset_uuid,
+                prev_leader_uuid,
+                prev_alias,
+                prev_uri,
+                decision.leader,
+                assert(servers[decision.leader]).uri
+            )
+        end
         session.ctx.decisions[replicaset_uuid] = decision
     end
 
