@@ -240,8 +240,6 @@ end
 -- @treturn boolean Whether leadership map has changed
 local function accept_appointments(appointments)
     checks('table')
-    log.debug('accept_appointments: incoming appointments = %s', json.encode(appointments))
-    local t_accept_appointments = fiber.clock()
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
     local replicasets = assert(topology_cfg.replicasets)
 
@@ -255,7 +253,6 @@ local function accept_appointments(appointments)
     -- Remove replicasets that aren't listed in topology
     for replicaset_uuid, _ in pairs(active_leaders) do
         if replicasets[replicaset_uuid] == nil then
-            log.debug('accept_appointments: removed obsolete replicaset %s', replicaset_uuid)
             active_leaders[replicaset_uuid] = nil
         end
     end
@@ -282,17 +279,10 @@ local function accept_appointments(appointments)
 
     if changed then
         vars.cache.active_leaders = active_leaders
-        local my_leader = active_leaders[vars.replicaset_uuid]
-        log.debug('accept_appointments: local leader updated -> %s', tostring(my_leader))
-
-        local t_payload = fiber.clock()
-        membership.set_payload('leader_uuid', my_leader)
-        log.debug('accept_appointments: membership.set_payload completed in %.6f sec', fiber.clock() - t_payload)
+        membership.set_payload('leader_uuid', active_leaders[vars.replicaset_uuid])
     else
         log.warn('accept_appointments: no changes in leadership map')
     end
-
-    log.debug('accept_appointments: finished in %.6f sec', fiber.clock() - t_accept_appointments)
 
     return changed
 end
@@ -350,20 +340,9 @@ local function on_apply_config(mod, state)
     local conf = vars.clusterwide_config:get_readonly()
 
     if type(mod.on_apply_config) == 'function' then
-        log.debug('on_apply_config: invoking for role %q (state = %s)', mod.role_name, state)
-
-        local t_apply_conf = fiber.clock()
         local ok, err = ApplyConfigError:pcall(mod.on_apply_config, conf, state)
-        local t_elapsed_apply_conf = fiber.clock() - t_apply_conf
-
         if not ok then
-            log.error('on_apply_config: role %q in failover failed: %s in %.6f sec',
-                mod.role_name, err and err.err or err, t_elapsed_apply_conf)
-        else
-            log.debug('on_apply_config: role %q completed successfully in %.6f sec',
-                mod.role_name,
-                t_elapsed_apply_conf
-            )
+            log.error('Role %q on_apply_config in failover failed: %s', mod.role_name, err and err.err or err)
         end
     end
 end
@@ -380,7 +359,6 @@ local function fencing_healthcheck()
     -- If state provider is available then
     -- there is no need to actuate fencing yet
     if assert(vars.client):check_quorum() then
-        log.debug('fencing_healthcheck: quorum OK via state provider')
         return true
     else
         log.warn('fencing_healthcheck: quorum NOT OK, checking replicas...')
@@ -401,7 +379,6 @@ local function fencing_healthcheck()
         and (member.status == 'alive')
         and (member.payload.uuid == instance_uuid)
         then
-            log.debug('fencing_healthcheck: replica %s is alive and matches UUID', server.uri)
             goto continue
         end
 
@@ -413,8 +390,6 @@ local function fencing_healthcheck()
 
         ::continue::
     end
-
-    log.debug('fencing_healthcheck: all checks passed, fencing not needed')
 
     return true
 end
@@ -476,14 +451,10 @@ local function synchro_promote()
     then
         log.info('synchro_promote: attempting box.ctl.promote()')
 
-        local t0 = fiber.clock()
         local ok, err = pcall(box.ctl.promote)
-        local t1 = fiber.clock()
         if ok ~= true then
             log.error('synchro_promote: failed to promote: %s', err or 'unknown error')
             return err
-        else
-            log.debug('synchro_promote: box.ctl.promote() completed in %.6f sec', t1 - t0)
         end
 
         ok, err = pcall(fiber.testcancel)
@@ -505,15 +476,11 @@ local function synchro_demote()
     and box.ctl.demote ~= nil then
         log.info('synchro_demote: attempting box.ctl.demote()')
 
-        local t0 = fiber.clock()
         local ok, err = pcall(box.ctl.demote)
-        local t1 = fiber.clock()
 
         if ok ~= true then
             log.error('Failed to demote: %s', err or 'unknown')
             return err
-        else
-            log.debug('synchro_demote: box.ctl.demote() completed in %.6f sec', t1 - t0)
         end
 
         ok, err = pcall(fiber.testcancel)
@@ -646,9 +613,6 @@ end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
-    local t_reconf_all = fiber.clock()
-    log.debug('reconfigure_all: start with active_leaders = %s', json.encode(active_leaders))
-
 ::start_over::
 
     local t1 = fiber.clock()
@@ -658,7 +622,6 @@ function reconfigure_all(active_leaders)
     })
     fiber.testcancel()
     local t2 = fiber.clock()
-    log.debug('reconfigure_all: constitute_oneself completed in %.6f sec', t2 - t1)
 
     if not ok then
         log.info("Consistency isn't reached yet: %s", err.err)
@@ -669,13 +632,8 @@ function reconfigure_all(active_leaders)
     -- WARNING: implicit yield
     -- The event may arrive while two-phase commit is in progress.
     -- We should wait for the appropriate state.
-    local t_wish_state = fiber.clock()
     local state = confapplier.wish_state('RolesConfigured', math.huge)
     fiber.testcancel()
-    log.debug('reconfigure_all: wish_state("RolesConfigured") took %.6f sec (result = %s)',
-        fiber.clock() - t_wish_state,
-        state
-    )
 
     if state ~= 'RolesConfigured' then
         log.info('Skipping failover step - state is %s', state)
@@ -695,22 +653,13 @@ function reconfigure_all(active_leaders)
     local apply_total_start = fiber.clock()
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
-
-        local t_box_cfg = clock.monotonic()
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
-        log.debug('reconfigure_all: box.cfg(read_only=%s) applied in %.6f sec',
-            tostring(not vars.cache.is_rw),
-            clock.monotonic() - t_box_cfg
-        )
-
-        local t_synchro_promote = clock.monotonic()
         err = synchro_promote()
         if err ~= nil then
             error(err)
         end
-        log.debug('reconfigure_all: synchro_promote() completed in %.6f sec', clock.monotonic() - t_synchro_promote)
 
         local state = 'RolesConfigured'
 
@@ -751,8 +700,6 @@ function reconfigure_all(active_leaders)
         log.warn('Failover step failed after %.6f sec: %s', apply_total_elapsed, err)
     end
     confapplier.set_state('RolesConfigured')
-
-    log.debug('reconfigure_all: total duration %.6f sec', fiber.clock() - t_reconf_all)
 end
 
 --- Lock failover if failover suppressing is on.
