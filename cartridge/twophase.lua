@@ -46,6 +46,8 @@ vars:new('options', {
     apply_config_timeout = 10,
 })
 
+vars:new('config_applied', false)
+
 local function release_config_lock()
     local prepared_config = vars.prepared_config
     vars.prepared_config = nil
@@ -574,6 +576,7 @@ local function _clusterwide(patch)
     end
 
     log.warn('Updating config clusterwide...')
+    vars.config_applied = false
 
     local clusterwide_config_old = confapplier.get_active_config()
     local vshard_utils = require('cartridge.vshard-utils')
@@ -650,6 +653,7 @@ local function _clusterwide(patch)
 
     if err == nil then
         log.warn('Clusterwide config updated successfully')
+        vars.config_applied = true
         return true
     else
         log.error('Clusterwide config update failed')
