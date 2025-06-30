@@ -221,7 +221,8 @@ local function describe(uuid)
     if uuid == vars.instance_uuid then
         return string.format('%s (me)', uuid)
     elseif servers[uuid] ~= nil then
-        return string.format('%s (%q)', uuid, servers[uuid].uri)
+        local alias = servers[uuid].alias or '-'
+        return string.format('%s (%s, %q)', uuid, alias, servers[uuid].uri)
     else
         return uuid
     end
@@ -473,7 +474,7 @@ local function synchro_promote()
     and not vars.failover_suppressed
     and box.ctl.promote ~= nil
     then
-        log.info('synchro_promote: conditions met, attempting box.ctl.promote()')
+        log.info('synchro_promote: attempting box.ctl.promote()')
 
         local t0 = fiber.clock()
         local ok, err = pcall(box.ctl.promote)
@@ -509,7 +510,7 @@ local function synchro_demote()
         local t1 = fiber.clock()
 
         if ok ~= true then
-            log.error('synchro_demote: failed to demote: %s', err or 'unknown error')
+            log.error('Failed to demote: %s', err or 'unknown')
             return err
         else
             log.debug('synchro_demote: box.ctl.demote() completed in %.6f sec', t1 - t0)
@@ -527,11 +528,6 @@ local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
     })
-    local t0 = fiber.clock()
-    log.debug('constitute_oneself: start for %s (expected leader = %s)',
-        vars.instance_uuid,
-        tostring(active_leaders[vars.replicaset_uuid])
-    )
 
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
@@ -540,8 +536,6 @@ local function constitute_oneself(active_leaders, opts)
         vars.cache.is_vclockkeeper = false
         vars.cache.is_leader = false
         vars.cache.is_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw
-        local t1 = fiber.clock()
-        log.debug('constitute_oneself: not a leader, exit early in %.6f sec', t1 - t0)
         return true
     end
 
@@ -550,13 +544,9 @@ local function constitute_oneself(active_leaders, opts)
         vars.cache.is_vclockkeeper = false
         vars.cache.is_leader = true
         vars.cache.is_rw = true
-        local t1 = fiber.clock()
-        log.debug('constitute_oneself: consistency not needed, early exit in %.6f sec', t1 - t0)
         return true
     elseif vars.cache.is_vclockkeeper then
         -- I'm already a vclockkeeper
-        local t1 = fiber.clock()
-        log.debug('constitute_oneself: already vclockkeeper, skipping in %.6f sec', t1 - t0)
         return true
     end
 
@@ -565,7 +555,6 @@ local function constitute_oneself(active_leaders, opts)
     -- Go to the external state provider
     local session = assert(vars.client):get_session()
     if session == nil or not session:is_alive() then
-        log.error('constitute_oneself: state provider unavailable')
         return nil, StateProviderError:new('State provider unavailable')
     end
 
@@ -574,17 +563,14 @@ local function constitute_oneself(active_leaders, opts)
     local vclockkeeper, err = session:get_vclockkeeper(vars.replicaset_uuid)
     fiber.testcancel()
     if err ~= nil then
-        log.error('constitute_oneself: get_vclockkeeper failed: %s', err)
         return nil, SwitchoverError:new(err)
     end
 
     if vclockkeeper == nil then
         -- It's absent, no need to wait anyone
-        log.debug('constitute_oneself: no current vclockkeeper')
         goto set_vclockkeeper
     elseif vclockkeeper.instance_uuid == vars.instance_uuid then
         -- It's me already, but vclock still should be persisted
-        log.debug('constitute_oneself: already vclockkeeper = %s', vclockkeeper.instance_uuid)
         goto set_vclockkeeper
     end
 
@@ -601,7 +587,6 @@ local function constitute_oneself(active_leaders, opts)
         local vclockkeeper_uri = vclockkeeper_srv.uri
 
         local timeout = deadline - fiber.clock()
-        log.debug('constitute_oneself: contacting vclockkeeper %s', vclockkeeper_uri)
         -- WARNING: implicit yield
         local vclockkeeper_info, err = errors.netbox_call(
             pool.connect(vclockkeeper_uri, {wait_connected = false}),
@@ -613,11 +598,9 @@ local function constitute_oneself(active_leaders, opts)
         fiber.testcancel()
 
         if vclockkeeper_info == nil then
-            log.error('constitute_oneself: get_lsn failed: %s', err)
             return nil, SwitchoverError:new(err)
         end
 
-        log.debug('constitute_oneself: got lsn = %s from %s', json.encode(vclockkeeper_info), vclockkeeper_uri)
         -- Wait async replication to arrive
         -- WARNING: implicit yield
         local timeout = deadline - fiber.clock()
@@ -629,31 +612,23 @@ local function constitute_oneself(active_leaders, opts)
         )
         fiber.testcancel()
         if not ok then
-            log.error('constitute_oneself: wait_lsn timed out')
             return nil, SwitchoverError:new(
                 "Can't catch up with the vclockkeeper"
             )
         end
-        log.debug('constitute_oneself: caught up with vclockkeeper')
     end
 
     -- The last one thing: persist our vclock
     ::set_vclockkeeper::
     local vclock = box.info.vclock
-    log.debug('constitute_oneself: persisting vclock = %s',
-        json.encode(setmetatable(vclock,{_serialize = 'sequence'}))
-    )
 
     -- WARNING: implicit yield
-    local set_t0 = fiber.clock()
     local ok, err = session:set_vclockkeeper(
         vars.replicaset_uuid, vars.instance_uuid, vclock
     )
     fiber.testcancel()
-    local set_t1 = fiber.clock()
 
     if ok == nil then
-        log.error('constitute_oneself: set_vclockkeeper failed: %s', err)
         return nil, SwitchoverError:new(err)
     end
 
@@ -662,9 +637,8 @@ local function constitute_oneself(active_leaders, opts)
     vars.cache.is_leader = true
     vars.cache.is_rw = true
 
-    log.debug('Vclock persisted: %s. Consistent switchover succeeded in %.6f sec',
-        json.encode(setmetatable(vclock, {_serialize = 'sequence'})),
-        set_t1 - set_t0
+    log.info('Vclock persisted: %s. Consistent switchover succeeded',
+        json.encode(setmetatable(vclock, {_serialize = 'sequence'}))
     )
 
     return true
@@ -1345,13 +1319,6 @@ local function set_options(opts)
     for k, v in pairs(opts) do
         vars.options[k] = v
     end
-
-    local options_log = {}
-    for k, v in pairs(vars.options) do
-        table.insert(options_log, string.format('%s=%.2f', k, v))
-    end
-    log.debug('Failover set_options: updated options -> {%s}', table.concat(options_log, ', '))
-
     return true
 end
 
