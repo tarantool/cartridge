@@ -214,6 +214,21 @@ local function _get_appointments_stateful_mode(client, timeout)
     return client:longpoll(timeout)
 end
 
+local function _get_replicaset_alias_by_server_uuid(server_uuid)
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+
+    local server = topology_cfg.servers[server_uuid]
+    if server then
+        local replicaset_uuid = server.replicaset_uuid
+        if replicaset_uuid then
+            local replicaset = topology_cfg.replicasets[replicaset_uuid]
+            if replicaset and replicaset.alias then
+                return replicaset.alias
+            end
+        end
+    end
+end
+
 local function describe(uuid)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
     local servers = assert(topology_cfg.servers)
@@ -266,8 +281,10 @@ local function accept_appointments(appointments)
 
         changed = true
 
-        log.info('Replicaset %s%s: new leader %s, was %s',
+        local replicaset_alias = _get_replicaset_alias_by_server_uuid(leader_uuid) or ''
+        log.info('Replicaset %s(%s)%s: new leader %s, was %s',
             replicaset_uuid,
+            replicaset_alias,
             replicaset_uuid == vars.replicaset_uuid and ' (me)' or '',
             describe(leader_uuid),
             describe(current_leader)

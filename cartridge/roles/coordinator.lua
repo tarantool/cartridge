@@ -44,6 +44,17 @@ vars:new('healthcheck', function(_, instance_uuid)
     return false
 end)
 
+local DECISION_REASONS = {
+    IMMUNITY_NOT_EXPIRED = 'immunity_not_expired',
+    CURRENT_LEADER_HEALTHY = 'current_leader_healthy',
+    FIRST_APPOINTMENT = 'first_appointment',
+    NEW_LEADER_SELECTED = 'new_leader_selected',
+    NO_HEALTHY_CANDIDATES = 'no_healthy_candidates',
+}
+
+local CHECKED_NONE = 0
+local CHECKED_FIRST = 1
+
 local function pack_decision(leader_uuid)
     checks('string')
     return {
@@ -76,6 +87,27 @@ local function describe(uuid)
     return uuid
 end
 
+--- Make leader election decision for a replicaset.
+--
+-- This function evaluates the current leader and available candidates,
+-- taking into account immunity timeout and health status.
+--
+-- @function make_decision
+-- @tparam table ctx The failover context table (must include .members and .decisions)
+-- @tparam string replicaset_uuid UUID of the replicaset
+--
+-- @treturn[1] table decision The decision table with `leader` and `immunity` fields
+-- @treturn[1] string reason A string describing why the decision was made:
+--   - DECISION_REASONS.IMMUNITY_NOT_EXPIRED
+--   - DECISION_REASONS.CURRENT_LEADER_HEALTHY
+--   - DECISION_REASONS.FIRST_APPOINTMENT
+--   - DECISION_REASONS.NEW_LEADER_SELECTED
+--   - DECISION_REASONS.NO_HEALTHY_CANDIDATES
+-- @treturn[1] number checked_count Number of candidates actually checked
+--
+-- @treturn[2] nil
+-- @treturn[2] string reason See above
+-- @treturn[2] number checked_count Number of candidates actually checked
 local function make_decision(ctx, replicaset_uuid)
     checks({members = 'table', decisions = 'table'}, 'string')
 
@@ -84,30 +116,15 @@ local function make_decision(ctx, replicaset_uuid)
         local current_leader_uuid = current_decision.leader
         local current_leader = vars.topology_cfg.servers[current_leader_uuid]
         if fiber.clock() < current_decision.immunity then
-            log.info(
-                'make_decision: immunity not expired for leader %s (expires in %.1f sec)',
-                describe(current_leader_uuid),
-                current_decision.immunity - fiber.clock()
-            )
-            return nil
+            return nil, DECISION_REASONS.IMMUNITY_NOT_EXPIRED, CHECKED_NONE
         elseif topology.electable(current_leader_uuid, current_leader)
             and vars.healthcheck(ctx.members, current_leader_uuid) then
-            log.info(
-                'make_decision: current leader %s is still healthy and electable',
-                describe(current_leader_uuid)
-            )
-            return nil
+            return nil, DECISION_REASONS.CURRENT_LEADER_HEALTHY, CHECKED_NONE
         end
     end
 
     local candidates = topology.get_leaders_order(
         vars.topology_cfg, replicaset_uuid
-    )
-
-    log.info(
-        'make_decision: evaluating replicaset %s (candidates=%d)',
-        replicaset_uuid,
-        #candidates
     )
 
     if current_decision == nil then
@@ -116,21 +133,20 @@ local function make_decision(ctx, replicaset_uuid)
         -- without regard to the healthcheck
         local decision = pack_decision(candidates[1])
         ctx.decisions[replicaset_uuid] = decision
-        return decision
+        return decision, DECISION_REASONS.FIRST_APPOINTMENT, CHECKED_FIRST
     end
 
+    local checked_count = 0
     for _, instance_uuid in ipairs(candidates) do
+        checked_count = checked_count + 1
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
             ctx.decisions[replicaset_uuid] = decision
-            return decision
+            return decision, DECISION_REASONS.NEW_LEADER_SELECTED, checked_count
         end
     end
 
-    log.warn(
-        'make_decision: no healthy candidates found in replicaset %s',
-        replicaset_uuid
-    )
+    return nil, DECISION_REASONS.NO_HEALTHY_CANDIDATES, checked_count
 end
 
 local function control_loop(session)
@@ -138,23 +154,36 @@ local function control_loop(session)
     local ctx = assert(session.ctx)
 
     while true do
-        log.info('control_loop: started')
+        log.info('control_loop: making decisions')
 
         ctx.members = membership.members()
 
         local updates = {}
 
-        for replicaset_uuid, _ in pairs(vars.topology_cfg.replicasets) do
+        for replicaset_uuid, data in pairs(vars.topology_cfg.replicasets) do
             local prev = ctx.decisions[replicaset_uuid]
-            local decision = make_decision(ctx, replicaset_uuid)
+            local decision, reason, checked = make_decision(ctx, replicaset_uuid)
+            local prev_leader_uuid = prev and prev.leader or 'none'
+
             if decision ~= nil then
-                table.insert(updates, {replicaset_uuid, decision.leader})
-                local prev_leader_uuid = prev and prev.leader or 'none'
+            table.insert(updates, {replicaset_uuid, decision.leader})
                 log.info(
-                    'control_loop: replicaset %s: appoint new leader %s, previous leader %s',
+                    'control_loop: replicaset %s(%s): appoint new leader %s, previous leader %s' ..
+                    ' (reason=%s, checked=%d)',
                     replicaset_uuid,
+                    data.alias,
                     describe(decision.leader),
-                    describe(prev_leader_uuid)
+                    describe(prev_leader_uuid),
+                    reason,
+                    checked
+                )
+            else
+                log.warn(
+                    'control_loop: replicaset %s(%s): no appointment made (reason=%s, checked=%d)',
+                    replicaset_uuid,
+                    data.alias,
+                    reason,
+                    checked
                 )
             end
         end
@@ -185,10 +214,9 @@ local function control_loop(session)
         end
 
         assert(next_moment >= now)
+        log.info('control_loop: wait membership notifications')
         vars.membership_notification:wait(next_moment - now)
         fiber.testcancel()
-
-        log.info('control_loop: iteration finished')
     end
 end
 
