@@ -97,17 +97,17 @@ end
 -- @tparam string replicaset_uuid UUID of the replicaset
 --
 -- @treturn[1] table decision The decision table with `leader` and `immunity` fields
--- @treturn[1] string reason A string describing why the decision was made:
---   - DECISION_REASONS.IMMUNITY_NOT_EXPIRED
---   - DECISION_REASONS.CURRENT_LEADER_HEALTHY
---   - DECISION_REASONS.FIRST_APPOINTMENT
---   - DECISION_REASONS.NEW_LEADER_SELECTED
---   - DECISION_REASONS.NO_HEALTHY_CANDIDATES
--- @treturn[1] number checked_count Number of candidates actually checked
+-- @treturn[1] table info Metadata about the decision:
+--   - info.reason (string): One of:
+--       * DECISION_REASONS.IMMUNITY_NOT_EXPIRED
+--       * DECISION_REASONS.CURRENT_LEADER_HEALTHY
+--       * DECISION_REASONS.FIRST_APPOINTMENT
+--       * DECISION_REASONS.NEW_LEADER_SELECTED
+--       * DECISION_REASONS.NO_HEALTHY_CANDIDATES
+--   - info.checked (number): Number of candidates actually checked
 --
 -- @treturn[2] nil
--- @treturn[2] string reason See above
--- @treturn[2] number checked_count Number of candidates actually checked
+-- @treturn[2] table info Same as above
 local function make_decision(ctx, replicaset_uuid)
     checks({members = 'table', decisions = 'table'}, 'string')
 
@@ -115,11 +115,17 @@ local function make_decision(ctx, replicaset_uuid)
     if current_decision ~= nil then
         local current_leader_uuid = current_decision.leader
         local current_leader = vars.topology_cfg.servers[current_leader_uuid]
-        if fiber.clock() < current_decision.immunity then
-            return nil, DECISION_REASONS.IMMUNITY_NOT_EXPIRED, CHECKED_NONE
-        elseif topology.electable(current_leader_uuid, current_leader)
+        if topology.electable(current_leader_uuid, current_leader)
             and vars.healthcheck(ctx.members, current_leader_uuid) then
-            return nil, DECISION_REASONS.CURRENT_LEADER_HEALTHY, CHECKED_NONE
+            return nil, {
+                reason = DECISION_REASONS.CURRENT_LEADER_HEALTHY,
+                checked = CHECKED_NONE,
+            }
+        elseif fiber.clock() < current_decision.immunity then
+            return nil, {
+                reason = DECISION_REASONS.IMMUNITY_NOT_EXPIRED,
+                checked = CHECKED_NONE,
+            }
         end
     end
 
@@ -133,7 +139,10 @@ local function make_decision(ctx, replicaset_uuid)
         -- without regard to the healthcheck
         local decision = pack_decision(candidates[1])
         ctx.decisions[replicaset_uuid] = decision
-        return decision, DECISION_REASONS.FIRST_APPOINTMENT, CHECKED_FIRST
+        return decision, {
+            reason = DECISION_REASONS.FIRST_APPOINTMENT,
+            checked = CHECKED_FIRST,
+        }
     end
 
     local checked_count = 0
@@ -142,11 +151,17 @@ local function make_decision(ctx, replicaset_uuid)
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
             ctx.decisions[replicaset_uuid] = decision
-            return decision, DECISION_REASONS.NEW_LEADER_SELECTED, checked_count
+            return decision, {
+                reason = DECISION_REASONS.NEW_LEADER_SELECTED,
+                checked = checked_count,
+            }
         end
     end
 
-    return nil, DECISION_REASONS.NO_HEALTHY_CANDIDATES, checked_count
+    return nil, {
+        reason = DECISION_REASONS.NO_HEALTHY_CANDIDATES,
+        checked = checked_count,
+    }
 end
 
 local function control_loop(session)
@@ -162,7 +177,7 @@ local function control_loop(session)
 
         for replicaset_uuid, data in pairs(vars.topology_cfg.replicasets) do
             local prev = ctx.decisions[replicaset_uuid]
-            local decision, reason, checked = make_decision(ctx, replicaset_uuid)
+            local decision, info = make_decision(ctx, replicaset_uuid)
             local prev_leader_uuid = prev and prev.leader or 'none'
 
             if decision ~= nil then
@@ -174,17 +189,19 @@ local function control_loop(session)
                     data.alias,
                     describe(decision.leader),
                     describe(prev_leader_uuid),
-                    reason,
-                    checked
+                    info.reason,
+                    info.checked
                 )
             else
-                log.warn(
-                    'control_loop: replicaset %s(%s): no appointment made (reason=%s, checked=%d)',
-                    replicaset_uuid,
-                    data.alias,
-                    reason,
-                    checked
-                )
+                if info.reason ~= DECISION_REASONS.CURRENT_LEADER_HEALTHY then
+                    log.warn(
+                        'control_loop: replicaset %s(%s): no appointment made (reason=%s, checked=%d)',
+                        replicaset_uuid,
+                        data.alias,
+                        info.reason,
+                        info.checked
+                    )
+                end
             end
         end
 
