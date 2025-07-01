@@ -53,6 +53,29 @@ local function pack_decision(leader_uuid)
     }
 end
 
+local function describe(uuid)
+    local servers = assert(vars.topology_cfg.servers)
+    local srv = servers[uuid]
+
+    if srv ~= nil then
+        local uri = srv.uri
+        local alias
+
+        local member = membership.get_member(uri)
+        if member ~= nil and member.payload ~= nil and member.payload.alias ~= nil then
+            alias = member.payload.alias
+        end
+
+        if alias and uri then
+            return string.format('%s (%s, %q)', uuid, alias, uri)
+        elseif uri then
+            return string.format('%s (%q)', uuid, uri)
+        end
+    end
+
+    return uuid
+end
+
 local function make_decision(ctx, replicaset_uuid)
     checks({members = 'table', decisions = 'table'}, 'string')
 
@@ -60,16 +83,31 @@ local function make_decision(ctx, replicaset_uuid)
     if current_decision ~= nil then
         local current_leader_uuid = current_decision.leader
         local current_leader = vars.topology_cfg.servers[current_leader_uuid]
-        if fiber.clock() < current_decision.immunity
-        or (topology.electable(current_leader_uuid, current_leader)
-            and vars.healthcheck(ctx.members, current_decision.leader))
-        then
+        if fiber.clock() < current_decision.immunity then
+            log.info(
+                'make_decision: immunity not expired for leader %s (expires in %.1f sec)',
+                describe(current_leader_uuid),
+                current_decision.immunity - fiber.clock()
+            )
+            return nil
+        elseif topology.electable(current_leader_uuid, current_leader)
+            and vars.healthcheck(ctx.members, current_leader_uuid) then
+            log.info(
+                'make_decision: current leader %s is still healthy and electable',
+                describe(current_leader_uuid)
+            )
             return nil
         end
     end
 
     local candidates = topology.get_leaders_order(
         vars.topology_cfg, replicaset_uuid
+    )
+
+    log.info(
+        'make_decision: evaluating replicaset %s (candidates=%d)',
+        replicaset_uuid,
+        #candidates
     )
 
     if current_decision == nil then
@@ -85,26 +123,14 @@ local function make_decision(ctx, replicaset_uuid)
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
             ctx.decisions[replicaset_uuid] = decision
-            do
-                local prev = current_decision
-                local prev_leader_uuid = prev and prev.leader or 'none'
-                local prev_info = vars.topology_cfg.servers[prev_leader_uuid]
-                local prev_alias = prev_info and (prev_info.alias or '-') or '-'
-                local prev_uri = prev_info and (prev_info.uri or '-') or '-'
-
-                log.info(
-                    'Replicaset %s: previous leader %s (%s, %s), healthcheck failed, appoint new leader %s (%s)',
-                    replicaset_uuid,
-                    prev_leader_uuid,
-                    prev_alias,
-                    prev_uri,
-                    decision.leader,
-                    vars.topology_cfg.servers[decision.leader].uri
-                )
-            end
             return decision
         end
     end
+
+    log.warn(
+        'make_decision: no healthy candidates found in replicaset %s',
+        replicaset_uuid
+    )
 end
 
 local function control_loop(session)
@@ -112,17 +138,23 @@ local function control_loop(session)
     local ctx = assert(session.ctx)
 
     while true do
+        log.info('control_loop: started')
+
         ctx.members = membership.members()
 
         local updates = {}
 
         for replicaset_uuid, _ in pairs(vars.topology_cfg.replicasets) do
+            local prev = ctx.decisions[replicaset_uuid]
             local decision = make_decision(ctx, replicaset_uuid)
             if decision ~= nil then
                 table.insert(updates, {replicaset_uuid, decision.leader})
-                log.info('Replicaset %s: appoint %s (%q)',
-                    replicaset_uuid, decision.leader,
-                    vars.topology_cfg.servers[decision.leader].uri
+                local prev_leader_uuid = prev and prev.leader or 'none'
+                log.info(
+                    'control_loop: replicaset %s: appoint new leader %s, previous leader %s',
+                    replicaset_uuid,
+                    describe(decision.leader),
+                    describe(prev_leader_uuid)
                 )
             end
         end
@@ -155,6 +187,8 @@ local function control_loop(session)
         assert(next_moment >= now)
         vars.membership_notification:wait(next_moment - now)
         fiber.testcancel()
+
+        log.info('control_loop: iteration finished')
     end
 end
 
@@ -393,25 +427,18 @@ local function appoint_leaders(leaders)
             return nil, AppointmentError:new("Cannot appoint non-electable instance")
         end
 
+        local prev = session.ctx.decisions[replicaset_uuid]
+        local prev_leader_uuid = prev and prev.leader or 'none'
+
+        log.info(
+            'appoint_leaders: replicaset %s: appoint new leader %s, previous leader %s (manual)',
+            replicaset_uuid,
+            describe(leader_uuid),
+            describe(prev_leader_uuid)
+        )
+
         local decision = pack_decision(leader_uuid)
         table.insert(updates, {replicaset_uuid, decision.leader})
-        do
-            local prev = session.ctx.decisions[replicaset_uuid]
-            local prev_leader_uuid = prev and prev.leader or 'none'
-            local prev_info = servers[prev_leader_uuid]
-            local prev_alias = prev_info and (prev_info.alias or '-') or '-'
-            local prev_uri = prev_info and (prev_info.uri or '-') or '-'
-
-            log.info(
-                'Replicaset %s: previous leader %s (%s, %s), appoint new leader %s (%s) (manual)',
-                replicaset_uuid,
-                prev_leader_uuid,
-                prev_alias,
-                prev_uri,
-                decision.leader,
-                assert(servers[decision.leader]).uri
-            )
-        end
         session.ctx.decisions[replicaset_uuid] = decision
     end
 

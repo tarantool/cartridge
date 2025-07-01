@@ -221,8 +221,7 @@ local function describe(uuid)
     if uuid == vars.instance_uuid then
         return string.format('%s (me)', uuid)
     elseif servers[uuid] ~= nil then
-        local alias = servers[uuid].alias or '-'
-        return string.format('%s (%s, %q)', uuid, alias, servers[uuid].uri)
+        return string.format('%s (%q)', uuid, servers[uuid].uri)
     else
         return uuid
     end
@@ -462,8 +461,6 @@ local function synchro_promote()
             log.error('synchro_promote: fiber was cancelled in synchro_promote')
             return err
         end
-    else
-        log.warn('synchro_promote: skipped (conditions not met)')
     end
 end
 
