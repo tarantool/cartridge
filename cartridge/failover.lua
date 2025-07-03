@@ -214,7 +214,7 @@ local function _get_appointments_stateful_mode(client, timeout)
     return client:longpoll(timeout)
 end
 
-local function _get_replicaset_alias_by_replicaset_uuid(server_uuid)
+local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
     local replicaset = topology_cfg.replicasets[replicaset_uuid]
