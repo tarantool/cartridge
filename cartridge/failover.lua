@@ -217,7 +217,7 @@ end
 local function _get_replicaset_alias_by_replicaset_uuid(server_uuid)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
-    local replicaset = topology_cfg.replicasets[server_uuid]
+    local replicaset = topology_cfg.replicasets[replicaset_uuid]
     if replicaset ~= nil and replicaset.alias ~= nil then
         return replicaset.alias
     end
