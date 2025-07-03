@@ -93,6 +93,7 @@ end
 -- taking into account immunity timeout and health status.
 --
 -- @function make_decision
+-- @local
 -- @tparam table ctx The failover context table (must include .members and .decisions)
 -- @tparam string replicaset_uuid UUID of the replicaset
 --
