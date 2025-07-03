@@ -64,6 +64,14 @@ local function pack_decision(leader_uuid)
     }
 end
 
+local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+    local replicaset = vars.topology_cfg.replicasets[replicaset_uuid]
+
+    if replicaset ~= nil and replicaset.alias ~= nil then
+        return replicaset.alias
+    end
+end
+
 local function describe(uuid)
     local servers = assert(vars.topology_cfg.servers)
     local srv = servers[uuid]
@@ -77,9 +85,9 @@ local function describe(uuid)
             alias = member.payload.alias
         end
 
-        if alias and uri then
+        if alias ~= nil and uri ~= nil then
             return string.format('%s (%s, %q)', uuid, alias, uri)
-        elseif uri then
+        elseif uri ~= nil then
             return string.format('%s (%q)', uuid, uri)
         end
     end
@@ -170,7 +178,7 @@ local function control_loop(session)
     local ctx = assert(session.ctx)
 
     while true do
-        log.info('control_loop: making decisions')
+        log.info('Making decisions')
 
         ctx.members = membership.members()
 
@@ -179,15 +187,14 @@ local function control_loop(session)
         for replicaset_uuid, replicaset in pairs(vars.topology_cfg.replicasets) do
             local prev = ctx.decisions[replicaset_uuid]
             local decision, info = make_decision(ctx, replicaset_uuid)
-            local prev_leader_uuid = prev and prev.leader or 'none'
+            local prev_leader_uuid = prev ~= nil and prev.leader ~= nil and prev.leader or 'none'
 
             if decision ~= nil then
-            table.insert(updates, {replicaset_uuid, decision.leader})
+                table.insert(updates, {replicaset_uuid, decision.leader})
                 log.info(
-                    'control_loop: replicaset %s(%s): appoint new leader %s, previous leader %s' ..
-                    ' (reason=%s, checked=%d)',
+                    'Replicaset %s%s: appoint new leader %s, previous leader %s (reason=%s, checked=%d)',
                     replicaset_uuid,
-                    data.alias,
+                    replicaset.alias ~= nil and '(' .. replicaset.alias .. ')' or '',
                     describe(decision.leader),
                     describe(prev_leader_uuid),
                     info.reason,
@@ -196,9 +203,9 @@ local function control_loop(session)
             else
                 if info.reason ~= DECISION_REASONS.CURRENT_LEADER_HEALTHY then
                     log.warn(
-                        'control_loop: replicaset %s(%s): no appointment made (reason=%s, checked=%d)',
+                        'Replicaset %s%s: no appointment made (reason=%s, checked=%d)',
                         replicaset_uuid,
-                        data.alias,
+                        replicaset.alias ~= nil and '(' .. replicaset.alias .. ')' or '',
                         info.reason,
                         info.checked
                     )
@@ -232,7 +239,7 @@ local function control_loop(session)
         end
 
         assert(next_moment >= now)
-        log.info('control_loop: wait membership notifications')
+        log.info('Wait membership notifications')
         vars.membership_notification:wait(next_moment - now)
         fiber.testcancel()
     end
@@ -474,11 +481,13 @@ local function appoint_leaders(leaders)
         end
 
         local prev = session.ctx.decisions[replicaset_uuid]
-        local prev_leader_uuid = prev and prev.leader or 'none'
+        local prev_leader_uuid = prev ~= nil and prev.leader ~= nil and prev.leader or 'none'
 
+        local replicaset_alias = _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
         log.info(
-            'appoint_leaders: replicaset %s: appoint new leader %s, previous leader %s (manual)',
+            'Replicaset %s%s: appoint new leader %s, previous leader %s (manual)',
             replicaset_uuid,
+            replicaset_alias ~= nil and '(' .. replicaset_alias .. ')' or '',
             describe(leader_uuid),
             describe(prev_leader_uuid)
         )

@@ -214,18 +214,12 @@ local function _get_appointments_stateful_mode(client, timeout)
     return client:longpoll(timeout)
 end
 
-local function _get_replicaset_alias_by_server_uuid(server_uuid)
+local function _get_replicaset_alias_by_replicaset_uuid(server_uuid)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
-    local server = topology_cfg.servers[server_uuid]
-    if server then
-        local replicaset_uuid = server.replicaset_uuid
-        if replicaset_uuid then
-            local replicaset = topology_cfg.replicasets[replicaset_uuid]
-            if replicaset and replicaset.alias then
-                return replicaset.alias
-            end
-        end
+    local replicaset = topology_cfg.replicasets[server_uuid]
+    if replicaset ~= nil and replicaset.alias ~= nil then
+        return replicaset.alias
     end
 end
 
@@ -281,10 +275,10 @@ local function accept_appointments(appointments)
 
         changed = true
 
-        local replicaset_alias = _get_replicaset_alias_by_server_uuid(leader_uuid) or ''
-        log.info('Replicaset %s(%s)%s: new leader %s, was %s',
+        local replicaset_alias = _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+        log.info('Replicaset %s%s%s: new leader %s, previous leader %s',
             replicaset_uuid,
-            replicaset_alias,
+            replicaset_alias ~= nil and '(' .. replicaset_alias .. ')' or '',
             replicaset_uuid == vars.replicaset_uuid and ' (me)' or '',
             describe(leader_uuid),
             describe(current_leader)
@@ -296,8 +290,6 @@ local function accept_appointments(appointments)
     if changed then
         vars.cache.active_leaders = active_leaders
         membership.set_payload('leader_uuid', active_leaders[vars.replicaset_uuid])
-    else
-        log.warn('accept_appointments: no changes in leadership map')
     end
 
     return changed
@@ -377,7 +369,7 @@ local function fencing_healthcheck()
     if assert(vars.client):check_quorum() then
         return true
     else
-        log.warn('fencing_healthcheck: quorum NOT OK, checking replicas...')
+        log.warn('Quorum NOT OK, checking replicas...')
     end
 
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
@@ -465,17 +457,16 @@ local function synchro_promote()
     and not vars.failover_suppressed
     and box.ctl.promote ~= nil
     then
-        log.info('synchro_promote: attempting box.ctl.promote()')
+        log.info('Attempting box.ctl.promote()')
 
         local ok, err = pcall(box.ctl.promote)
         if ok ~= true then
-            log.error('synchro_promote: failed to promote: %s', err or 'unknown error')
+            log.error('Failed to promote: %s', err or 'unknown')
             return err
         end
-
         ok, err = pcall(fiber.testcancel)
         if ok ~= true then
-            log.error('synchro_promote: fiber was cancelled in synchro_promote')
+            log.error('Fiber was cancelled in synchro_promote')
             return err
         end
     end
@@ -488,18 +479,16 @@ local function synchro_demote()
     and box_info.synchro.queue.owner ~= 0
     and box_info.synchro.queue.owner == box_info.id
     and box.ctl.demote ~= nil then
-        log.info('synchro_demote: attempting box.ctl.demote()')
+        log.info('Attempting box.ctl.demote()')
 
         local ok, err = pcall(box.ctl.demote)
-
         if ok ~= true then
             log.error('Failed to demote: %s', err or 'unknown')
             return err
         end
-
         ok, err = pcall(fiber.testcancel)
         if ok ~= true then
-            log.error('synchro_demote: fiber was cancelled in synchro_demote')
+            log.error('Fiber was cancelled in synchro_demote')
             return err
         end
     end
@@ -759,7 +748,7 @@ local function failover_loop(args)
         local csw1 = utils.fiber_csw()
 
         if appointments == nil then
-            log.warn('failover_loop: appointments error: %s', err.err)
+            log.warn('Appointments error: %s', err.err)
             vars.failover_err = FailoverError:new(
                 "Error fetching appointments: %s", err.err
             )
