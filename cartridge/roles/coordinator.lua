@@ -176,7 +176,7 @@ local function control_loop(session)
 
         local updates = {}
 
-        for replicaset_uuid, data in pairs(vars.topology_cfg.replicasets) do
+        for replicaset_uuid, replicaset in pairs(vars.topology_cfg.replicasets) do
             local prev = ctx.decisions[replicaset_uuid]
             local decision, info = make_decision(ctx, replicaset_uuid)
             local prev_leader_uuid = prev and prev.leader or 'none'
