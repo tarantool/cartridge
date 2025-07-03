@@ -493,6 +493,8 @@ test_remotely('test_patch_clusterwide', function()
     local _patch = cartridge.config_patch_clusterwide
     local _get_ro = cartridge.config_get_readonly
 
+    local vars = require('cartridge.vars').new('cartridge.twophase')
+
     --------------------------------------------------------------------
     local ok, err = _patch({
         ['data'] = "friday",
@@ -500,6 +502,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), 'friday')
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({
@@ -508,6 +511,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), {today = 'friday'})
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({
@@ -517,6 +521,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
+    t.assert(vars.config_applied)
 
     local ok, err = _patch({
         ['data.yml'] = '{tomorow: saturday} # so excited',
@@ -525,6 +530,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
     t.assert_equals(_get_ro('data.yml'), '{tomorow: saturday} # so excited')
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({
@@ -534,6 +540,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), nil)
     t.assert_equals(_get_ro('data.yml'), nil)
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({
@@ -543,6 +550,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), {afterwards = 'sunday'})
     t.assert_equals(_get_ro('data.yml'), '{afterwards: sunday}')
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({['data'] = "Fun, fun, fun, fun",})
@@ -551,6 +559,7 @@ test_remotely('test_patch_clusterwide', function()
         class_name = 'LoadConfigError',
         err = 'Ambiguous sections "data" and "data.yml"'
     })
+    t.assert_not(vars.config_applied)
     local ok, err = _patch({
         ['data'] = "Fun, fun, fun, fun",
         ['data.yml'] = box.NULL,
@@ -559,6 +568,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), "Fun, fun, fun, fun")
     t.assert_equals(_get_ro('data.yml'), nil)
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({['data.yml'] = "---\nWeekend\n...",})
@@ -567,6 +577,7 @@ test_remotely('test_patch_clusterwide', function()
         class_name = 'LoadConfigError',
         err = 'Ambiguous sections "data" and "data.yml"'
     })
+    t.assert_not(vars.config_applied)
     local ok, err = _patch({
         ['data'] = box.NULL,
         ['data.yml'] = "---\nWeekend\n...",
@@ -575,6 +586,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), "Weekend")
     t.assert_equals(_get_ro('data.yml'), "---\nWeekend\n...")
+    t.assert(vars.config_applied)
 
     --------------------------------------------------------------------
     local ok, err = _patch({
@@ -586,6 +598,7 @@ test_remotely('test_patch_clusterwide', function()
         class_name = 'PatchConfigError',
         err = 'Ambiguous sections "conflict" and "conflict.yml"',
     })
+    t.assert_not(vars.config_applied)
 end)
 
 
