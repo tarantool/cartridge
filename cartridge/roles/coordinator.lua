@@ -73,7 +73,7 @@ local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
 end
 
 local function describe(uuid)
-    local servers = assert(vars.topology_cfg.servers)
+    local servers = vars.topology_cfg.servers
     local srv = servers[uuid]
 
     if srv ~= nil then
