@@ -65,7 +65,8 @@ local function pack_decision(leader_uuid)
 end
 
 local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
-    local replicaset = vars.topology_cfg.replicasets[replicaset_uuid]
+    local replicaset_map = assert(vars.topology_cfg.replicasets)
+    local replicaset = replicaset_map[replicaset_uuid]
 
     if replicaset ~= nil and replicaset.alias ~= nil then
         return replicaset.alias
@@ -73,7 +74,7 @@ local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
 end
 
 local function describe(uuid)
-    local servers = vars.topology_cfg.servers
+    local servers = assert(vars.topology_cfg.servers)
     local srv = servers[uuid]
 
     if srv ~= nil then
