@@ -44,6 +44,17 @@ vars:new('healthcheck', function(_, instance_uuid)
     return false
 end)
 
+local DECISION_REASONS = {
+    IMMUNITY_NOT_EXPIRED = 'immunity_not_expired',
+    CURRENT_LEADER_HEALTHY = 'current_leader_healthy',
+    FIRST_APPOINTMENT = 'first_appointment',
+    NEW_LEADER_SELECTED = 'new_leader_selected',
+    NO_HEALTHY_CANDIDATES = 'no_healthy_candidates',
+}
+
+local CHECKED_NONE = 0
+local CHECKED_FIRST = 1
+
 local function pack_decision(leader_uuid)
     checks('string')
     return {
@@ -53,6 +64,60 @@ local function pack_decision(leader_uuid)
     }
 end
 
+local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+    local replicaset_map = assert(vars.topology_cfg.replicasets)
+    local replicaset = replicaset_map[replicaset_uuid]
+
+    if replicaset ~= nil and replicaset.alias ~= nil then
+        return replicaset.alias
+    end
+end
+
+local function describe(uuid)
+    local servers = assert(vars.topology_cfg.servers)
+    local srv = servers[uuid]
+
+    if srv ~= nil then
+        local uri = srv.uri
+        local alias
+
+        local member = membership.get_member(uri)
+        if member ~= nil and member.payload ~= nil and member.payload.alias ~= nil then
+            alias = member.payload.alias
+        end
+
+        if alias ~= nil and uri ~= nil then
+            return string.format('%s (%s, %q)', uuid, alias, uri)
+        elseif uri ~= nil then
+            return string.format('%s (%q)', uuid, uri)
+        end
+    end
+
+    return uuid
+end
+
+--- Make leader election decision for a replicaset.
+--
+-- This function evaluates the current leader and available candidates,
+-- taking into account immunity timeout and health status.
+--
+-- @function make_decision
+-- @local
+-- @tparam table ctx The failover context table (must include .members and .decisions)
+-- @tparam string replicaset_uuid UUID of the replicaset
+--
+-- @treturn[1] table decision The decision table with `leader` and `immunity` fields
+-- @treturn[1] table info Metadata about the decision:
+--   - info.reason (string): One of:
+--       * DECISION_REASONS.IMMUNITY_NOT_EXPIRED
+--       * DECISION_REASONS.CURRENT_LEADER_HEALTHY
+--       * DECISION_REASONS.FIRST_APPOINTMENT
+--       * DECISION_REASONS.NEW_LEADER_SELECTED
+--       * DECISION_REASONS.NO_HEALTHY_CANDIDATES
+--   - info.checked (number): Number of candidates actually checked
+--
+-- @treturn[2] nil
+-- @treturn[2] table info Same as above
 local function make_decision(ctx, replicaset_uuid)
     checks({members = 'table', decisions = 'table'}, 'string')
 
@@ -60,11 +125,17 @@ local function make_decision(ctx, replicaset_uuid)
     if current_decision ~= nil then
         local current_leader_uuid = current_decision.leader
         local current_leader = vars.topology_cfg.servers[current_leader_uuid]
-        if fiber.clock() < current_decision.immunity
-        or (topology.electable(current_leader_uuid, current_leader)
-            and vars.healthcheck(ctx.members, current_decision.leader))
-        then
-            return nil
+        if topology.electable(current_leader_uuid, current_leader)
+            and vars.healthcheck(ctx.members, current_leader_uuid) then
+            return nil, {
+                reason = DECISION_REASONS.CURRENT_LEADER_HEALTHY,
+                checked = CHECKED_NONE,
+            }
+        elseif fiber.clock() < current_decision.immunity then
+            return nil, {
+                reason = DECISION_REASONS.IMMUNITY_NOT_EXPIRED,
+                checked = CHECKED_NONE,
+            }
         end
     end
 
@@ -78,16 +149,29 @@ local function make_decision(ctx, replicaset_uuid)
         -- without regard to the healthcheck
         local decision = pack_decision(candidates[1])
         ctx.decisions[replicaset_uuid] = decision
-        return decision
+        return decision, {
+            reason = DECISION_REASONS.FIRST_APPOINTMENT,
+            checked = CHECKED_FIRST,
+        }
     end
 
+    local checked_count = 0
     for _, instance_uuid in ipairs(candidates) do
+        checked_count = checked_count + 1
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
             ctx.decisions[replicaset_uuid] = decision
-            return decision
+            return decision, {
+                reason = DECISION_REASONS.NEW_LEADER_SELECTED,
+                checked = checked_count,
+            }
         end
     end
+
+    return nil, {
+        reason = DECISION_REASONS.NO_HEALTHY_CANDIDATES,
+        checked = checked_count,
+    }
 end
 
 local function control_loop(session)
@@ -95,18 +179,38 @@ local function control_loop(session)
     local ctx = assert(session.ctx)
 
     while true do
+        log.info('Making decisions')
+
         ctx.members = membership.members()
 
         local updates = {}
 
-        for replicaset_uuid, _ in pairs(vars.topology_cfg.replicasets) do
-            local decision = make_decision(ctx, replicaset_uuid)
+        for replicaset_uuid, replicaset in pairs(vars.topology_cfg.replicasets) do
+            local prev = ctx.decisions[replicaset_uuid]
+            local decision, info = make_decision(ctx, replicaset_uuid)
+            local prev_leader_uuid = prev ~= nil and prev.leader ~= nil and prev.leader or 'none'
+
             if decision ~= nil then
                 table.insert(updates, {replicaset_uuid, decision.leader})
-                log.info('Replicaset %s: appoint %s (%q)',
-                    replicaset_uuid, decision.leader,
-                    vars.topology_cfg.servers[decision.leader].uri
+                log.info(
+                    'Replicaset %s%s: appoint new leader %s, previous leader %s (reason=%s, checked=%d)',
+                    replicaset_uuid,
+                    replicaset.alias ~= nil and '(' .. replicaset.alias .. ')' or '',
+                    describe(decision.leader),
+                    describe(prev_leader_uuid),
+                    info.reason,
+                    info.checked
                 )
+            else
+                if info.reason ~= DECISION_REASONS.CURRENT_LEADER_HEALTHY then
+                    log.warn(
+                        'Replicaset %s%s: no appointment made (reason=%s, checked=%d)',
+                        replicaset_uuid,
+                        replicaset.alias ~= nil and '(' .. replicaset.alias .. ')' or '',
+                        info.reason,
+                        info.checked
+                    )
+                end
             end
         end
 
@@ -136,6 +240,7 @@ local function control_loop(session)
         end
 
         assert(next_moment >= now)
+        log.info('Wait membership notifications')
         vars.membership_notification:wait(next_moment - now)
         fiber.testcancel()
     end
@@ -376,12 +481,20 @@ local function appoint_leaders(leaders)
             return nil, AppointmentError:new("Cannot appoint non-electable instance")
         end
 
+        local prev = session.ctx.decisions[replicaset_uuid]
+        local prev_leader_uuid = prev ~= nil and prev.leader ~= nil and prev.leader or 'none'
+
+        local replicaset_alias = _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+        log.info(
+            'Replicaset %s%s: appoint new leader %s, previous leader %s (manual)',
+            replicaset_uuid,
+            replicaset_alias ~= nil and '(' .. replicaset_alias .. ')' or '',
+            describe(leader_uuid),
+            describe(prev_leader_uuid)
+        )
+
         local decision = pack_decision(leader_uuid)
         table.insert(updates, {replicaset_uuid, decision.leader})
-        log.info('Replicaset %s: appoint %s (%q) (manual)',
-            replicaset_uuid, decision.leader,
-            assert(servers[decision.leader]).uri
-        )
         session.ctx.decisions[replicaset_uuid] = decision
     end
 

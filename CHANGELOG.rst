@@ -18,6 +18,11 @@ Added
 
 - New ``config_applied`` variable in ``cartridge.twophase`` module to track
   clusterwide configuration status.
+- Improved failover and leader election logging:
+
+  - Added structured logs explaining why a leader appointment was made or skipped.
+  - Logs now include replicaset aliases and number of candidates evaluated.
+  - Control loop logs clearer start and wait states.
 
 -------------------------------------------------------------------------------
 [2.16.0] - 2025-06-20

@@ -214,6 +214,16 @@ local function _get_appointments_stateful_mode(client, timeout)
     return client:longpoll(timeout)
 end
 
+local function _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local replicaset_map = assert(topology_cfg.replicasets)
+    local replicaset = replicaset_map[replicaset_uuid]
+
+    if replicaset ~= nil and replicaset.alias ~= nil then
+        return replicaset.alias
+    end
+end
+
 local function describe(uuid)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
     local servers = assert(topology_cfg.servers)
@@ -266,8 +276,10 @@ local function accept_appointments(appointments)
 
         changed = true
 
-        log.info('Replicaset %s%s: new leader %s, was %s',
+        local replicaset_alias = _get_replicaset_alias_by_replicaset_uuid(replicaset_uuid)
+        log.info('Replicaset %s%s%s: new leader %s, previous leader %s',
             replicaset_uuid,
+            replicaset_alias ~= nil and '(' .. replicaset_alias .. ')' or '',
             replicaset_uuid == vars.replicaset_uuid and ' (me)' or '',
             describe(leader_uuid),
             describe(current_leader)
@@ -357,6 +369,8 @@ local function fencing_healthcheck()
     -- there is no need to actuate fencing yet
     if assert(vars.client):check_quorum() then
         return true
+    else
+        log.warn('Quorum NOT OK, checking replicas...')
     end
 
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
@@ -444,6 +458,8 @@ local function synchro_promote()
     and not vars.failover_suppressed
     and box.ctl.promote ~= nil
     then
+        log.info('Attempting box.ctl.promote()')
+
         local ok, err = pcall(box.ctl.promote)
         if ok ~= true then
             log.error('Failed to promote: %s', err or 'unknown')
@@ -464,6 +480,8 @@ local function synchro_demote()
     and box_info.synchro.queue.owner ~= 0
     and box_info.synchro.queue.owner == box_info.id
     and box.ctl.demote ~= nil then
+        log.info('Attempting box.ctl.demote()')
+
         local ok, err = pcall(box.ctl.demote)
         if ok ~= true then
             log.error('Failed to demote: %s', err or 'unknown')
@@ -636,6 +654,7 @@ function reconfigure_all(active_leaders)
         fencing_start()
     end
 
+    local apply_total_start = fiber.clock()
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         box.cfg({
@@ -678,10 +697,11 @@ function reconfigure_all(active_leaders)
         return true
     end)
 
+    local apply_total_elapsed = fiber.clock() - apply_total_start
     if ok then
-        log.info('Failover step finished')
+        log.info('Failover step finished in %.6f sec', apply_total_elapsed)
     else
-        log.warn('Failover step failed: %s', err)
+        log.warn('Failover step failed after %.6f sec: %s', apply_total_elapsed, err)
     end
     confapplier.set_state('RolesConfigured')
 end
@@ -729,7 +749,7 @@ local function failover_loop(args)
         local csw1 = utils.fiber_csw()
 
         if appointments == nil then
-            log.warn('%s', err.err)
+            log.warn('Appointments error: %s', err.err)
             vars.failover_err = FailoverError:new(
                 "Error fetching appointments: %s", err.err
             )
