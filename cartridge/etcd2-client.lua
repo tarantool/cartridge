@@ -464,7 +464,7 @@ end
 -- @treturn[2] table Error description
 local function check_quorum(client)
     local session = client:get_session()
-    local resp, err = session.connection:request('GET', '/lock?quorum=true')
+    local resp, err = session.connection:request('GET', '/lock', {quorum=true})
     if resp ~= nil then
         return true
     elseif err.etcd_code == etcd2.EcodeKeyNotFound then

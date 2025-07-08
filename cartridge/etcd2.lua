@@ -29,6 +29,13 @@ local function request(connection, method, path, args, opts)
     assert(connection.etcd_cluster_id ~= nil)
 
     local body = {}
+    if method == 'GET' then
+        args = args or {}
+        if args.wait == nil then -- quorum does not work with wait, cause
+            args.quorum = true
+        end
+    end
+
     if args ~= nil then
         for k, v in pairs(args) do
             table.insert(body, k .. '=' .. tostring(v))
@@ -57,7 +64,6 @@ local function request(connection, method, path, args, opts)
     local lasterror
     local num_endpoints = #connection.endpoints
     assert(num_endpoints > 0)
-
     for i = 0, num_endpoints - 1 do
         local eidx = connection.eidx + i
         if eidx > num_endpoints then
@@ -103,6 +109,7 @@ local function request(connection, method, path, args, opts)
         end
 
         connection.eidx = eidx
+
         local ok, data = pcall(json.decode, resp.body)
         if not ok then
             -- Example:
@@ -134,6 +141,16 @@ local function request(connection, method, path, args, opts)
             --     x-etcd-cluster-id: cdf818194e3a8c32
             --     x-etcd-index: '61529'
             -- ...
+            if data.errorCode == 300 or data.errorCode == 301 then
+                lasterror = EtcdError:new(
+                    "quorum not ok for %s, %s, %s, %s",
+                    connection.endpoints[eidx],
+                    data.errorCode,
+                    data.message,
+                    data.cause
+                )
+                goto continue
+            end
 
             local err = EtcdError:new('%s (%s): %s',
                 data.message, data.errorCode, data.cause
