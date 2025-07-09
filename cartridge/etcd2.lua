@@ -64,11 +64,9 @@ local function request(connection, method, path, args, opts)
     local lasterror
     local num_endpoints = #connection.endpoints
     assert(num_endpoints > 0)
-    for i = 0, num_endpoints - 1 do
-        local eidx = connection.eidx + i
-        if eidx > num_endpoints then
-            eidx = eidx % num_endpoints
-        end
+    for _ = 1, num_endpoints do
+        connection.eidx = (connection.eidx % num_endpoints) + 1
+        local eidx = connection.eidx
 
         if #connection.endpoints ~= num_endpoints then
             -- something may change during network yield
@@ -107,8 +105,6 @@ local function request(connection, method, path, args, opts)
             )
             goto continue
         end
-
-        connection.eidx = eidx
 
         local ok, data = pcall(json.decode, resp.body)
         if not ok then
@@ -149,6 +145,7 @@ local function request(connection, method, path, args, opts)
                     data.message,
                     data.cause
                 )
+                lasterror.http_code = resp.status
                 goto continue
             end
 
