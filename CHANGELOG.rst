@@ -18,6 +18,16 @@ Changed
 
 - Update ``http`` dependency to `https://github.com/tarantool/http/releases/tag/1.8.0>`_.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- An **instance** (router or storage) could stick to a minority etcd node after a
+  network partition, keep an outdated `active_leaders` key and cause split-brain.  
+  Ordinary reads are now sent with `quorum=true`, and every request (reads, writes,
+  long-polls) is issued to the next endpoint in round-robin order.  
+  Split-brain is prevented; long-polls eventually reach a majority node.
+
 -------------------------------------------------------------------------------
 [2.16.1] - 2025-07-04
 -------------------------------------------------------------------------------
