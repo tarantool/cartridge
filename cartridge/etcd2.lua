@@ -31,7 +31,9 @@ local function request(connection, method, path, args, opts)
     local body = {}
     if method == 'GET' then
         args = args or {}
-        if args.wait == nil then -- quorum does not work with wait, cause
+        -- Quorum does not work with wait, it does not wait result and returns immediately.
+        -- If quorum not provided explicitly by deafult it true.
+        if args.wait == nil and args.quorum == nil then
             args.quorum = true
         end
     end
@@ -65,8 +67,8 @@ local function request(connection, method, path, args, opts)
     local num_endpoints = #connection.endpoints
     assert(num_endpoints > 0)
     for _ = 1, num_endpoints do
-        connection.eidx = (connection.eidx % num_endpoints) + 1
         local eidx = connection.eidx
+        connection.eidx = (connection.eidx % num_endpoints) + 1
 
         if #connection.endpoints ~= num_endpoints then
             -- something may change during network yield
@@ -137,7 +139,7 @@ local function request(connection, method, path, args, opts)
             --     x-etcd-cluster-id: cdf818194e3a8c32
             --     x-etcd-index: '61529'
             -- ...
-            if data.errorCode == 300 or data.errorCode == 301 then
+            if (data.errorCode == 300 or data.errorCode == 301) and method == 'GET' then
                 lasterror = EtcdError:new(
                     "quorum not ok for %s, %s, %s, %s",
                     connection.endpoints[eidx],
