@@ -32,7 +32,7 @@ local function request(connection, method, path, args, opts)
     if method == 'GET' then
         args = args or {}
         -- Quorum does not work with wait, it does not wait result and returns immediately.
-        -- If quorum not provided explicitly by deafult it true.
+        -- If quorum not provided explicitly by default it true.
         if args.wait == nil and args.quorum == nil then
             args.quorum = true
         end
