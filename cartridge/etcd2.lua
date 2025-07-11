@@ -68,6 +68,8 @@ local function request(connection, method, path, args, opts)
     assert(num_endpoints > 0)
     for _ = 1, num_endpoints do
         local eidx = connection.eidx
+
+        -- round-robin on etcd-connections
         connection.eidx = (connection.eidx % num_endpoints) + 1
 
         if #connection.endpoints ~= num_endpoints then
