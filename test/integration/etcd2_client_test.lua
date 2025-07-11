@@ -614,6 +614,7 @@ function g.test_round_robin_on_etcd_nodes()
     local eidx2 = session.connection.eidx
     t.assert_not_equals(eidx1, eidx2)
 end
+
 function g.test_longpolling_lack_of_quorum()
     local c1 = create_client():get_session()
     local kid = uuid.str()
