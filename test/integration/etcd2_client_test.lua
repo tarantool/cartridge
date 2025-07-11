@@ -578,3 +578,73 @@ function g.test_promote_after_close()
 
     rawset(package.loaded['http.client'], 'request', old_request)
 end
+
+function g.test_get_request_with_implicit_quorum()
+    local client = create_client()
+    local session = client:get_session()
+    session.eidx = 1
+    g.etcd_b.process:kill('STOP') -- etcd lack of quorum
+
+    local resp, err = session.connection:request('GET', '/some_key', {quorum=false})
+    t.assert_equals(resp, nil)
+    t.assert_equals(err.etcd_code, 100)
+
+    client:drop_session()
+    session = client:get_session()
+
+    resp, err = session.connection:request('GET', '/some_key', {quorum=true})
+    t.assert_equals(resp, nil)
+    t.assert_equals(err.etcd_code, nil)
+    t.assert_equals(err.http_code, 408)
+
+    client:drop_session()
+    session = client:get_session()
+
+    resp, err = session.connection:request('GET', '/some_key')
+    t.assert_equals(resp, nil)
+    t.assert_equals(err.etcd_code, nil)
+    t.assert_equals(err.http_code, 408)
+end
+
+function g.test_round_robin_on_etcd_nodes()
+    local client = create_client()
+    local session = client:get_session()
+    local eidx1 = session.connection.eidx
+    session.connection:request('GET', '/some_key', {quorum=false})
+    local eidx2 = session.connection.eidx
+    t.assert_not_equals(eidx1, eidx2)
+end
+
+function g.test_longpolling_lack_of_quorum()
+    local c1 = create_client():get_session()
+    local kid = uuid.str()
+    t.assert_equals(
+        c1:acquire_lock({uuid = kid, uri = 'localhost:9'}),
+        true
+    )
+    c1:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
+
+    local client = create_client()
+    local function async_longpoll()
+        local chan = fiber.channel(1)
+        fiber.new(function()
+            local ret, err = client:longpoll(0.2)
+            chan:put({ret, err})
+        end)
+        return chan
+    end
+
+    t.assert_equals(client:longpoll(0.2), {A = 'a1', B = 'b1'})
+
+    local chan = async_longpoll()
+    t.assert(c1:set_leaders({{'A', 'a2'}}), true)
+
+    t.assert_equals(chan:get(0.2), {{A = 'a2', B = 'b1'}})
+
+    t.assert(c1:set_leaders({{'B', 'b2'}}), true)
+
+    g.etcd_b.process:kill('STOP') -- etcd lack of quorum
+
+    local chan = async_longpoll()
+    t.assert_equals(chan:get(0.4), {{A = 'a2', B = 'b2'}})
+end

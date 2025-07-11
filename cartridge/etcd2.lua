@@ -29,6 +29,15 @@ local function request(connection, method, path, args, opts)
     assert(connection.etcd_cluster_id ~= nil)
 
     local body = {}
+    if method == 'GET' then
+        args = args or {}
+        -- Quorum does not work with wait: it does not wait for the result and returns immediately.
+        -- If quorum is not provided explicitly, it defaults to true.
+        if args.wait == nil and args.quorum == nil then
+            args.quorum = true
+        end
+    end
+
     if args ~= nil then
         for k, v in pairs(args) do
             table.insert(body, k .. '=' .. tostring(v))
@@ -57,12 +66,11 @@ local function request(connection, method, path, args, opts)
     local lasterror
     local num_endpoints = #connection.endpoints
     assert(num_endpoints > 0)
+    for _ = 1, num_endpoints do
+        local eidx = connection.eidx
 
-    for i = 0, num_endpoints - 1 do
-        local eidx = connection.eidx + i
-        if eidx > num_endpoints then
-            eidx = eidx % num_endpoints
-        end
+        -- round-robin on etcd-connections
+        connection.eidx = (connection.eidx % num_endpoints) + 1
 
         if #connection.endpoints ~= num_endpoints then
             -- something may change during network yield
@@ -102,7 +110,6 @@ local function request(connection, method, path, args, opts)
             goto continue
         end
 
-        connection.eidx = eidx
         local ok, data = pcall(json.decode, resp.body)
         if not ok then
             -- Example:
@@ -134,6 +141,17 @@ local function request(connection, method, path, args, opts)
             --     x-etcd-cluster-id: cdf818194e3a8c32
             --     x-etcd-index: '61529'
             -- ...
+            if (data.errorCode == 300 or data.errorCode == 301) and method == 'GET' then
+                lasterror = EtcdError:new(
+                    "quorum not ok for %s, %s, %s, %s",
+                    connection.endpoints[eidx],
+                    data.errorCode,
+                    data.message,
+                    data.cause
+                )
+                lasterror.http_code = resp.status
+                goto continue
+            end
 
             local err = EtcdError:new('%s (%s): %s',
                 data.message, data.errorCode, data.cause
