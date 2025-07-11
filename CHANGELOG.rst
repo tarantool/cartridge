@@ -23,10 +23,10 @@ Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - An **instance** (router or storage) could stick to a minority etcd node after a
-  network partition, keep an outdated `active_leaders` key and cause split-brain.  
+  network partition, keep an outdated `active_leaders` key, and cause split-brain.
   Ordinary reads are now sent with `quorum=true`, and every request (reads, writes,
-  long-polls) is issued to the next endpoint in round-robin order.  
-  Split-brain is prevented; long-polls eventually reach a majority node.
+  long-polls) is issued to the next endpoint in a round-robin order.
+  Split-brain is prevented, and long-polls eventually reach a majority node.
 
 -------------------------------------------------------------------------------
 [2.16.1] - 2025-07-04
