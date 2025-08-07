@@ -46,7 +46,7 @@ vars:new('options', {
     apply_config_timeout = 10,
 })
 
-vars:new('config_applied', false)
+vars:new('config_applied', true)
 
 local function release_config_lock()
     local prepared_config = vars.prepared_config
@@ -212,6 +212,8 @@ local function commit_2pc()
         "commit isn't prepared"
     )
 
+    vars.config_applied = false
+
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
     local path_backup = fio.pathjoin(workdir, 'config.backup')
@@ -246,19 +248,27 @@ local function commit_2pc()
     local state = confapplier.wish_state('RolesConfigured')
 
     if state == 'Unconfigured' then
-        return confapplier.boot_instance(prepared_config)
+        local ok, err = confapplier.boot_instance(prepared_config)
+        if ok then
+            vars.config_applied = true
+        end
+        return ok, err
     elseif state == 'RolesConfigured' or state == 'OperationError' then
-
         local current_config = confapplier.get_active_config()
         if state == 'RolesConfigured' and utils.deepcmp(
             prepared_config:get_plaintext(),
             current_config:get_plaintext()
         ) then
             log.warn("Clusterwide config didn`t change, skipping")
+            vars.config_applied = true
             return true
         end
 
-        return confapplier.apply_config(prepared_config)
+        local ok, err = confapplier.apply_config(prepared_config)
+        if ok then
+            vars.config_applied = true
+        end
+        return ok, err
     else
         local err = Commit2pcError:new(
             "Instance state is %s, can't apply config in this state",
@@ -280,6 +290,7 @@ local function abort_2pc()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
     ClusterwideConfig.remove(path_prepare)
     release_config_lock()
+    vars.config_applied = false
     return true
 end
 
