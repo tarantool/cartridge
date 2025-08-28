@@ -331,10 +331,14 @@ local function edit_topology(args)
         }
     end
 
+    local servers = args.servers
+    if servers == nil then
+        servers = {}
+    end
     local i = 0
-    for _, srv in pairs(args.servers or {}) do
+    for _, srv in pairs(servers) do
         i = i + 1
-        if args.servers[i] == nil then
+        if servers[i] == nil then
             error('bad argument args.servers' ..
                 ' to edit_topology (it must be a contiguous array)', 2
             )
@@ -346,10 +350,14 @@ local function edit_topology(args)
         end
     end
 
+    local replicasets = args.replicasets
+    if replicasets == nil then
+        replicasets = {}
+    end
     local i = 0
-    for _, rpl in pairs(args.replicasets or {}) do
+    for _, rpl in pairs(replicasets) do
         i = i + 1
-        if args.replicasets[i] == nil then
+        if replicasets[i] == nil then
             error('bad argument args.replicasets' ..
                 ' to edit_topology (it must be a contiguous array)', 2
             )
@@ -422,12 +430,16 @@ local function edit_topology(args)
         return nil, err
     end
 
-    for _, srv in pairs(args.servers or {}) do
+    for _, srv in pairs(servers) do
         table.insert(ret.servers, topology.servers[srv.uuid])
     end
 
-    for _, rpl in pairs(args.replicasets or {}) do
-        for _, srv in pairs(rpl.join_servers or {}) do
+    for _, rpl in pairs(replicasets) do
+        local join_servers = rpl.join_servers
+        if join_servers == nil then
+            join_servers = {}
+        end
+        for _, srv in pairs(join_servers) do
             table.insert(ret.servers, topology.servers[srv.uuid])
         end
         table.insert(ret.replicasets, topology.replicasets[rpl.uuid])
