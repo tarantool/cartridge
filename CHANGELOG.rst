@@ -17,6 +17,8 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``vshard`` dependency to `0.1.37 <https://github.com/tarantool/vshard/releases/tag/0.1.37>`_.
+- Update ``chechs`` dependency to `3.4.0 <https://github.com/tarantool/checks/releases/tag/3.4.0>`_.
+- Bump CMake version to avoid compatibility problem with CMake 4.x .
 
 -------------------------------------------------------------------------------
 [2.16.3] - 2025-08-13
