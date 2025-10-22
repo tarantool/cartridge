@@ -16,6 +16,17 @@ Unreleased
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Update ``membership`` dependency to `2.5.3 <https://github.com/tarantool/membership/releases/tag/2.5.3>`_.
+- Update ``cartridge-metrics-role`` dependency to `0.1.3 https://github.com/tarantool/cartridge-metrics-role/releases/tag/0.1.3`_.
+
+-------------------------------------------------------------------------------
+[2.16.4] - 2025-10-21
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - Update ``vshard`` dependency to `0.1.37 <https://github.com/tarantool/vshard/releases/tag/0.1.37>`_.
 - Update ``chechs`` dependency to `3.4.0 <https://github.com/tarantool/checks/releases/tag/3.4.0>`_.
 - Bump CMake version to avoid compatibility problem with CMake 4.x .
