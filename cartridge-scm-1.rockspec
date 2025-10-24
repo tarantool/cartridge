@@ -11,9 +11,9 @@ dependencies = {
     'checks == 3.4.0-1',
     'errors == 2.2.1-1',
     'vshard == 0.1.37-1',
-    'membership == 2.5.2-1',
+    'membership == 2.5.3-1',
     'frontend-core == 8.2.2-1',
-    'cartridge-metrics-role == 0.1.1',
+    'cartridge-metrics-role == 0.1.3-1',
     'graphql == 0.3.0-1',
 }
 
