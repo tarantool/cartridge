@@ -18,6 +18,7 @@ Changed
 
 - Update ``membership`` dependency to `2.5.3 <https://github.com/tarantool/membership/releases/tag/2.5.3>`_.
 - Update ``cartridge-metrics-role`` dependency to `0.1.3 https://github.com/tarantool/cartridge-metrics-role/releases/tag/0.1.3`_.
+- Update ``graphql`` dependency to `0.3.1 https://github.com/tarantool/graphql/releases/tag/0.3.1`_.
 
 -------------------------------------------------------------------------------
 [2.16.4] - 2025-10-21
