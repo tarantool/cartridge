@@ -14,7 +14,7 @@ dependencies = {
     'membership == 2.5.3-1',
     'frontend-core == 8.2.2-1',
     'cartridge-metrics-role == 0.1.3-1',
-    'graphql == 0.3.0-1',
+    'graphql == 0.3.1-1',
 }
 
 external_dependencies = {
