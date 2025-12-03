@@ -7,10 +7,10 @@ source  = {
 dependencies = {
     'lua >= 5.1',
     'ddl == 1.7.1-1',
-    'http == 1.8.0-1',
+    'http == 1.9.0-1',
     'checks == 3.4.0-1',
     'errors == 2.2.1-1',
-    'vshard == 0.1.37-1',
+    'vshard == 0.1.38-1',
     'membership == 2.5.3-1',
     'frontend-core == 8.2.2-1',
     'cartridge-metrics-role == 0.1.3-1',
