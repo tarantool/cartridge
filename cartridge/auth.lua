@@ -723,10 +723,12 @@ local function init(httpd, opts)
     end
 
     httpd:route({
+        name = 'cartridge_auth_login',
         path = opts.prefix .. '/login',
         method = 'POST'
     }, login)
     httpd:route({
+        name = 'cartridge_auth_logout',
         path = opts.prefix .. '/logout',
         method = 'POST'
     }, logout)
