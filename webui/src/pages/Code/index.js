@@ -419,7 +419,6 @@ class Code extends React.Component<CodeProps, CodeState> {
             </div>
             <FileTree
               className={'meta-test__Code__FileTree'}
-              initiallyExpanded
               tree={fileTree}
               filePaths={filePaths}
               selectedFile={selectedFile}
