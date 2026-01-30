@@ -12,6 +12,15 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Ability to configure vshard bootstrap timeout on ``vshard-router`` by the argparse option
+  ``TARANTOOL_VSHARD_BOOTSTRAP_TIMEOUT`` or ``--vshard-bootstrap-timeout``
+  (must be a finite positive number)
+  (`#2362 <https://github.com/tarantool/cartridge/issues/2362>`_).
+
 -------------------------------------------------------------------------------
 [2.16.5] - 2025-12-03
 -------------------------------------------------------------------------------
