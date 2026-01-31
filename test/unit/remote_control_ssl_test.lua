@@ -280,6 +280,8 @@ function g.test_fiber_name()
 end
 
 function g.test_drop_connections()
+    t.skip_if(sslsocket.openssl_version().major == 3)
+
     rc_start(13301)
     local conn_1 = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301',
         params={

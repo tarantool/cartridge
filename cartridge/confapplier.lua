@@ -15,6 +15,7 @@ local membership = require('membership')
 local uri_tools = require('uri')
 local socket = require('socket')
 local json = require('json')
+local vshard_util = require('vshard.util')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -367,7 +368,7 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --    (https://github.com/tarantool/tarantool/issues/4691)
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local leaders_order = errors.pcall('E',
-        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid, {only_enabled = true}
+        topology.get_leaders_order, topology_cfg, vshard_util.replicaset_uuid(), {only_enabled = true}
     )
 
     if leaders_order == nil then
@@ -698,7 +699,7 @@ local function boot_instance(clusterwide_config)
 
     local box_info = box.info
     vars.instance_uuid = box_info.uuid
-    vars.replicaset_uuid = box_info.cluster.uuid
+    vars.replicaset_uuid = vshard_util.replicaset_uuid()
     membership.set_payload('uuid', box_info.uuid)
 
     if topology_cfg.servers == nil

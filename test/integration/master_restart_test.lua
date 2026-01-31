@@ -30,6 +30,8 @@ g.after_all(function()
 end)
 
 function g.test_master_restart_with_missing_xlog()
+    t.skip_if(h.tarantool_version_ge('3.0.0'))
+
     g.master.net_box:eval([[
         -- create space
         box.schema.create_space('test')

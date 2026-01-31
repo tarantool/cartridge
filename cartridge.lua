@@ -369,10 +369,6 @@ local function cfg(opts, box_opts)
         disable_errstack = '?boolean',
     }, '?table')
 
-    if tarantool_version:sub(1, 2) == '3.' then
-        return nil, CartridgeCfgError:new("Unsupported Tarantool version " .. tarantool_version)
-    end
-
     if opts.enable_sychro_mode ~= nil then
         opts.enable_synchro_mode = opts.enable_sychro_mode
         log.warn('enable_sychro_mode is deprecated. Use enable_synchro_mode instead')

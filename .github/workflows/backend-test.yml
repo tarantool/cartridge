@@ -44,13 +44,13 @@ jobs:
         if: steps.cache-venv.outputs.cache-hit != 'true'
 
       # Setup tarantool
-      - uses: tarantool/setup-tarantool@v3
+      - uses: tarantool/setup-tarantool@v4
         with:
           tarantool-version: '1.10'
 
       - name: Setup tt
         run: |
-          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          curl -L https://tarantool.io/release/3/installer.sh | sudo bash
           sudo apt install -y tt
           tt version
 
@@ -97,7 +97,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.10', '2.11']
+        tarantool: [
+          '2.10',
+          '2.11',
+          '3.6',
+        ]
         etcd: ['v2.3.8']
         metrics: ['']
         include:
@@ -119,13 +123,15 @@ jobs:
 
       - uses: actions/checkout@v4
       - if: matrix.tarantool != 'latest'
-        uses: tarantool/setup-tarantool@v3
+        uses: tarantool/setup-tarantool@v4
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
       - if: matrix.tarantool == 'latest'
+        env:
+          TT_MAJOR: ${{ startsWith(matrix.tarantool, '2') && '2' || '3' }}
         run: |
-          curl -L https://tarantool.io/pre-release/2/installer.sh | bash
+          curl -L https://tarantool.io/pre-release/${TT_MAJOR}/installer.sh | bash
           sudo apt-get -y install tarantool
 
       - name: Set up etcd
@@ -137,8 +143,10 @@ jobs:
       - run: echo "ETCD_PATH=etcd-${{ matrix.etcd }}/etcd" >> $GITHUB_ENV
 
       - name: Setup tt
+        env:
+          TT_MAJOR: ${{ startsWith(matrix.tarantool, '2') && '2' || '3' }}
         run: |
-          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          curl -L https://tarantool.io/release/${TT_MAJOR}/installer.sh | sudo bash
           sudo apt install -y tt
           tt version
 
@@ -204,10 +212,14 @@ jobs:
     strategy:
       matrix:
         sdk-version: [
-          "gc64-2.11.2-0-r609",
-          "nogc64-2.11.2-0-r609",
+          "gc64-2.11.8-0-r706",
+          "nogc64-2.11.8-0-r706",
+          "gc64-3.6.0-0-r85",
           ]
-        etcd: ['v2.3.8', 'v3.5.0']
+        etcd: [
+          'v2.3.8',
+          'v3.5.0',
+        ]
       fail-fast: false
     steps:
       - uses: actions/setup-python@v5
@@ -231,8 +243,13 @@ jobs:
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           ARCHIVE_NAME=tarantool-enterprise-sdk-${{ matrix.sdk-version }}.linux.x86_64.tar.gz
+          SDK_VERSION="${{ matrix.sdk-version }}"
+          base="${SDK_VERSION#*-}"
+          sem="${base%%-*}"
+          IFS='.' read -r major minor _ <<< "$sem"
+          SDK_VER="${major}.${minor}"
           curl -O -L \
-            https://tarantool:${{ secrets.CARTRIDGE_SDK_DOWNLOAD_TOKEN }}@download.tarantool.io/enterprise/release/linux/x86_64/2.11/${ARCHIVE_NAME}
+            https://tarantool:${{ secrets.CARTRIDGE_SDK_DOWNLOAD_TOKEN }}@download.tarantool.io/enterprise/release/linux/x86_64/${SDK_VER}/${ARCHIVE_NAME}
           tar -xzf ${ARCHIVE_NAME}
           rm -f ${ARCHIVE_NAME}
           source tarantool-enterprise/env.sh

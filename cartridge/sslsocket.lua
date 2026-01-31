@@ -59,6 +59,8 @@ pcall(ffi.cdef, [[
 
     void *memmem(const void *haystack, size_t haystacklen,
                  const void *needle, size_t needlelen);
+
+    unsigned long OpenSSL_version_num(void);
 ]])
 
 local function slice_wait(timeout, starttime)
@@ -531,6 +533,17 @@ local function accept(server, sslctx)
     return wrap_accepted_socket(sock, sslctx)
 end
 
+local function openssl_version()
+    local v = tonumber(ffi.C.OpenSSL_version_num())
+    return {
+        major  = bit.rshift(v, 28) % 0x10,
+        minor  = bit.band(bit.rshift(v, 20), 0xFF),
+        fix    = bit.band(bit.rshift(v, 12), 0xFF),
+        patch  = bit.band(bit.rshift(v,  4), 0xFF),
+        status = bit.band(v, 0xF),
+    }
+end
+
 return {
     ctx = ctx,
     ctx_use_private_key_file = ctx_use_private_key_file,
@@ -544,4 +557,6 @@ return {
 
     wrap_accepted_socket = wrap_accepted_socket,
     accept = accept,
+
+    openssl_version = openssl_version,
 }
