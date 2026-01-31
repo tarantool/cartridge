@@ -209,7 +209,8 @@ describe('Leader promotion tests', () => {
         port: sock,
         code: `
         local failover = require('cartridge.failover')
-        return failover.force_inconsistency({[box.info.cluster.uuid] = 'nobody2'})
+        local vshard_util = require('vshard.util')
+        return failover.force_inconsistency({[vshard_util.replicaset_uuid()] = 'nobody2'})
       `,
       }).should('deep.eq', [true]);
     });
