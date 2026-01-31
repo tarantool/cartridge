@@ -394,7 +394,11 @@ function g.test_late_accept()
             ssl_cert_file=CLIENT_CERT_FILE,
             ssl_key_file=CLIENT_KEY_FILE}}, {connect_timeout = 0.2})
     t.assert_equals(conn_2.state, "error")
-    t.assert_str_matches(conn_2.error, "unexpected EOF.*")
+    if helpers.tarantool_version_ge('3.5.0') then
+        t.assert_str_matches(conn_2.error, "unexpected EOF.*")
+    else
+        t.assert_str_matches(conn_2.error, ".*unexpected eof.*")
+    end
 
     remote_control.drop_connections()
 
@@ -403,7 +407,11 @@ function g.test_late_accept()
     t.assert_equals(conn_1.state, "error")
     t.assert_equals(conn_3.state, "error")
     if helpers.tarantool_version_ge('2.10.0') then
-        t.assert_str_matches(conn_1.error, "unexpected EOF.*")
+        if helpers.tarantool_version_ge('3.5.0') then
+            t.assert_str_matches(conn_1.error, "unexpected EOF.*")
+        else
+            t.assert_str_matches(conn_1.error, ".*unexpected eof.*")
+        end
         t.assert_str_matches(conn_3.error, ".*Connection reset.*")
     else
         t.assert_str_matches(conn_1.error, "Invalid greeting")
@@ -1213,10 +1221,12 @@ function g.test_reconnect()
     remote_control.drop_connections()
 
     helpers.retrying({}, function()
-        t.assert_covers(conn, {
-            error = 'Peer closed',
-            state = 'error_reconnect',
-        })
+        t.assert_covers(conn, {state = 'error_reconnect'})
+        if helpers.tarantool_version_ge('3.5.0') then
+            t.assert_str_matches(conn.error, "Peer closed")
+        else
+            t.assert_str_matches(conn.error, ".*Connection refused")
+        end
     end)
 
     box.cfg({listen = {uri='127.0.0.1:13301', params={
