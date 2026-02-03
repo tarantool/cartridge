@@ -325,10 +325,8 @@ function g.test_drop_connections()
 
         --
         t.assert_equals(_G.conn_2:ping(), false)
-        t.assert_covers(_G.conn_2, {
-            state = "error",
-            error = "Peer closed",
-        })
+        t.assert_covers(_G.conn_2, {state = 'error'})
+        t.assert_str_matches(_G.conn_2.error, '.*unexpected eof.*')
 
         -- Our own connection should remain operable
         -- until the last response is sent
@@ -338,8 +336,10 @@ function g.test_drop_connections()
     end)
 
     -- Both connections are closed as soon as eval returns
-    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
-    t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
+    t.assert_equals(conn_1.state, 'error')
+    t.assert_equals(conn_2.state, 'error')
+    t.assert_str_matches(conn_1.error, '.*unexpected eof.*')
+    t.assert_str_matches(conn_2.error, '.*unexpected eof.*')
 
     -- conn_1 was able to get the response
     t.assert_equals(result, sslsecret)
@@ -349,7 +349,8 @@ function g.test_drop_connections()
     local ok, err = future:result()
     t.assert_not(ok)
     t.assert_equals(type(err), 'cdata')
-    t.assert_equals(err.message, 'Peer closed')
+    t.assert_str_matches(err.message, '.*unexpected eof.*')
+
     -- but its handler is still alive
     t.assert_equals(ch:get(0), sslsecret)
 
@@ -392,7 +393,7 @@ function g.test_late_accept()
             ssl_cert_file=CLIENT_CERT_FILE,
             ssl_key_file=CLIENT_KEY_FILE}}, {connect_timeout = 0.2})
     t.assert_equals(conn_2.state, "error")
-    t.assert_str_matches(conn_2.error, "unexpected EOF.*")
+    t.assert_str_matches(conn_2.error, '.*unexpected eof.*')
 
     remote_control.drop_connections()
 
@@ -401,7 +402,7 @@ function g.test_late_accept()
     t.assert_equals(conn_1.state, "error")
     t.assert_equals(conn_3.state, "error")
     if helpers.tarantool_version_ge('2.10.0') then
-        t.assert_str_matches(conn_1.error, "unexpected EOF.*")
+        t.assert_str_matches(conn_1.error, '.*unexpected eof.*')
         t.assert_str_matches(conn_3.error, ".*Connection reset.*")
     else
         t.assert_str_matches(conn_1.error, "Invalid greeting")
@@ -1211,10 +1212,8 @@ function g.test_reconnect()
     remote_control.drop_connections()
 
     helpers.retrying({}, function()
-        t.assert_covers(conn, {
-            error = 'Peer closed',
-            state = 'error_reconnect',
-        })
+        t.assert_covers(conn, {state = 'error_reconnect'})
+        t.assert_str_matches(conn.error, '.*Connection refused')
     end)
 
     box.cfg({listen = {uri='127.0.0.1:13301', params={

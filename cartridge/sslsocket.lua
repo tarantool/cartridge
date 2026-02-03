@@ -31,6 +31,7 @@ pcall(ffi.cdef, [[
     int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile, const char *CApath);
     int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
     void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, int (*verify_callback)(int, void *));
+    uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t options);
 
     SSL *SSL_new(SSL_CTX *ctx);
     void SSL_free(SSL *ssl);
@@ -44,9 +45,12 @@ pcall(ffi.cdef, [[
     int SSL_read(SSL *ssl, void *buf, int num);
 
     int SSL_pending(const SSL *ssl);
+    unsigned long ERR_get_error_all(const char **file, int *line,
+                                const char **func, const char **data,
+                                int *flags);
+    void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 
     void ERR_clear_error(void);
-    char *ERR_error_string(unsigned long e, char *buf);
     unsigned long ERR_peek_last_error(void);
 
     int SSL_get_error(const SSL *s, int ret_code);
@@ -61,6 +65,56 @@ pcall(ffi.cdef, [[
                  const void *needle, size_t needlelen);
 ]])
 
+local function openssl_error_queue()
+    local filep  = ffi.new('const char *[1]')
+    local funcp  = ffi.new('const char *[1]')
+    local datap  = ffi.new('const char *[1]')
+    local linep  = ffi.new('int[1]')
+    local flagsp = ffi.new('int[1]')
+    local bufsize = 256
+    local msgbuf = ffi.new('char[?]', bufsize)
+
+    local parts = {}
+    while true do
+        local e = ffi.C.ERR_get_error_all(filep, linep, funcp, datap, flagsp)
+        if e == 0 then
+            break
+        end
+
+        ffi.C.ERR_error_string_n(e, msgbuf, bufsize)
+        local msg = ffi.string(msgbuf)
+
+        local file = filep[0] ~= nil and ffi.string(filep[0]) or '?'
+        local func = funcp[0] ~= nil and ffi.string(funcp[0]) or '?'
+        local line = tonumber(linep[0]) or 0
+
+        local extra = ""
+        if datap[0] ~= nil then
+            local data = ffi.string(datap[0])
+            if #data > 0 then
+                extra = " | data=" .. data
+            end
+        end
+        table.insert(parts, string.format('%s (%s:%d %s)%s', msg, file, line, func, extra))
+    end
+
+    if #parts == 0 then
+        return nil
+    end
+    return table.concat(parts, ' ; ')
+end
+
+local function openssl_last_error_string()
+    local e = ffi.C.ERR_peek_last_error()
+    if e == 0 then
+        return nil
+    end
+    local bufsize = 256
+    local msgbuf = ffi.new('char[?]', bufsize)
+    ffi.C.ERR_error_string_n(e, msgbuf, bufsize)
+    return ffi.string(msgbuf)
+end
+
 local function slice_wait(timeout, starttime)
     if timeout == nil then
         return nil
@@ -70,17 +124,19 @@ local function slice_wait(timeout, starttime)
 end
 
 local X509_FILETYPE_PEM       = 1
+local SSL_OP_IGNORE_UNEXPECTED_EOF = bit.lshift(1, 7)
 
 local function ctx(method)
     ffi.C.ERR_clear_error()
-    local newctx =
-        ffi.gc(ffi.C.SSL_CTX_new(method), ffi.C.SSL_CTX_free)
+    local newctx = ffi.gc(ffi.C.SSL_CTX_new(method), ffi.C.SSL_CTX_free)
 
+    -- See https://github.com/tarantool/tarantool-ee/commit/51784b32be57f40e28dfb81de7c23ec481e05312
+    ffi.C.SSL_CTX_set_options(newctx, SSL_OP_IGNORE_UNEXPECTED_EOF)
     return newctx
 end
 
 local function ctx_use_private_key_file(ctx, pem_file, password)
-    ffi.C.SSL_CTX_set_default_passwd_cb(ctx, box.NULL);
+    ffi.C.SSL_CTX_set_default_passwd_cb(ctx, box.NULL)
     if password ~= nil then
         log.info('set private key password')
         ffi.C.SSL_CTX_set_default_passwd_cb_userdata(ctx,
@@ -90,7 +146,7 @@ local function ctx_use_private_key_file(ctx, pem_file, password)
     local rc = ffi.C.SSL_CTX_use_PrivateKey_file(ctx, pem_file, X509_FILETYPE_PEM)
 
     if password ~= nil then
-        ffi.C.SSL_CTX_set_default_passwd_cb_userdata(ctx, box.NULL);
+        ffi.C.SSL_CTX_set_default_passwd_cb_userdata(ctx, box.NULL)
     end
 
     if rc ~= 1 then
@@ -166,21 +222,29 @@ function sslsocket.write(self, data, timeout)
         end
 
         ffi.C.ERR_clear_error()
-        local num = ffi.C.SSL_write(self.ssl, s, size);
+        local num = ffi.C.SSL_write(self.ssl, s, size)
         if num <= 0 then
-            local ssl_error = ffi.C.SSL_get_error(self.ssl, num);
+            local ssl_error = ffi.C.SSL_get_error(self.ssl, num)
             if ssl_error == SSL_ERROR_WANT_WRITE then
                 mode = WAIT_FOR_WRITE
             elseif ssl_error == SSL_ERROR_WANT_READ then
                 mode = WAIT_FOR_READ
             elseif ssl_error == SSL_ERROR_SYSCALL then
+                local last_err = openssl_last_error_string()
+                if last_err ~= nil then
+                    local q = openssl_error_queue()
+                    return nil, q or last_err
+                end
                 return nil, self.sock:error()
             elseif ssl_error == SSL_ERROR_ZERO_RETURN then
                 return 0
             else
-                local error_string = ffi.string(ffi.C.ERR_error_string(ssl_error, nil))
-                log.info(error_string)
-                return nil, error_string
+                local q = openssl_error_queue()
+                if q == nil then
+                    q = 'SSL error (error queue empty)'
+                end
+                log.warn(q)
+                return nil, q
             end
         else
             return num
@@ -195,19 +259,27 @@ function sslsocket.shutdown(self, timeout)
     local rc = ffi.C.SSL_shutdown(self.ssl) -- ignore result
     while rc < 0 do
         local mode
-        local ssl_error = ffi.C.SSL_get_error(self.ssl, rc);
+        local ssl_error = ffi.C.SSL_get_error(self.ssl, rc)
         if ssl_error == SSL_ERROR_WANT_WRITE then
             mode = WAIT_FOR_WRITE
         elseif ssl_error == SSL_ERROR_WANT_READ then
             mode = WAIT_FOR_READ
         elseif ssl_error == SSL_ERROR_SYSCALL then
+            local last_err = openssl_last_error_string()
+            if last_err ~= nil then
+                local q = openssl_error_queue()
+                return nil, q or last_err
+            end
             return nil, self.sock:error()
         elseif ssl_error == SSL_ERROR_ZERO_RETURN then
             return 0
         else
-            local error_string = ffi.string(ffi.C.ERR_error_string(ssl_error, nil))
-            log.info(error_string)
-            return nil, error_string
+            local q = openssl_error_queue()
+            if q == nil then
+                q = 'SSL error (error queue empty)'
+            end
+            log.warn(q)
+            return nil, q
         end
 
         local waited = nil
@@ -240,9 +312,7 @@ function sslsocket.close(self)
 end
 
 function sslsocket.error(self)
-    local error_string =
-        ffi.string(ffi.C.ERR_error_string(ffi.C.ERR_peek_last_error(), nil))
-
+    local error_string = openssl_last_error_string()
     return self.sock:error() or error_string
 end
 
@@ -300,21 +370,29 @@ local function sysread(self, charptr, size, timeout)
         end
 
         ffi.C.ERR_clear_error()
-        local num = ffi.C.SSL_read(self.ssl, charptr, size);
+        local num = ffi.C.SSL_read(self.ssl, charptr, size)
         if num <= 0 then
-            local ssl_error = ffi.C.SSL_get_error(self.ssl, num);
+            local ssl_error = ffi.C.SSL_get_error(self.ssl, num)
             if ssl_error == SSL_ERROR_WANT_WRITE then
                 mode = WAIT_FOR_WRITE
             elseif ssl_error == SSL_ERROR_WANT_READ then
                 mode = WAIT_FOR_READ
             elseif ssl_error == SSL_ERROR_SYSCALL then
+                local last_err = openssl_last_error_string()
+                if last_err ~= nil then
+                    local q = openssl_error_queue()
+                    return nil, q or last_err
+                end
                 return nil, self.sock:error()
             elseif ssl_error == SSL_ERROR_ZERO_RETURN then
                 return 0
             else
-                local error_string = ffi.string(ffi.C.ERR_error_string(ssl_error, nil))
-                log.info(error_string)
-                return nil, error_string
+                local q = openssl_error_queue()
+                if q == nil then
+                    q = 'SSL error (error queue empty)'
+                end
+                log.warn(q)
+                return nil, q
             end
         else
             return num
@@ -462,7 +540,7 @@ local function tcp_connect(host, port, timeout, sslctx)
     end
 
     ffi.C.ERR_clear_error()
-    ffi.C.SSL_set_connect_state(ssl);
+    ffi.C.SSL_set_connect_state(ssl)
 
     local self = setmetatable({}, sslsocket)
     rawset(self, 'sock', sock)
@@ -494,7 +572,7 @@ local function wrap_accepted_socket(sock, sslctx)
     end
 
     ffi.C.ERR_clear_error()
-    ffi.C.SSL_set_accept_state(ssl);
+    ffi.C.SSL_set_accept_state(ssl)
 
     local self = setmetatable({}, sslsocket)
     rawset(self, 'sock', sock)
