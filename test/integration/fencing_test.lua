@@ -13,6 +13,7 @@ local uB = helpers.uuid('b')
 local uA1 = helpers.uuid('a', 1, 1)
 local uB1 = helpers.uuid('b', 1, 1)
 local uB2 = helpers.uuid('b', 2, 2)
+local uB3 = helpers.uuid('b', 3, 3)
 local A1
 local B1
 local B2
@@ -37,6 +38,7 @@ local function setup_cluster(g)
             servers = {
                 {alias = 'B1', instance_uuid = uB1},
                 {alias = 'B2', instance_uuid = uB2},
+                {alias = 'B3', instance_uuid = uB3},
             },
         }},
     })

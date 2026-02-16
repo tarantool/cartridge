@@ -714,6 +714,9 @@ end)
 
 function g.test_sync_spaces_is_prohibited()
     t.skip_if(not helpers.tarantool_version_ge('2.6.1'))
+
+    set_failover(true)
+
     local master = cluster:server('storage-1')
     master:exec(function()
         box.schema.space.create('test', {if_not_exists = true, is_sync=true})
