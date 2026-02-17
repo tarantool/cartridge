@@ -852,6 +852,10 @@ local function cfg(clusterwide_config, opts)
     end
 
     if vars.mode == 'stateful' and failover_cfg.mode ~= 'stateful' and failover_cfg.mode ~= 'raft' then
+        if box.cfg.election_mode then
+            box.cfg{ election_mode = 'off' }
+        end
+
         local err = synchro_demote()
         if err ~= nil then
             ApplyConfigError:new(
@@ -908,6 +912,10 @@ local function cfg(clusterwide_config, opts)
             end
         else
             vars.consistency_needed = true
+
+            if box.cfg.election_mode then
+                box.cfg{ election_mode = 'manual' }
+            end
         end
 
         if failover_cfg.state_provider == 'tarantool' then

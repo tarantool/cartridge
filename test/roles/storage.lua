@@ -1,7 +1,6 @@
 return {
     init = function(opts)
-        if opts.is_master then
-            assert(box.info.ro == false)
+        if opts.is_master and box.info.ro == false then
             box.schema.space.create('test', { if_not_exists = true })
             box.space.test:format{
                 {'bucket_id', 'unsigned'},

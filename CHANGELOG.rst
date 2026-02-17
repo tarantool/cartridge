@@ -18,6 +18,7 @@ Changed
 
 - Do not expand the file tree by default on the code page.
 - Update ``vshard`` dependency to `0.1.39 <https://github.com/tarantool/vshard/releases/tag/0.1.38>`_.
+- Change election mode from 'off' to 'manual' for stateful failover to avoid split-brain.
 
 -------------------------------------------------------------------------------
 [2.16.5] - 2025-12-03
