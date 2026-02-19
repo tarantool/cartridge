@@ -44,6 +44,7 @@ local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
 local leader_autoreturn = require('cartridge.failover.leader_autoreturn')
 local argparse = require('cartridge.argparse')
+local sync_spaces = require('cartridge.sync-spaces')
 
 local FailoverError = errors.new_class('FailoverError')
 local SwitchoverError = errors.new_class('SwitchoverError')
@@ -784,6 +785,16 @@ end
 
 ------------------------------------------------------------------------
 
+--- Check if syncrho spaces supported in current failover mode.
+-- @function is_sync_spaces_supported
+-- @local
+-- @treturn boolean true / false
+local function is_sync_spaces_supported()
+    return vars.mode == 'raft'
+    or vars.mode == 'disabled'
+    or (vars.mode == 'stateful' and vars.enable_synchro_mode)
+end
+
 --- Initialize the failover module.
 -- @function cfg
 -- @local
@@ -1063,6 +1074,17 @@ local function cfg(clusterwide_config, opts)
         )
     end
 
+    local sync_spaces_list = sync_spaces.spaces_list_str()
+    if sync_spaces_list ~= '' and vars.cache.is_leader
+    and not is_sync_spaces_supported() then
+        log.warn(
+            "Having sync spaces may cause failover errors. " ..
+            "Consider to change failover type to stateful and enable synchro_mode or use " ..
+            "raft failover mode. Sync spaces: " ..
+            sync_spaces_list
+        )
+    end
+
     return true
 end
 
@@ -1289,7 +1311,7 @@ return {
     is_suppressed = is_suppressed,
     is_synchro_mode_enabled = is_synchro_mode_enabled,
     mode = mode,
-
+    is_sync_spaces_supported = is_sync_spaces_supported,
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
 }

@@ -19,6 +19,18 @@ Changed
 - Do not expand the file tree by default on the code page.
 - Update ``vshard`` dependency to `0.1.39 <https://github.com/tarantool/vshard/releases/tag/0.1.38>`_.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Refactor synchronous spaces monitoring to consider the actual failover mode.
+  Sync spaces warning is now logged when failover is configured in a mode
+  that doesn't support them (eventual, stateful without synchro_mode),
+  instead of unconditionally at instance startup. Added
+  ``is_sync_spaces_supported()`` function to ``cartridge.failover`` module.
+  Sync spaces are now detected dynamically, allowing detection of spaces
+  added at runtime.
+
 -------------------------------------------------------------------------------
 [2.16.5] - 2025-12-03
 -------------------------------------------------------------------------------

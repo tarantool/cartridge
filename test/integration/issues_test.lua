@@ -686,3 +686,486 @@ function g.test_unhealthy_replicasets()
         require('cartridge.lua-api.topology').enable_servers({uuid})
     end, {g.to_be_stopped.instance_uuid})
 end
+
+----------------------------------------------------------------
+-- Sync spaces issues
+--
+-- Test that sync spaces generate issues only for failover modes
+-- that don't support them. Supported modes:
+--   - disabled
+--   - raft
+--   - stateful with enable_synchro_mode
+--
+-- Unsupported modes:
+--   - eventual
+--   - stateful without enable_synchro_mode
+----------------------------------------------------------------
+
+-- Eventual failover: sync spaces are NOT allowed, issues are expected
+local g_eventual = t.group('integration.sync_spaces_issue_failover.eventual')
+
+g_eventual.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'), 'Sync spaces require Tarantool 2.6.1+')
+    g_eventual.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = helpers.uuid('b'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('b', 'b', 1)},
+                    {instance_uuid = helpers.uuid('b', 'b', 2)},
+                    {instance_uuid = helpers.uuid('b', 'b', 3)},
+                },
+            },
+        },
+    })
+    g_eventual.cluster:start()
+
+    -- Set eventual failover mode
+    g_eventual.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'eventual'}}
+    )
+
+    helpers.retrying({}, function()
+        g_eventual.cluster:wait_until_healthy()
+    end)
+end)
+
+g_eventual.after_all(function(g)
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end)
+
+function g_eventual.test_sync_spaces_prohibited(g)
+    local server = g.cluster:server('storage-1')
+
+    server:exec(function()
+        box.schema.space.create('test_sync', {if_not_exists = true, is_sync = true})
+    end)
+
+    -- Issues should be reported for eventual failover
+    helpers.retrying({}, function()
+        t.assert_items_equals(helpers.list_cluster_issues(g.cluster.main_server), {
+            {
+                level = 'warning',
+                topic = 'failover',
+                message = 'Having sync spaces may cause failover errors. ' ..
+                    'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                    'raft failover mode. Sync spaces: test_sync',
+                instance_uuid = server.instance_uuid,
+                replicaset_uuid = server.replicaset_uuid,
+            },
+        })
+    end)
+
+    -- Cleanup
+    server:exec(function()
+        box.space.test_sync:drop()
+    end)
+end
+
+-- Raft failover: sync spaces are allowed, no issues expected
+local g_raft = t.group('integration.sync_spaces_issue_failover.raft')
+
+g_raft.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.10.0'), 'Raft failover requires Tarantool 2.10.0+')
+    g_raft.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_raft'),
+        cookie = helpers.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = helpers.uuid('b'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('b', 'b', 1)},
+                    {instance_uuid = helpers.uuid('b', 'b', 2)},
+                    {instance_uuid = helpers.uuid('b', 'b', 3)},
+                },
+            },
+        },
+        env = {
+            TARANTOOL_ELECTION_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+            TARANTOOL_SYNCHRO_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+        },
+    })
+    g_raft.cluster:start()
+
+    -- Set raft failover mode
+    g_raft.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'raft'}}
+    )
+
+    helpers.retrying({}, function()
+        g_raft.cluster:wait_until_healthy()
+    end)
+end)
+
+g_raft.after_all(function(g)
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end)
+
+function g_raft.test_sync_spaces_allowed(g)
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'), 'Sync spaces require Tarantool 2.6.1+')
+
+    -- Promote storage-1 to be the raft leader
+    g.cluster:server('storage-1'):exec(function()
+        box.ctl.promote()
+    end)
+
+    helpers.retrying({}, function()
+        local state = g.cluster:server('storage-1'):exec(function()
+            return box.info.election.state
+        end)
+        t.assert_equals(state, 'leader')
+    end)
+
+    -- Create sync space
+    local server = g.cluster:server('storage-1')
+    server:exec(function()
+        box.schema.space.create('test_sync', {if_not_exists = true, is_sync = true})
+    end)
+
+    -- No issues should be reported for raft failover
+    helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+    end)
+
+    -- Cleanup
+    server:exec(function()
+        box.space.test_sync:drop()
+    end)
+end
+
+-- Disabled failover: sync spaces are allowed, no issues expected
+local g_disabled = t.group('integration.sync_spaces_issue_failover.disabled')
+
+g_disabled.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'), 'Sync spaces require Tarantool 2.6.1+')
+    g_disabled.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = helpers.uuid('b'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('b', 'b', 1)},
+                    {instance_uuid = helpers.uuid('b', 'b', 2)},
+                },
+            },
+        },
+    })
+    g_disabled.cluster:start()
+
+    -- Set disabled failover mode
+    g_disabled.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'disabled'}}
+    )
+
+    helpers.retrying({}, function()
+        g_disabled.cluster:wait_until_healthy()
+    end)
+end)
+
+g_disabled.after_all(function(g)
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end)
+
+function g_disabled.test_sync_spaces_allowed(g)
+    local server = g.cluster:server('storage-1')
+
+    server:exec(function()
+        box.schema.space.create('test_sync', {if_not_exists = true, is_sync = true})
+    end)
+
+    -- No issues should be reported for disabled failover
+    helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+    end)
+
+    -- Cleanup
+    server:exec(function()
+        box.space.test_sync:drop()
+    end)
+end
+
+-- Stateful failover without synchro_mode: sync spaces are NOT allowed,
+-- issues are expected
+local g_stateboard_no_synchro = t.group('integration.sync_spaces_issue_failover.stateboard_no_synchro')
+
+local stateboard_client = require('cartridge.stateboard-client')
+
+g_stateboard_no_synchro.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'), 'Sync spaces require Tarantool 2.6.1+')
+    local g = g_stateboard_no_synchro
+    g.datadir = fio.tempdir()
+
+    g.kvpassword = helpers.random_cookie()
+    g.state_provider = helpers.Stateboard:new({
+        command = helpers.entrypoint('srv_stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard'),
+        net_box_port = 14401,
+        net_box_credentials = {
+            user = 'client',
+            password = g.kvpassword,
+        },
+        env = {
+            TARANTOOL_LOCK_DELAY = 2,
+            TARANTOOL_PASSWORD = g.kvpassword,
+        },
+    })
+
+    g.state_provider:start()
+    g.client = stateboard_client.new({
+        uri = 'localhost:' .. g.state_provider.net_box_port,
+        password = g.kvpassword,
+        call_timeout = 1,
+    })
+
+    g.cluster = helpers.Cluster:new({
+        datadir = g.datadir,
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router', 'failover-coordinator'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = helpers.uuid('b'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('b', 'b', 1)},
+                    {instance_uuid = helpers.uuid('b', 'b', 2)},
+                },
+            },
+        },
+        env = {
+            TARANTOOL_ENABLE_SYNCHRO_MODE = 'false',
+        },
+    })
+
+    g.cluster:start()
+
+    -- Set stateful failover without synchro_mode
+    t.assert(g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            tarantool_params = {
+                uri = g.state_provider.net_box_uri,
+                password = g.kvpassword,
+            },
+        }}
+    ))
+
+    helpers.retrying({}, function()
+        g.cluster:wait_until_healthy()
+    end)
+end)
+
+g_stateboard_no_synchro.after_all(function(g)
+    g.state_provider:stop()
+    fio.rmtree(g.state_provider.workdir)
+    g.cluster:stop()
+    fio.rmtree(g.datadir)
+end)
+
+function g_stateboard_no_synchro.test_sync_spaces_prohibited(g)
+    -- Wait for storage-1 to become the leader
+    local server = g.cluster:server('storage-1')
+    helpers.retrying({}, function()
+        local is_leader = server:exec(function()
+            return require('cartridge.failover').is_leader()
+        end)
+        t.assert_equals(is_leader, true)
+    end)
+
+    -- Create sync space
+    server:exec(function()
+        box.schema.space.create('test_sync', {if_not_exists = true, is_sync = true})
+    end)
+
+    -- Issues should be reported for stateful failover without synchro_mode
+    helpers.retrying({}, function()
+        t.assert_items_equals(helpers.list_cluster_issues(g.cluster.main_server), {
+            {
+                level = 'warning',
+                topic = 'failover',
+                message = 'Having sync spaces may cause failover errors. ' ..
+                    'Consider to change failover type to stateful and enable synchro_mode or use ' ..
+                    'raft failover mode. Sync spaces: test_sync',
+                instance_uuid = server.instance_uuid,
+                replicaset_uuid = server.replicaset_uuid,
+            },
+        })
+    end)
+
+    -- Cleanup
+    server:exec(function()
+        box.space.test_sync:drop()
+    end)
+end
+
+-- Stateful failover with synchro_mode: sync spaces are allowed,
+-- no issues expected
+local g_stateboard_synchro = t.group('integration.sync_spaces_issue_failover.stateboard_synchro')
+
+g_stateboard_synchro.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'), 'Sync spaces require Tarantool 2.6.1+')
+    local g = g_stateboard_synchro
+    g.datadir = fio.tempdir()
+
+    g.kvpassword = helpers.random_cookie()
+    g.state_provider = helpers.Stateboard:new({
+        command = helpers.entrypoint('srv_stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard'),
+        net_box_port = 14402,
+        net_box_credentials = {
+            user = 'client',
+            password = g.kvpassword,
+        },
+        env = {
+            TARANTOOL_LOCK_DELAY = 2,
+            TARANTOOL_PASSWORD = g.kvpassword,
+        },
+    })
+
+    g.state_provider:start()
+    g.client = stateboard_client.new({
+        uri = 'localhost:' .. g.state_provider.net_box_port,
+        password = g.kvpassword,
+        call_timeout = 1,
+    })
+
+    g.cluster = helpers.Cluster:new({
+        datadir = g.datadir,
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router', 'failover-coordinator'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = helpers.uuid('b'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('b', 'b', 1)},
+                    {instance_uuid = helpers.uuid('b', 'b', 2)},
+                },
+            },
+        },
+        env = {
+            TARANTOOL_ENABLE_SYNCHRO_MODE = 'true',
+        },
+    })
+
+    g.cluster:start()
+
+    -- Set stateful failover with synchro_mode
+    t.assert(g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            tarantool_params = {
+                uri = g.state_provider.net_box_uri,
+                password = g.kvpassword,
+            },
+        }}
+    ))
+
+    helpers.retrying({}, function()
+        g.cluster:wait_until_healthy()
+    end)
+end)
+
+g_stateboard_synchro.after_all(function(g)
+    g.state_provider:stop()
+    fio.rmtree(g.state_provider.workdir)
+    g.cluster:stop()
+    fio.rmtree(g.datadir)
+end)
+
+function g_stateboard_synchro.test_sync_spaces_allowed(g)
+    -- Wait for storage-1 to become the leader
+    local server = g.cluster:server('storage-1')
+    helpers.retrying({}, function()
+        local is_leader = server:exec(function()
+            return require('cartridge.failover').is_leader()
+        end)
+        t.assert_equals(is_leader, true)
+    end)
+
+    -- Create sync space
+    server:exec(function()
+        box.schema.space.create('test_sync', {if_not_exists = true, is_sync = true})
+    end)
+
+    -- No issues should be reported for stateful failover with synchro_mode
+    helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+    end)
+
+    -- Cleanup
+    server:exec(function()
+        box.space.test_sync:drop()
+    end)
+end
+

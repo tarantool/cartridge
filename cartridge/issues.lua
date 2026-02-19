@@ -362,10 +362,7 @@ local function list_on_instance(opts)
     end
 
     local sync_spaces_list = sync_spaces.spaces_list_str()
-    if sync_spaces_list ~= ''
-    and (failover.is_leader()
-    and (failover.mode() == 'eventual'
-    or (failover.mode() == 'stateful' and not failover.is_synchro_mode_enabled()))) then
+    if sync_spaces_list ~= '' and failover.is_leader() and not failover.is_sync_spaces_supported() then
         table.insert(ret, {
             level = 'warning',
             topic = 'failover',
