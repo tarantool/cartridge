@@ -117,10 +117,17 @@ function g.test_content_bootstrapped()
         end)
         :totable()
 
+
+    local replicaset_uuid_str
+    if helpers.tarantool_version_ge('3.0.0') then
+        replicaset_uuid_str = 'I> replicaset uuid ' .. g.server.replicaset_uuid
+    else
+        replicaset_uuid_str = 'I> cluster uuid ' .. g.server.replicaset_uuid
+    end
     t.assert_items_include(messages, {
         'I> Cartridge ' .. require('cartridge').VERSION,
         'I> server alias ' .. g.server.alias,
-        'I> cluster uuid ' .. g.server.replicaset_uuid,
+        replicaset_uuid_str,
         'I> instance uuid ' .. g.server.instance_uuid,
         'I> advertise uri ' .. g.server.advertise_uri,
         'I> working directory ' .. g.server.workdir,

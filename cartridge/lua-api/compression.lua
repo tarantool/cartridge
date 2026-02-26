@@ -230,7 +230,7 @@ function _G.__cartridgeGetStorageCompressionInfo(_)
                 uncompressed_space:drop()
                 index_space:drop()
 
-                log.info('Field "%s" in space "%s" can be compressed down to %q%%. Slowdown %q%%.',
+                log.info('Field "%s" in space "%s" can be compressed down to %d%%. Slowdown %d%%.',
                     space_name,
                     field_compression_info.field_name,
                     field_compression_info.compression_percentage,
