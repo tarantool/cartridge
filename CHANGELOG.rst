@@ -12,6 +12,15 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Empty strings in etcd2 endpoints are now silently ignored during validation,
+  preventing misleading "Invalid URI" errors when users add trailing newlines
+  in the Web UI (`#2319 <https://github.com/tarantool/cartridge/issues/2319>`_).
+
+
 -------------------------------------------------------------------------------
 [2.16.6] - 2026-02-24
 -------------------------------------------------------------------------------
