@@ -837,3 +837,142 @@ add('test_disable', function(g)
         require('cartridge.lua-api.topology').enable_servers({uuid})
     end, {storage_1_uuid})
 end)
+
+local g_manual_stateboard = t.group('integration.failover_stateful.manual_election.stateboard')
+local g_manual_etcd2 = t.group('integration.failover_stateful.manual_election.etcd2')
+
+local manual_storage_uuid = helpers.uuid('d')
+local manual_storage_1_uuid = helpers.uuid('d', 'd', 1)
+
+local function setup_manual_cluster(g, opts)
+    local cluster_opts = {
+        datadir = g.datadir,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        env = {
+            TARANTOOL_ELECTION_MODE = 'manual',
+        },
+        replicasets = {
+            {
+                alias = 'storage',
+                uuid = manual_storage_uuid,
+                roles = {'failover-coordinator'},
+                servers = {
+                    {alias = 'storage', instance_uuid = manual_storage_1_uuid},
+                },
+            },
+        },
+    }
+
+    for key, value in pairs(opts or {}) do
+        cluster_opts[key] = value
+    end
+
+    g.cluster = helpers.Cluster:new(cluster_opts)
+    g.cluster:start()
+end
+
+local function cleanup_manual_group(g)
+    if g.cluster ~= nil then
+        g.cluster:stop()
+    end
+
+    if g.state_provider ~= nil then
+        g.state_provider:stop()
+        fio.rmtree(g.state_provider.workdir)
+    end
+
+    if g.datadir ~= nil then
+        fio.rmtree(g.datadir)
+    end
+end
+
+g_manual_stateboard.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'),
+        'Manual election startup requires Tarantool 2.6.1+')
+
+    local g = g_manual_stateboard
+    g.datadir = fio.tempdir()
+
+    setup_manual_cluster(g, {
+        failover = 'stateful',
+        stateboard_entrypoint = helpers.entrypoint('srv_stateboard'),
+    })
+end)
+
+g_manual_stateboard.after_all(function()
+    cleanup_manual_group(g_manual_stateboard)
+end)
+
+g_manual_etcd2.before_all(function()
+    t.skip_if(not helpers.tarantool_version_ge('2.6.1'),
+        'Manual election startup requires Tarantool 2.6.1+')
+
+    local etcd_path = os.getenv('ETCD_PATH')
+    t.skip_if(etcd_path == nil, 'etcd missing')
+
+    local g = g_manual_etcd2
+    local uri = 'http://127.0.0.1:14011'
+
+    g.datadir = fio.tempdir()
+    g.state_provider = helpers.Etcd:new({
+        workdir = fio.tempdir('/tmp'),
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17011',
+        client_url = uri,
+    })
+
+    g.state_provider:start()
+    setup_manual_cluster(g)
+
+    t.assert(g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'etcd2',
+            etcd2_params = {
+                prefix = 'failover_stateful_manual_election_test',
+                endpoints = {uri},
+                lock_delay = 3,
+            },
+        }}
+    ))
+end)
+
+g_manual_etcd2.after_all(function()
+    cleanup_manual_group(g_manual_etcd2)
+end)
+
+local function assert_manual_single_instance_is_promoted(g)
+    helpers.retrying({timeout = 20}, function()
+        local state = g.cluster.main_server:exec(function()
+            local failover = require('cartridge.failover')
+            local synchro = box.info.synchro or {}
+            local queue = synchro.queue or {}
+
+            return {
+                healthy = require('cartridge').is_healthy(),
+                election_mode = box.cfg.election_mode or 'off',
+                is_leader = failover.is_leader(),
+                is_ro = box.info.ro,
+                synchro_owner = queue.owner,
+                id = box.info.id,
+            }
+        end)
+
+        t.assert_equals(state.healthy, true)
+        t.assert_equals(state.election_mode, 'manual')
+        t.assert_equals(state.is_leader, true)
+        t.assert_equals(state.is_ro, false)
+        t.assert_equals(state.synchro_owner, state.id)
+    end)
+end
+
+local function add_manual_test(name, fn)
+    g_manual_stateboard[name] = fn
+    g_manual_etcd2[name] = fn
+end
+
+add_manual_test('test_single_instance_is_promoted', function(g)
+    assert_manual_single_instance_is_promoted(g)
+end)
