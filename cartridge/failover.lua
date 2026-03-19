@@ -43,6 +43,7 @@ local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
 local leader_autoreturn = require('cartridge.failover.leader_autoreturn')
+local manual_election_mode = require('cartridge.failover.manual_election_mode')
 local argparse = require('cartridge.argparse')
 local sync_spaces = require('cartridge.sync-spaces')
 
@@ -59,6 +60,9 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
+-- True when the appointed leader must call box.ctl.promote()
+-- to become the actual Tarantool leader.
+vars:new('promote_for_leader_required', false)
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
@@ -453,7 +457,7 @@ end
 local function synchro_promote()
     if vars.enable_synchro_mode == true
     and vars.mode == 'stateful'
-    and vars.consistency_needed
+    and vars.promote_for_leader_required
     and vars.cache.is_leader
     and not vars.failover_paused
     and not vars.failover_suppressed
@@ -795,6 +799,36 @@ local function is_sync_spaces_supported()
     or (vars.mode == 'stateful' and vars.enable_synchro_mode)
 end
 
+local function validate_manual_election_mode_config(topology_cfg, failover_cfg)
+    if box.cfg.election_mode ~= 'manual' then
+        return
+    end
+
+    if failover_cfg.mode ~= 'stateful' then
+        log.error(
+            'election_mode="manual" is supported only with stateful failover; ' ..
+            'current failover mode is %q. ' ..
+            'Re-enable stateful failover, then switch election_mode back to "off"' ..
+            ' using failover.switch_to_off_election_mode().',
+            tostring(failover_cfg.mode)
+        )
+    end
+
+    local replicaset = topology_cfg.replicasets[vars.replicaset_uuid]
+    if replicaset ~= nil and replicaset.all_rw then
+        log.error(
+            'Stateful failover with election_mode="manual" is not supported with ALL_RW replicasets'
+        )
+    end
+
+    if box.cfg.election_fencing_mode ~= 'off' then
+        log.error(
+            'Stateful failover with election_mode="manual" should use election_fencing_mode="off"; got %s',
+            tostring(box.cfg.election_fencing_mode)
+        )
+    end
+end
+
 --- Initialize the failover module.
 -- @function cfg
 -- @local
@@ -849,6 +883,9 @@ local function cfg(clusterwide_config, opts)
     vars.clusterwide_config = clusterwide_config
     local topology_cfg = clusterwide_config:get_readonly('topology')
     local failover_cfg = topology.get_failover_params(topology_cfg)
+    if box.cfg.election_mode == 'manual' then
+        validate_manual_election_mode_config(topology_cfg, failover_cfg)
+    end
     local first_appointments
 
     -- disable raft if it was enabled
@@ -876,12 +913,14 @@ local function cfg(clusterwide_config, opts)
         log.info('Failover disabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
         first_appointments = _get_appointments_disabled_mode(topology_cfg)
 
     elseif failover_cfg.mode == 'eventual' then
         log.info('Eventual failover enabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
         first_appointments = _get_appointments_eventual_mode(topology_cfg)
 
         vars.failover_fiber = fiber.new(failover_loop, {
@@ -898,6 +937,7 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            vars.promote_for_leader_required = false
             local err = synchro_demote()
             if err ~= nil then
                 ApplyConfigError:new(
@@ -910,15 +950,19 @@ local function cfg(clusterwide_config, opts)
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
-            local err = synchro_demote()
-            if err ~= nil then
-                ApplyConfigError:new(
-                    'Unable to demote: %q',
-                    err
-                )
+            vars.promote_for_leader_required = box.cfg.election_mode == 'manual'
+            if not vars.promote_for_leader_required then
+                local err = synchro_demote()
+                if err ~= nil then
+                    ApplyConfigError:new(
+                        'Unable to demote: %q',
+                        err
+                    )
+                end
             end
         else
             vars.consistency_needed = true
+            vars.promote_for_leader_required = true
         end
 
         if failover_cfg.state_provider == 'tarantool' then
@@ -1021,6 +1065,7 @@ local function cfg(clusterwide_config, opts)
         end
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
 
         -- Raft failover can be enabled only on replicasets of 3 or more instances
         if vars.disable_raft_on_small_clusters
@@ -1331,4 +1376,6 @@ return {
     is_sync_spaces_supported = is_sync_spaces_supported,
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
+    switch_to_manual_election_mode = manual_election_mode.switch_to_manual_election_mode,
+    switch_to_off_election_mode = manual_election_mode.switch_to_off_election_mode,
 }

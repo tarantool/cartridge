@@ -687,6 +687,58 @@ function g.test_unhealthy_replicasets()
     end, {g.to_be_stopped.instance_uuid})
 end
 
+function g.test_manual_election_mode_without_stateful_failover()
+    t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+        'Manual election issue test requires election_fencing_mode support')
+
+    g.master:exec(function()
+        rawset(_G, 'old_manual_election_mode_issue_cfg', {
+            election_mode = box.cfg.election_mode,
+            election_fencing_mode = box.cfg.election_fencing_mode,
+        })
+
+        box.cfg({
+            election_mode = 'manual',
+            election_fencing_mode = 'off',
+        })
+    end)
+
+    t.helpers.retrying({}, function()
+        t.assert_items_include(helpers.list_cluster_issues(g.master), {{
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+            message =
+                'election_mode="manual" is supported only with stateful failover; ' ..
+                'current failover mode is "disabled". ' ..
+                'Re-enable stateful failover, then switch election_mode back to "off"' ..
+                ' using failover.switch_to_off_election_mode().',
+        }})
+    end)
+end
+
+g.after_test('test_manual_election_mode_without_stateful_failover', function()
+    g.master:exec(function()
+        local prev_cfg = rawget(_G, 'old_manual_election_mode_issue_cfg')
+        if prev_cfg == nil then
+            return
+        end
+
+        local opts = {
+            election_mode = prev_cfg.election_mode,
+            election_fencing_mode = prev_cfg.election_fencing_mode,
+        }
+
+        box.cfg(opts)
+        rawset(_G, 'old_manual_election_mode_issue_cfg', nil)
+    end)
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
+    end)
+end)
+
 ----------------------------------------------------------------
 -- Sync spaces issues
 --

@@ -7,6 +7,13 @@ local stateboard_client = require('cartridge.stateboard-client')
 
 local g_etcd2 = t.group('integration.fencing.etcd2')
 local g_stateboard = t.group('integration.fencing.stateboard')
+local g_manual_etcd2 = t.group('integration.fencing.manual_election.etcd2')
+local g_manual_stateboard = t.group('integration.fencing.manual_election.stateboard')
+
+local manual_env = {
+    TARANTOOL_ELECTION_MODE = 'manual',
+    TARANTOOL_ELECTION_FENCING_MODE = 'off',
+}
 
 local uA = helpers.uuid('a')
 local uB = helpers.uuid('b')
@@ -17,16 +24,18 @@ local A1
 local B1
 local B2
 
-local function setup_cluster(g)
+local function setup_cluster(g, opts)
+    opts = opts or {}
+
     g.cluster = helpers.Cluster:new({
         datadir = g.datadir,
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
-        env = {
+        env = helpers.merge_env({
             TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
             TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
-        },
+        }, opts.extra_env or {}),
         replicasets = {{
             uuid = uA,
             roles = {},
@@ -57,8 +66,14 @@ local function setup_cluster(g)
     )
 end
 
-g_stateboard.before_all(function()
-    local g = g_stateboard
+local function setup_stateboard_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
@@ -66,7 +81,7 @@ g_stateboard.before_all(function()
     g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
-        net_box_port = 14401,
+        net_box_port = opts.net_box_port,
         net_box_credentials = {
             user = 'client',
             password = g.kvpassword,
@@ -90,7 +105,9 @@ g_stateboard.before_all(function()
         call_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {
+        extra_env = opts.extra_env,
+    })
 
     B1:call('box.schema.sequence.create', {'test'})
     B1:call('package.loaded.cartridge.failover_set_params', {{
@@ -101,10 +118,16 @@ g_stateboard.before_all(function()
             password = g.kvpassword,
         },
     }})
-end)
+end
 
-g_etcd2.before_all(function()
-    local g = g_etcd2
+local function setup_etcd2_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
@@ -112,13 +135,13 @@ g_etcd2.before_all(function()
     g.state_provider = helpers.Etcd:new({
         workdir = fio.tempdir('/tmp'),
         etcd_path = etcd_path,
-        peer_url = 'http://127.0.0.1:17001',
-        client_url = 'http://127.0.0.1:14001',
+        peer_url = opts.peer_url,
+        client_url = opts.uri,
     })
 
     g.state_provider:start()
     g.client = etcd2_client.new({
-        prefix = 'fencing_test',
+        prefix = opts.prefix,
         endpoints = {g.state_provider.client_url},
         lock_delay = 5,
         username = '',
@@ -126,7 +149,9 @@ g_etcd2.before_all(function()
         request_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {
+        extra_env = opts.extra_env,
+    })
 
     B1:call('box.schema.sequence.create', {'test'})
     t.assert(A1:call(
@@ -135,24 +160,68 @@ g_etcd2.before_all(function()
             mode = 'stateful',
             state_provider = 'etcd2',
             etcd2_params = {
-                prefix = 'fencing_test',
+                prefix = opts.prefix,
                 endpoints = {g.state_provider.client_url},
                 lock_delay = 5,
             },
         }}
     ))
+end
 
+g_stateboard.before_all(function()
+    setup_stateboard_group(g_stateboard, {
+        net_box_port = 14401,
+    })
+end)
+
+g_etcd2.before_all(function()
+    setup_etcd2_group(g_etcd2, {
+        peer_url = 'http://127.0.0.1:17001',
+        prefix = 'fencing_test',
+        uri = 'http://127.0.0.1:14001',
+    })
+end)
+
+g_manual_stateboard.before_all(function()
+    setup_stateboard_group(g_manual_stateboard, {
+        extra_env = manual_env,
+        net_box_port = 14411,
+        require_manual_election = true,
+    })
+end)
+
+g_manual_etcd2.before_all(function()
+    setup_etcd2_group(g_manual_etcd2, {
+        extra_env = manual_env,
+        peer_url = 'http://127.0.0.1:17011',
+        prefix = 'manual_fencing_test',
+        require_manual_election = true,
+        uri = 'http://127.0.0.1:14011',
+    })
 end)
 
 local function after_all(g)
-    g.cluster:stop()
-    g.state_provider:stop()
-    fio.rmtree(g.state_provider.workdir)
-    fio.rmtree(g.datadir)
+    if g.cluster ~= nil then
+        g.cluster:stop()
+    end
+
+    if g.state_provider ~= nil then
+        g.state_provider:stop()
+
+        if g.state_provider.workdir ~= nil then
+            fio.rmtree(g.state_provider.workdir)
+        end
+    end
+
+    if g.datadir ~= nil then
+        fio.rmtree(g.datadir)
+    end
 end
 
 g_etcd2.after_all(function() after_all(g_etcd2) end)
 g_stateboard.after_all(function() after_all(g_stateboard) end)
+g_manual_etcd2.after_all(function() after_all(g_manual_etcd2) end)
+g_manual_stateboard.after_all(function() after_all(g_manual_stateboard) end)
 
 local function before_each(g)
     g.session = g.client:get_session()
@@ -168,10 +237,14 @@ end
 
 g_etcd2.before_each(function() before_each(g_etcd2) end)
 g_stateboard.before_each(function() before_each(g_stateboard) end)
+g_manual_etcd2.before_each(function() before_each(g_manual_etcd2) end)
+g_manual_stateboard.before_each(function() before_each(g_manual_stateboard) end)
 
 local function add(name, fn)
     g_stateboard[name] = fn
     g_etcd2[name] = fn
+    g_manual_stateboard[name] = fn
+    g_manual_etcd2[name] = fn
 end
 
 local q_readonliness = "return box.info.ro"
@@ -245,3 +318,4 @@ add('test_basics', function(g)
         t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
 end)
+

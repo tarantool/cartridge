@@ -205,6 +205,7 @@ end
 local function list_on_instance(opts)
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
+    local failover_cfg = topology.get_failover_params(topology_cfg)
     for _, uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
         enabled_servers[uuid] = server
     end
@@ -357,6 +358,22 @@ local function list_on_instance(opts)
                 'Failover is stuck on %s: %s',
                 describe(self_uri),
                 failover_error.err
+            ),
+        })
+    end
+
+    if box.cfg.election_mode == 'manual' and failover_cfg.mode ~= 'stateful' then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'election_mode="manual" is supported only with stateful failover; ' ..
+                'current failover mode is %q. ' ..
+                'Re-enable stateful failover, then switch election_mode back to "off"' ..
+                ' using failover.switch_to_off_election_mode().',
+                tostring(failover_cfg.mode)
             ),
         })
     end
@@ -893,3 +910,4 @@ return {
         end
     end,
 }
+

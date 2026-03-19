@@ -8,6 +8,13 @@ local stateboard_client = require('cartridge.stateboard-client')
 
 local g_etcd2 = t.group('integration.failover_stateful.etcd2')
 local g_stateboard = t.group('integration.failover_stateful.stateboard')
+local g_manual_multi_etcd2 = t.group('integration.failover_stateful.manual_election_multi.etcd2')
+local g_manual_multi_stateboard = t.group('integration.failover_stateful.manual_election_multi.stateboard')
+
+local manual_env = {
+    TARANTOOL_ELECTION_MODE = 'manual',
+    TARANTOOL_ELECTION_FENCING_MODE = 'off',
+}
 
 local storage_uuid = helpers.uuid('b')
 local S1; local storage_1_uuid = helpers.uuid('b', 'b', 1)
@@ -17,15 +24,17 @@ local S3; local storage_3_uuid = helpers.uuid('b', 'b', 3)
 local router_uuid = helpers.uuid('a')
 local R1; local router_1_uuid = helpers.uuid('a', 'a', 1)
 
-local function setup_cluster(g)
+local function setup_cluster(g, opts)
+    opts = opts or {}
+
     g.cluster = helpers.Cluster:new({
         datadir = g.datadir,
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
-        env = {
+        env = helpers.merge_env({
             TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
-        },
+        }, opts.env or {}),
         replicasets = {
             {
                 alias = 'router',
@@ -67,15 +76,21 @@ local function setup_cluster(g)
     )
 end
 
-g_stateboard.before_all(function()
-    local g = g_stateboard
+local function setup_stateboard_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
     g.datadir = fio.tempdir()
 
     g.kvpassword = helpers.random_cookie()
     g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
-        net_box_port = 14401,
+        net_box_port = opts.net_box_port,
         net_box_credentials = {
             user = 'client',
             password = g.kvpassword,
@@ -93,7 +108,7 @@ g_stateboard.before_all(function()
         call_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {env = opts.extra_env})
 
     t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
@@ -106,33 +121,38 @@ g_stateboard.before_all(function()
             },
         }}
     ))
-end)
+end
 
-g_etcd2.before_all(function()
-    local g = g_etcd2
+local function setup_etcd2_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
-    local URI = 'http://127.0.0.1:14001'
     g.datadir = fio.tempdir()
     g.state_provider = helpers.Etcd:new({
         workdir = fio.tempdir('/tmp'),
         etcd_path = etcd_path,
-        peer_url = 'http://127.0.0.1:17001',
-        client_url = 'http://127.0.0.1:14001',
+        peer_url = opts.peer_url,
+        client_url = opts.uri,
     })
 
     g.state_provider:start()
     g.client = etcd2_client.new({
-        prefix = 'failover_stateful_test',
-        endpoints = {URI},
+        prefix = opts.prefix,
+        endpoints = {opts.uri},
         lock_delay = 3,
         username = '',
         password = '',
         request_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {env = opts.extra_env})
 
     t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
@@ -140,12 +160,44 @@ g_etcd2.before_all(function()
             mode = 'stateful',
             state_provider = 'etcd2',
             etcd2_params = {
-                prefix = 'failover_stateful_test',
-                endpoints = {URI},
+                prefix = opts.prefix,
+                endpoints = {opts.uri},
                 lock_delay = 3,
             },
         }}
     ))
+end
+
+g_stateboard.before_all(function()
+    setup_stateboard_group(g_stateboard, {
+        net_box_port = 14401,
+    })
+end)
+
+g_etcd2.before_all(function()
+    setup_etcd2_group(g_etcd2, {
+        prefix = 'failover_stateful_test',
+        peer_url = 'http://127.0.0.1:17001',
+        uri = 'http://127.0.0.1:14001',
+    })
+end)
+
+g_manual_multi_stateboard.before_all(function()
+    setup_stateboard_group(g_manual_multi_stateboard, {
+        extra_env = manual_env,
+        net_box_port = 14421,
+        require_manual_election = true,
+    })
+end)
+
+g_manual_multi_etcd2.before_all(function()
+    setup_etcd2_group(g_manual_multi_etcd2, {
+        extra_env = manual_env,
+        prefix = 'failover_stateful_manual_multi_test',
+        peer_url = 'http://127.0.0.1:17021',
+        require_manual_election = true,
+        uri = 'http://127.0.0.1:14021',
+    })
 end)
 
 local function after_all(g)
@@ -156,6 +208,8 @@ local function after_all(g)
 end
 g_stateboard.after_all(function() after_all(g_stateboard) end)
 g_etcd2.after_all(function() after_all(g_etcd2) end)
+g_manual_multi_stateboard.after_all(function() after_all(g_manual_multi_stateboard) end)
+g_manual_multi_etcd2.after_all(function() after_all(g_manual_multi_etcd2) end)
 
 local function before_each(g)
     helpers.retrying({}, function()
@@ -178,6 +232,8 @@ local function before_each(g)
 end
 g_stateboard.before_each(function() before_each(g_stateboard) end)
 g_etcd2.before_each(function() before_each(g_etcd2) end)
+g_manual_multi_stateboard.before_each(function() before_each(g_manual_multi_stateboard) end)
+g_manual_multi_etcd2.before_each(function() before_each(g_manual_multi_etcd2) end)
 
 local q_leadership = string.format([[
     local failover = require('cartridge.failover')
@@ -190,6 +246,8 @@ local q_readonliness = [[
 local function add(name, fn)
     g_stateboard[name] = fn
     g_etcd2[name] = fn
+    g_manual_multi_stateboard[name] = fn
+    g_manual_multi_etcd2[name] = fn
 end
 
 local function after_each(g)
@@ -212,6 +270,8 @@ local function after_each(g)
 end
 g_stateboard.after_each(function() after_each(g_stateboard) end)
 g_etcd2.after_each(function() after_each(g_etcd2) end)
+g_manual_multi_stateboard.after_each(function() after_each(g_manual_multi_stateboard) end)
+g_manual_multi_etcd2.after_each(function() after_each(g_manual_multi_etcd2) end)
 
 add('test_state_provider_restart', function(g)
     g.state_provider:stop()
@@ -793,6 +853,8 @@ end
 local test_cases = {
     [g_stateboard] = "localhost:14401",
     [g_etcd2] = "http://127.0.0.1:14001",
+    [g_manual_multi_stateboard] = "localhost:14421",
+    [g_manual_multi_etcd2] = "http://127.0.0.1:14021",
 }
 for group, uri in pairs(test_cases) do
     group.test_get_state_provider_status = function(g)
@@ -836,4 +898,145 @@ add('test_disable', function(g)
     g.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').enable_servers({uuid})
     end, {storage_1_uuid})
+end)
+
+local g_manual_stateboard = t.group('integration.failover_stateful.manual_election.stateboard')
+local g_manual_etcd2 = t.group('integration.failover_stateful.manual_election.etcd2')
+
+local manual_storage_uuid = helpers.uuid('d')
+local manual_storage_1_uuid = helpers.uuid('d', 'd', 1)
+
+local function setup_manual_cluster(g, opts)
+    local cluster_opts = {
+        datadir = g.datadir,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = helpers.random_cookie(),
+        env = helpers.merge_env({}, manual_env),
+        replicasets = {
+            {
+                alias = 'storage',
+                uuid = manual_storage_uuid,
+                roles = {'failover-coordinator'},
+                servers = {
+                    {alias = 'storage', instance_uuid = manual_storage_1_uuid},
+                },
+            },
+        },
+    }
+
+    for key, value in pairs(opts or {}) do
+        if key == 'env' then
+            cluster_opts.env = helpers.merge_env(cluster_opts.env or {}, value or {})
+        else
+            cluster_opts[key] = value
+        end
+    end
+
+    g.cluster = helpers.Cluster:new(cluster_opts)
+    g.cluster:start()
+end
+
+local function cleanup_manual_group(g)
+    if g.cluster ~= nil then
+        g.cluster:stop()
+    end
+
+    if g.state_provider ~= nil then
+        g.state_provider:stop()
+        fio.rmtree(g.state_provider.workdir)
+    end
+
+    if g.datadir ~= nil then
+        fio.rmtree(g.datadir)
+    end
+end
+
+g_manual_stateboard.before_all(function()
+    t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+        'Manual election release-1 tests require election_fencing_mode support')
+
+    local g = g_manual_stateboard
+    g.datadir = fio.tempdir()
+
+    setup_manual_cluster(g, {
+        failover = 'stateful',
+        stateboard_entrypoint = helpers.entrypoint('srv_stateboard'),
+    })
+end)
+
+g_manual_stateboard.after_all(function()
+    cleanup_manual_group(g_manual_stateboard)
+end)
+
+g_manual_etcd2.before_all(function()
+    t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+        'Manual election release-1 tests require election_fencing_mode support')
+
+    local etcd_path = os.getenv('ETCD_PATH')
+    t.skip_if(etcd_path == nil, 'etcd missing')
+
+    local g = g_manual_etcd2
+    local uri = 'http://127.0.0.1:14011'
+
+    g.datadir = fio.tempdir()
+    g.state_provider = helpers.Etcd:new({
+        workdir = fio.tempdir('/tmp'),
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17011',
+        client_url = uri,
+    })
+
+    g.state_provider:start()
+    setup_manual_cluster(g)
+
+    t.assert(g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'etcd2',
+            etcd2_params = {
+                prefix = 'failover_stateful_manual_election_test',
+                endpoints = {uri},
+                lock_delay = 3,
+            },
+        }}
+    ))
+end)
+
+g_manual_etcd2.after_all(function()
+    cleanup_manual_group(g_manual_etcd2)
+end)
+
+local function assert_manual_single_instance_is_promoted(g)
+    helpers.retrying({timeout = 20}, function()
+        local state = g.cluster.main_server:exec(function()
+            local failover = require('cartridge.failover')
+            local synchro = box.info.synchro or {}
+            local queue = synchro.queue or {}
+
+            return {
+                healthy = require('cartridge').is_healthy(),
+                election_mode = box.cfg.election_mode or 'off',
+                is_leader = failover.is_leader(),
+                is_ro = box.info.ro,
+                synchro_owner = queue.owner,
+                id = box.info.id,
+            }
+        end)
+
+        t.assert_equals(state.healthy, true)
+        t.assert_equals(state.election_mode, 'manual')
+        t.assert_equals(state.is_leader, true)
+        t.assert_equals(state.is_ro, false)
+        t.assert_equals(state.synchro_owner, state.id)
+    end)
+end
+
+local function add_manual_test(name, fn)
+    g_manual_stateboard[name] = fn
+    g_manual_etcd2[name] = fn
+end
+
+add_manual_test('test_single_instance_is_promoted', function(g)
+    assert_manual_single_instance_is_promoted(g)
 end)

@@ -7,22 +7,44 @@ local stateboard_client = require('cartridge.stateboard-client')
 
 local g_etcd2 = t.group('integration.switchover.etcd2')
 local g_stateboard = t.group('integration.switchover.stateboard')
+local g_manual_etcd2 = t.group('integration.switchover.manual_election.etcd2')
+local g_manual_stateboard = t.group('integration.switchover.manual_election.stateboard')
+local g_manual_quorum_etcd2 = t.group('integration.switchover.manual_election_quorum.etcd2')
+local g_manual_quorum_stateboard = t.group('integration.switchover.manual_election_quorum.stateboard')
+
+local manual_env = {
+    TARANTOOL_ELECTION_MODE = 'manual',
+    TARANTOOL_ELECTION_FENCING_MODE = 'off',
+}
 
 local uA = helpers.uuid('a')
 local uB = helpers.uuid('b')
 local uA1 = helpers.uuid('a', 1, 1)
 local uB1 = helpers.uuid('b', 1, 1)
 local uB2 = helpers.uuid('b', 2, 2)
+local uB3 = helpers.uuid('b', 3, 3)
 local A1
 local B1
 local B2
+local B3
 
-local function setup_cluster(g)
+local function setup_cluster(g, opts)
+    opts = opts or {}
+    local b_servers = {
+        {alias = 'B1', instance_uuid = uB1},
+        {alias = 'B2', instance_uuid = uB2},
+    }
+
+    if opts.with_b3 then
+        table.insert(b_servers, {alias = 'B3', instance_uuid = uB3})
+    end
+
     g.cluster = helpers.Cluster:new({
         datadir = g.datadir,
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
+        env = helpers.merge_env({}, opts.extra_env or {}),
         replicasets = {{
             uuid = uA,
             roles = {},
@@ -30,10 +52,7 @@ local function setup_cluster(g)
         }, {
             uuid = uB,
             roles = {},
-            servers = {
-                {alias = 'B1', instance_uuid = uB1},
-                {alias = 'B2', instance_uuid = uB2},
-            },
+            servers = b_servers,
         }},
     })
 
@@ -41,10 +60,18 @@ local function setup_cluster(g)
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
+    B3 = opts.with_b3 and g.cluster:server('B3') or nil
 end
 
-g_stateboard.before_all(function()
-    local g = g_stateboard
+local function setup_stateboard_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
+    g.is_etcd2 = false
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
@@ -52,7 +79,7 @@ g_stateboard.before_all(function()
     g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
-        net_box_port = 14401,
+        net_box_port = opts.net_box_port or 14401,
         net_box_credentials = {
             user = 'client',
             password = g.kvpassword,
@@ -77,21 +104,31 @@ g_stateboard.before_all(function()
         call_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {
+        extra_env = opts.extra_env,
+        with_b3 = opts.with_b3,
+    })
 
     B1:call('box.schema.sequence.create', {'test'})
     B1:call('package.loaded.cartridge.failover_set_params', {{
         mode = 'stateful',
         state_provider = 'tarantool',
         tarantool_params = {
-            uri = '127.0.0.1:' .. g.state_provider.net_box_port,
+            uri = g.state_provider.net_box_uri,
             password = g.kvpassword,
         },
     }})
-end)
+end
 
-g_etcd2.before_all(function()
-    local g = g_etcd2
+local function setup_etcd2_group(g, opts)
+    opts = opts or {}
+
+    if opts.require_manual_election then
+        t.skip_if(not helpers.tarantool_supports_election_fencing_mode(),
+            'Manual election release-1 tests require election_fencing_mode support')
+    end
+
+    g.is_etcd2 = true
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
@@ -99,21 +136,24 @@ g_etcd2.before_all(function()
     g.state_provider = helpers.Etcd:new({
         workdir = fio.tempdir('/tmp'),
         etcd_path = etcd_path,
-        peer_url = 'http://127.0.0.1:17001',
-        client_url = 'http://127.0.0.1:14001',
+        peer_url = opts.peer_url,
+        client_url = opts.uri,
     })
 
     g.state_provider:start()
     g.client = etcd2_client.new({
-        prefix = 'switchover_test',
+        prefix = opts.prefix,
         endpoints = {g.state_provider.client_url},
-        lock_delay = 5,
+        lock_delay = opts.lock_delay,
         username = '',
         password = '',
         request_timeout = 1,
     })
 
-    setup_cluster(g)
+    setup_cluster(g, {
+        extra_env = opts.extra_env,
+        with_b3 = opts.with_b3,
+    })
 
     B1:call('box.schema.sequence.create', {'test'})
     t.assert(A1:call(
@@ -122,14 +162,13 @@ g_etcd2.before_all(function()
             mode = 'stateful',
             state_provider = 'etcd2',
             etcd2_params = {
-                prefix = 'switchover_test',
+                prefix = opts.prefix,
                 endpoints = {g.state_provider.client_url},
-                lock_delay = 5,
+                lock_delay = opts.lock_delay,
             },
         }}
     ))
-
-end)
+end
 
 local function after_all(g)
     g.cluster:stop()
@@ -137,9 +176,6 @@ local function after_all(g)
     fio.rmtree(g.state_provider.workdir)
     fio.rmtree(g.datadir)
 end
-
-g_etcd2.after_all(function() after_all(g_etcd2) end)
-g_stateboard.after_all(function() after_all(g_stateboard) end)
 
 local function before_each(g)
     g.session = g.client:get_session()
@@ -153,17 +189,98 @@ local function before_each(g)
     end)
 end
 
-g_etcd2.before_each(function() before_each(g_etcd2) end)
-g_stateboard.before_each(function() before_each(g_stateboard) end)
-
 local function after_each(g)
     for _, srv in pairs(g.cluster.servers) do
         srv.process:kill('CONT')
     end
 end
 
-g_etcd2.after_each(function() after_each(g_etcd2) end)
-g_stateboard.after_each(function() after_each(g_stateboard) end)
+local regular_groups = {g_stateboard, g_etcd2}
+local manual_groups = {g_manual_stateboard, g_manual_etcd2}
+local manual_quorum_groups = {
+    g_manual_quorum_stateboard,
+    g_manual_quorum_etcd2,
+}
+
+local group_setups = {
+    {
+        group = g_stateboard,
+        setup = setup_stateboard_group,
+    },
+    {
+        group = g_etcd2,
+        setup = setup_etcd2_group,
+        opts = {
+            lock_delay = 5,
+            peer_url = 'http://127.0.0.1:17001',
+            prefix = 'switchover_test',
+            uri = 'http://127.0.0.1:14001',
+        },
+    },
+    {
+        group = g_manual_stateboard,
+        setup = setup_stateboard_group,
+        opts = {
+            extra_env = manual_env,
+            require_manual_election = true,
+        },
+    },
+    {
+        group = g_manual_quorum_stateboard,
+        setup = setup_stateboard_group,
+        opts = {
+            extra_env = manual_env,
+            net_box_port = 14411,
+            require_manual_election = true,
+            with_b3 = true,
+        },
+    },
+    {
+        group = g_manual_etcd2,
+        setup = setup_etcd2_group,
+        opts = {
+            extra_env = manual_env,
+            lock_delay = 5,
+            peer_url = 'http://127.0.0.1:17011',
+            prefix = 'switchover_manual_test',
+            require_manual_election = true,
+            uri = 'http://127.0.0.1:14011',
+        },
+    },
+    {
+        group = g_manual_quorum_etcd2,
+        setup = setup_etcd2_group,
+        opts = {
+            extra_env = manual_env,
+            lock_delay = 5,
+            peer_url = 'http://127.0.0.1:17012',
+            prefix = 'switchover_manual_quorum_test',
+            require_manual_election = true,
+            uri = 'http://127.0.0.1:14012',
+            with_b3 = true,
+        },
+    },
+}
+
+for i = 1, #group_setups do
+    local cfg = group_setups[i]
+
+    cfg.group.before_all(function()
+        cfg.setup(cfg.group, cfg.opts)
+    end)
+
+    cfg.group.after_all(function()
+        after_all(cfg.group)
+    end)
+
+    cfg.group.before_each(function()
+        before_each(cfg.group)
+    end)
+
+    cfg.group.after_each(function()
+        after_each(cfg.group)
+    end)
+end
 
 local q_readonliness = "return box.info.ro"
 local q_set_wait_lsn_timeout = [[
@@ -179,9 +296,24 @@ local q_leadership = [[
     return failover.get_active_leaders()[...]
 ]]
 
+local function register_test(groups, name, fn)
+    for i = 1, #groups do
+        groups[i][name] = fn
+    end
+end
+
 local function add(name, fn)
-    g_stateboard[name] = fn
-    g_etcd2[name] = fn
+    register_test(regular_groups, name, fn)
+    register_test(manual_groups, name, fn)
+end
+
+local function add_without_manual(name, fn)
+    register_test(regular_groups, name, fn)
+end
+
+local function add_with_manual_quorum(name, fn, quorum_fn)
+    add_without_manual(name, fn)
+    register_test(manual_quorum_groups, name, quorum_fn)
 end
 
 add('test_2pc_forceful', function(g)
@@ -250,7 +382,9 @@ add('test_2pc_forceful', function(g)
     end)
 end)
 
-add('test_promotion_forceful', function(g)
+local function test_promotion_forceful(g, opts)
+    opts = opts or {}
+
    -- Scenario:
     -- 1. B1 is a leader and a vclockkeeper
     -- 2. B2 gets promoted but can't accomplish wait_lsn
@@ -284,6 +418,9 @@ add('test_promotion_forceful', function(g)
     helpers.retrying({}, function()
         t.assert_equals(B2:eval(q_readonliness), false)
         t.assert_equals(B2:eval(q_is_vclockkeeper), true)
+        if opts.expect_b3 then
+            t.assert_equals(B3:eval(q_readonliness), true)
+        end
     end)
 
     -- Revert all hacks in fixtures
@@ -291,7 +428,14 @@ add('test_promotion_forceful', function(g)
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(A1), {})
     end)
-end)
+end
+
+add_with_manual_quorum('test_promotion_forceful',
+    test_promotion_forceful,
+    function(g)
+        test_promotion_forceful(g, {expect_b3 = true})
+    end
+)
 
 add('test_promotion_abortion', function(g)
     -- Scenario:
@@ -540,7 +684,7 @@ add('test_enabling', function(g)
                 instance_uuid = box.NULL,
                 replicaset_uuid = box.NULL,
                 message = "Can't obtain failover coordinator: " ..(
-                    g.name == 'integration.switchover.etcd2' and
+                    g.is_etcd2 and
                     g.state_provider.client_url .. "/v2/members:" ..
                     " Couldn't connect to server" or
                     "State provider unavailable"),
@@ -551,10 +695,10 @@ add('test_enabling', function(g)
                 replicaset_uuid = box.NULL  ,
                 message = "Failover is stuck on " .. A1.advertise_uri ..
                     " (A1): Error fetching first appointments: " ..(
-                    g.name == 'integration.switchover.etcd2' and
+                    g.is_etcd2 and
                     g.state_provider.client_url .. "/v2/members:" ..
                     " Couldn't connect to server" or
-                    '"127.0.0.1:14401": Connection refused'),
+                    string.format('%q: Connection refused', g.state_provider.net_box_uri)),
             }, {
                 level = "warning",
                 topic = "switchover",
@@ -639,8 +783,9 @@ add('test_api', function(g)
     g.client:drop_session()
     g.session = g.client:get_session()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
-    A1:eval(q_set_wait_lsn_timeout, {0.2})
-    B2:eval(q_set_wait_lsn_timeout, {0.2})
+    local wait_lsn_timeout = 0.2
+    A1:eval(q_set_wait_lsn_timeout, {wait_lsn_timeout})
+    B2:eval(q_set_wait_lsn_timeout, {wait_lsn_timeout})
     helpers.protect_from_rw(B2)
 
     A1:eval(
@@ -728,16 +873,18 @@ add('test_api', function(g)
 
     -- Now force inconsistency
     helpers.unprotect(B2)
-    local resp = A1:graphql({
-        query = query,
-        variables = {
-            replicaset_uuid = uB,
-            instance_uuid = uB2,
-            force = true,
-        }
-    })
-    t.assert_type(resp['data'], 'table')
-    t.assert_equals(resp.data, {cluster = {failover_promote = true}})
+    helpers.retrying({}, function()
+        local resp = A1:graphql({
+            query = query,
+            variables = {
+                replicaset_uuid = uB,
+                instance_uuid = uB2,
+                force = true,
+            }
+        })
+        t.assert_type(resp['data'], 'table')
+        t.assert_equals(resp.data, {cluster = {failover_promote = true}})
+    end)
     helpers.retrying({}, function()
         t.assert_equals(B2:eval(q_is_vclockkeeper), true)
     end)
@@ -745,20 +892,27 @@ add('test_api', function(g)
     local vclockkeeper_data = g.session:get_vclockkeeper(uB)
     if helpers.tarantool_version_ge('2.6.1') then
         -- box.ctl.promote makes a transaction in Tarantool
-        -- after switchover and promote call, there will be 
+        -- after switchover and promote call, there will be
         -- additional transactions in Tarantool, so we need to
-        -- add 1 to vclock here 
+        -- add 1 to vclock here.
+        --
+        -- State provider persists vclock before box.ctl.promote().
+        -- In manual election mode it may contain only replicated LSNs:
+        -- if there were no local changes yet, component 0 is absent and
+        -- B2's own component may also be absent. Promote creates one local
+        -- transaction and one transaction on B2, so missing components
+        -- should be normalized to 1 before comparing with box.info.vclock.
 
         vclockkeeper_data.vclock = transform_vclock(vclockkeeper_data.vclock)
-        vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] + 1
-        vclockkeeper_data.vclock[2] = vclockkeeper_data.vclock[2] + 1
+        vclockkeeper_data.vclock[0] = vclockkeeper_data.vclock[0] and vclockkeeper_data.vclock[0] + 1 or 1
+        vclockkeeper_data.vclock[2] = vclockkeeper_data.vclock[2] and vclockkeeper_data.vclock[2] + 1 or 1
     end
 
-    t.assert_equals(vclockkeeper_data, {
+    t.assert_equals({
         replicaset_uuid = uB,
         instance_uuid = uB2,
         vclock = B2:eval('return box.info.vclock'),
-    })
+    }, vclockkeeper_data)
 
     -- Revert all hacks in fixtures
     helpers.retrying({}, function()
@@ -769,7 +923,7 @@ add('test_api', function(g)
     end)
 end)
 
-add('test_all_rw', function(g)
+add_without_manual('test_all_rw', function(g)
     -- Replicasets with all_rw flag shouldn't fail on box.ctl.wait_ro().
 
     -- Make sure that B1 is a leader
@@ -823,3 +977,4 @@ add('test_alone_instance', function(g)
         vclock = nil,
     })
 end)
+

@@ -60,4 +60,55 @@ test_remotely('test_unconfigured_state', function()
     t.assert_equals(failover.get_active_leaders(), {})
 end)
 
+test_remotely('test_switch_to_manual_fails_when_local_election_mode_is_manual', function()
+    local failover = require('cartridge.lua-api.failover')
+    local vars = require('cartridge.vars').new('cartridge.failover')
+
+    vars.clusterwide_config = {
+        get_readonly = function(_, section_name)
+            t.assert_equals(section_name, 'topology')
+            return {
+                failover = {
+                    mode = 'stateful',
+                    state_provider = 'tarantool',
+                },
+                replicasets = {
+                    rs1 = {all_rw = false},
+                },
+                servers = {},
+            }
+        end,
+    }
+    vars.enable_synchro_mode = true
+    vars.failover_suppressed = false
+    vars.instance_uuid = 'instance-1'
+    vars.replicaset_uuid = 'rs1'
+    vars.cache = {is_leader = true}
+
+    rawset(_G, 'old_box', box)
+    _G.box = {
+        info = {
+            ro = false,
+        },
+        cfg = {
+            election_mode = 'manual',
+            election_fencing_mode = 'off',
+        },
+        ctl = {
+            promote = function() end,
+        },
+        error = _G.old_box.error,
+    }
+
+    local ok, err = failover.switch_to_manual_election_mode()
+    t.assert_equals(ok, nil)
+    t.assert_str_contains(
+        tostring(err),
+        'Local election_mode must be "off", got "manual"'
+    )
+
+    rawset(_G, 'box', _G.old_box)
+    rawset(_G, 'old_box', nil)
+end)
+
 return M
