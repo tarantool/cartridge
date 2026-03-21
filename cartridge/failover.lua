@@ -59,6 +59,9 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
+-- True when the appointed leader must call box.ctl.promote()
+-- to become the actual Tarantool leader.
+vars:new('promote_for_leader_required', false)
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
@@ -453,7 +456,7 @@ end
 local function synchro_promote()
     if vars.enable_synchro_mode == true
     and vars.mode == 'stateful'
-    and vars.consistency_needed
+    and vars.promote_for_leader_required
     and vars.cache.is_leader
     and not vars.failover_paused
     and not vars.failover_suppressed
@@ -876,12 +879,14 @@ local function cfg(clusterwide_config, opts)
         log.info('Failover disabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
         first_appointments = _get_appointments_disabled_mode(topology_cfg)
 
     elseif failover_cfg.mode == 'eventual' then
         log.info('Eventual failover enabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
         first_appointments = _get_appointments_eventual_mode(topology_cfg)
 
         vars.failover_fiber = fiber.new(failover_loop, {
@@ -898,6 +903,7 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
+            vars.promote_for_leader_required = false
             local err = synchro_demote()
             if err ~= nil then
                 ApplyConfigError:new(
@@ -910,15 +916,19 @@ local function cfg(clusterwide_config, opts)
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
-            local err = synchro_demote()
-            if err ~= nil then
-                ApplyConfigError:new(
-                    'Unable to demote: %q',
-                    err
-                )
+            vars.promote_for_leader_required = box.cfg.election_mode == 'manual'
+            if not vars.promote_for_leader_required then
+                local err = synchro_demote()
+                if err ~= nil then
+                    ApplyConfigError:new(
+                        'Unable to demote: %q',
+                        err
+                    )
+                end
             end
         else
             vars.consistency_needed = true
+            vars.promote_for_leader_required = true
         end
 
         if failover_cfg.state_provider == 'tarantool' then
@@ -1004,6 +1014,7 @@ local function cfg(clusterwide_config, opts)
         end
         vars.fencing_enabled = false
         vars.consistency_needed = false
+        vars.promote_for_leader_required = false
 
         -- Raft failover can be enabled only on replicasets of 3 or more instances
         if vars.disable_raft_on_small_clusters
@@ -1315,3 +1326,4 @@ return {
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
 }
+
