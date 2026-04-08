@@ -12,6 +12,18 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Fixed a stateful failover race when adding a brand new replicaset: if the
+  state provider has no appointment yet for this replicaset,
+  ``failover.cfg()`` now falls back to
+  ``topology.get_leaders_order(...)[1]`` (``failover_priority[1]``) for initial
+  appointment. This prevents the future leader from being switched to
+  ``read_only=true`` and avoids deadlock during topology apply (`#2375
+  <https://github.com/tarantool/cartridge/issues/2375>`_).
+
 -------------------------------------------------------------------------------
 [2.16.7] - 2026-03-20
 -------------------------------------------------------------------------------

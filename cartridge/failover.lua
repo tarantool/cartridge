@@ -980,6 +980,23 @@ local function cfg(clusterwide_config, opts)
             first_appointments = {}
         else
             first_appointments = appointments
+
+            -- gh-2375: for a brand new replicaset the state provider may not
+            -- have appointment yet. Fallback to failover_priority[1] to avoid
+            -- read_only deadlock during initial apply.
+            if first_appointments[vars.replicaset_uuid] == nil then
+                local leaders_order = topology.get_leaders_order(
+                    topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
+                )
+                if leaders_order[1] ~= nil then
+                    first_appointments[vars.replicaset_uuid] = leaders_order[1]
+                    log.warn(
+                        'No leader for replicaset %q in state provider,' ..
+                        ' defaulting to %q from failover_priority',
+                        vars.replicaset_uuid, leaders_order[1]
+                    )
+                end
+            end
         end
 
         vars.failover_fiber = fiber.new(failover_loop, {
