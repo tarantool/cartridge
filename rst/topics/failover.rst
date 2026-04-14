@@ -185,6 +185,95 @@ functionality, you should enable it in your ``init.lua`` file:
       enable_synchro_mode = true,
   })
 
+..  _cartridge-manual-election-mode-migration:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Migrating a stateful replicaset to manual election mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Stateful failover can also work with Tarantool
+``election_mode = 'manual'``. This mode gives stronger guarantees than
+``election_mode = 'off'``.
+
+With ``election_mode = 'off'``, Cartridge consistent promotion relies on
+``wait_lsn`` against the previous vclockkeeper. With
+``election_mode = 'manual'``, the new leader must also win a built-in
+Tarantool election triggered via ``box.ctl.promote()``. Tarantool elections
+use Raft-based terms and quorum, so the switchover verifies that the target
+instance can actually become the leader, not only catch up to the previous
+leader's WAL.
+
+In practice this makes a stateful replicaset more resilient during leader
+changes and failovers: inability to gather quorum is detected during
+promotion, before the replicaset continues as writable on the new leader.
+
+Manual election mode is supported only when all of the following are true:
+
+* failover mode is ``stateful``;
+* ``enable_synchro_mode = true`` is set in ``cartridge.cfg()``;
+* the replicaset doesn't use ``all_rw``.
+
+.. warning::
+
+   Use Tarantool ``election_fencing_mode = 'off'`` together with
+   ``election_mode = 'manual'``. If Tarantool election fencing makes an
+   instance read-only, Cartridge doesn't switch it back to writable mode
+   automatically. If you need fencing in stateful failover, prefer Cartridge
+   fencing (``failover.fencing_enabled``).
+
+To migrate a replicaset with restart, set startup configuration on every
+instance of the replicaset:
+
+.. code-block:: bash
+
+   export TARANTOOL_ELECTION_MODE=manual
+   export TARANTOOL_ELECTION_FENCING_MODE=off
+
+After restart, Tarantool starts in manual election mode and Cartridge uses it
+together with stateful failover.
+
+Starting with Cartridge ``2.17.0``, you can also switch a running replicaset
+at runtime via Lua API:
+
+.. code-block:: lua
+
+   require('cartridge.lua-api.failover').switch_to_manual_election_mode()
+
+Call the helper on the current appointed leader of the replicaset. The helper
+switches only the current replicaset and fails unless all instances in it are
+enabled and healthy.
+
+.. important::
+
+   Runtime helpers are not persistent. They change only the current runtime
+   ``box.cfg`` state and don't modify startup configuration. Before calling
+   ``switch_to_manual_election_mode()``, roll out
+   ``TARANTOOL_ELECTION_MODE=manual`` and
+   ``TARANTOOL_ELECTION_FENCING_MODE=off`` in deployment configuration for
+   future restarts, but do not restart the instances yet. Otherwise the next
+   restart restores the old startup values.
+
+To roll back a running replicaset from ``manual`` to ``off``, first update
+startup configuration for future restarts and then call:
+
+.. code-block:: lua
+
+   require('cartridge.lua-api.failover').switch_to_off_election_mode()
+
+By default the rollback helper switches the replicaset to
+``election_mode = 'off'`` with ``election_fencing_mode = 'soft'``. You can
+override the fencing mode explicitly:
+
+.. code-block:: lua
+
+   require('cartridge.lua-api.failover').switch_to_off_election_mode({
+       election_fencing_mode = 'off',
+   })
+
+Just like ``switch_to_manual_election_mode()``, the rollback helper affects
+only the current replicaset and must be called on its current appointed
+leader.
+
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Case: external provider outage

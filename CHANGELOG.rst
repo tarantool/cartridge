@@ -13,6 +13,21 @@ Unreleased
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Support Tarantool ``election_mode = 'manual'`` in Cartridge stateful
+  failover, including single-instance replicasets.
+- Runtime Lua API helpers
+  ``require('cartridge.lua-api.failover').switch_to_manual_election_mode()``
+  and ``switch_to_off_election_mode()`` to migrate a stateful replicaset
+  between Tarantool ``election_mode = 'off'`` and
+  ``election_mode = 'manual'``.
+- Documentation for migrating a stateful replicaset to Tarantool manual
+  election mode, including restart-based migration, runtime helpers,
+  rollback, and fencing recommendations.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2463,3 +2478,4 @@ Added
 - Integration tests
 - Luarock-based packaging
 - Gitlab CI integration
+

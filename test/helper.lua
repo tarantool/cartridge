@@ -173,6 +173,14 @@ function helpers.random_cookie()
     return digest.urandom(6):hex()
 end
 
+function helpers.merge_env(target, source)
+    for key, value in pairs(source) do
+        target[key] = value
+    end
+
+    return target
+end
+
 function helpers.run_remotely(srv, fn)
     checks('table', 'function')
     utils.assert_upvalues(fn, {})
@@ -210,6 +218,10 @@ function helpers.tarantool_version_ge(version)
     end
 
     return true
+end
+
+function helpers.tarantool_supports_election_fencing_mode()
+    return helpers.tarantool_version_ge('2.11.0')
 end
 
 -- Function to check if the error is a timeout error. The function

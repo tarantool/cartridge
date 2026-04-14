@@ -4,6 +4,8 @@ local t = require('luatest')
 
 local g_etcd2 = t.group('integration.failover_synchro.etcd2')
 local g_stateboard = t.group('integration.failover_synchro.stateboard')
+local g_manual_etcd2 = t.group('integration.failover_synchro.manual_election.etcd2')
+local g_manual_stateboard = t.group('integration.failover_synchro.manual_election.stateboard')
 
 local h = require('test.helper')
 
@@ -49,7 +51,9 @@ local function setup_cluster(g)
                     },
                     {
                         instance_uuid = storage_2_uuid,
-                        env = {['TARANTOOL_LOG'] = g.logfile},
+                        env = h.merge_env({
+                            TARANTOOL_LOG = g.logfile,
+                        }, g.extra_env or {}),
                     },
                     {
                         instance_uuid = storage_3_uuid,
@@ -57,9 +61,9 @@ local function setup_cluster(g)
                 },
             },
         },
-        env = {
+        env = h.merge_env({
             TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
-        }
+        }, g.extra_env or {}),
     })
     g.cluster:start()
 
@@ -113,6 +117,8 @@ end
 
 g_etcd2.before_each = before_each
 g_stateboard.before_each = before_each
+g_manual_etcd2.before_each = before_each
+g_manual_stateboard.before_each = before_each
 
 local function find_alias_by_uuid(uuid)
     return ({
@@ -255,16 +261,27 @@ local function promote_errors_test(g)
     end)
 end
 
-g_stateboard.before_all(function()
+local function cleanup(g)
+    if g.state_provider ~= nil then
+        g.state_provider:stop()
+        fio.rmtree(g.state_provider.workdir)
+    end
+    if g.cluster ~= nil then
+        g.cluster:stop()
+        fio.rmtree(g.cluster.datadir)
+    end
+end
+
+local function setup_stateboard_group(g, opts)
     t.skip_if(not h.tarantool_version_ge('2.6.1'))
-    local g = g_stateboard
+    g.extra_env = opts.extra_env
     g.datadir = fio.tempdir()
 
     g.kvpassword = h.random_cookie()
     g.state_provider = h.Stateboard:new({
         command = h.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
-        net_box_port = 14401,
+        net_box_port = opts.net_box_port,
         net_box_credentials = {
             user = 'client',
             password = g.kvpassword,
@@ -295,37 +312,26 @@ g_stateboard.before_all(function()
             },
         }}
     ))
-end)
+end
 
-g_stateboard.test_kill_master_stateboard = stateful_test
-g_stateboard.test_promote_errors = promote_errors_test
-
-g_stateboard.after_all(function(g)
-    g.state_provider:stop()
-    fio.rmtree(g.state_provider.workdir)
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end)
-
-g_etcd2.before_all(function()
+local function setup_etcd2_group(g, opts)
     t.skip_if(not h.tarantool_version_ge('2.6.1'))
-    local g = g_etcd2
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
-    local URI = 'http://127.0.0.1:14001'
+    g.extra_env = opts.extra_env
     g.datadir = fio.tempdir()
     g.state_provider = h.Etcd:new({
         workdir = fio.tempdir('/tmp'),
         etcd_path = etcd_path,
-        peer_url = 'http://127.0.0.1:17001',
-        client_url = 'http://127.0.0.1:14001',
+        peer_url = opts.peer_url,
+        client_url = opts.uri,
     })
 
     g.state_provider:start()
     g.client = etcd2_client.new({
-        prefix = 'failover_stateful_test',
-        endpoints = {URI},
+        prefix = opts.prefix,
+        endpoints = {opts.uri},
         lock_delay = 3,
         username = '',
         password = '',
@@ -340,20 +346,78 @@ g_etcd2.before_all(function()
             mode = 'stateful',
             state_provider = 'etcd2',
             etcd2_params = {
-                prefix = 'failover_stateful_test',
-                endpoints = {URI},
+                prefix = opts.prefix,
+                endpoints = {opts.uri},
                 lock_delay = 3,
             },
         }}
     ))
+end
+
+g_stateboard.before_all(function()
+    setup_stateboard_group(g_stateboard, {
+        net_box_port = 14401,
+    })
+end)
+
+g_stateboard.test_kill_master_stateboard = stateful_test
+g_stateboard.test_promote_errors = promote_errors_test
+
+g_stateboard.after_all(function(g)
+    cleanup(g)
+end)
+
+g_manual_stateboard.before_all(function()
+    t.skip_if(not h.tarantool_supports_election_fencing_mode(),
+        'Manual election release-1 tests require election_fencing_mode support')
+
+    setup_stateboard_group(g_manual_stateboard, {
+        extra_env = {
+            TARANTOOL_ELECTION_MODE = 'manual',
+            TARANTOOL_ELECTION_FENCING_MODE = 'off',
+        },
+        net_box_port = 14411,
+    })
+end)
+
+g_manual_stateboard.test_kill_master = stateful_test
+
+g_manual_stateboard.after_all(function(g)
+    cleanup(g)
+end)
+
+g_etcd2.before_all(function()
+    setup_etcd2_group(g_etcd2, {
+        peer_url = 'http://127.0.0.1:17001',
+        prefix = 'failover_stateful_test',
+        uri = 'http://127.0.0.1:14001',
+    })
 end)
 
 g_etcd2.test_kill_master = stateful_test
 g_etcd2.test_promote_errors = promote_errors_test
 
 g_etcd2.after_all(function(g)
-    g.state_provider:stop()
-    fio.rmtree(g.state_provider.workdir)
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
+    cleanup(g)
+end)
+
+g_manual_etcd2.before_all(function()
+    t.skip_if(not h.tarantool_supports_election_fencing_mode(),
+        'Manual election release-1 tests require election_fencing_mode support')
+
+    setup_etcd2_group(g_manual_etcd2, {
+        extra_env = {
+            TARANTOOL_ELECTION_MODE = 'manual',
+            TARANTOOL_ELECTION_FENCING_MODE = 'off',
+        },
+        peer_url = 'http://127.0.0.1:17011',
+        prefix = 'failover_stateful_manual_test',
+        uri = 'http://127.0.0.1:14011',
+    })
+end)
+
+g_manual_etcd2.test_kill_master = stateful_test
+
+g_manual_etcd2.after_all(function(g)
+    cleanup(g)
 end)

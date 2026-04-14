@@ -68,7 +68,17 @@ g.before_all(function()
             require('membership').set_payload = function() end
             local failover = require('cartridge.failover')
             _G.box = {
-                cfg = function() end,
+                cfg = setmetatable({
+                    election_mode = 'off',
+                    election_fencing_mode = 'off',
+                }, {
+                    __call = function(self, opts)
+                        for k, v in pairs(opts) do
+                            self[k] = v
+                        end
+                    end,
+                }),
+                space = {},
                 error = box.error,
                 info = {
                     cluster = {uuid = 'A'},
@@ -285,3 +295,4 @@ g.test_with_labels = function()
     local candidates = get_candidates('target-role', {labels = {msk = "dc"}, healthy_only = false})
     t.assert_items_equals(candidates, {'a2', 'b1', 'b2'})
 end
+

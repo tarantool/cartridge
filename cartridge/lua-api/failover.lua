@@ -354,6 +354,30 @@ local function resume()
     return true
 end
 
+--- Switch current replicaset from stateful failover to manual election mode.
+--
+-- @function switch_to_manual_election_mode
+--
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function switch_to_manual_election_mode()
+    return failover.switch_to_manual_election_mode()
+end
+
+--- Switch current replicaset from manual election mode to off election mode.
+--
+-- @function switch_to_off_election_mode
+-- @tparam[opt] table opts
+-- @tparam ?string opts.election_fencing_mode
+--
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function switch_to_off_election_mode(opts)
+    return failover.switch_to_off_election_mode(opts)
+end
+
 local --[[const]] PING_TIMEOUT = 3 -- seconds
 --- Gets status of the state provider if stateful failover is enabled.
 --
@@ -404,6 +428,8 @@ return {
     promote = promote,
     pause = pause,
     resume = resume,
+    switch_to_manual_election_mode = switch_to_manual_election_mode,
+    switch_to_off_election_mode = switch_to_off_election_mode,
     get_state_provider_status = get_state_provider_status,
     get_failover_enabled = get_failover_enabled, -- deprecated
     set_failover_enabled = set_failover_enabled, -- deprecated
