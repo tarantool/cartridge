@@ -1,6 +1,7 @@
 local log = require('log')
 
 local vshard = require('vshard')
+local vshard_util = require('vshard.util')
 
 local checks = require('checks')
 
@@ -62,9 +63,8 @@ end
 local function init()
     _G_vshard_backup = rawget(_G, 'vshard')
     rawset(_G, 'vshard', vshard)
-    local box_info = box.info
-    vars.instance_uuid = box_info.uuid
-    vars.replicaset_uuid = box_info.cluster.uuid
+    vars.instance_uuid = box.info.uuid
+    vars.replicaset_uuid = vshard_util.replicaset_uuid()
 
     local opts, err = require('cartridge.argparse').get_opts({
         add_vshard_storage_alerts_to_issues = 'boolean',
