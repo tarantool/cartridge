@@ -740,11 +740,6 @@ local function cfg(opts, box_opts)
         end
     end
 
-    -- Gracefully leave membership in case of stop if box.ctl.on_shutdown supported
-    if box.ctl.on_shutdown ~= nil then
-        box.ctl.on_shutdown(function() pcall(membership.leave) end)
-    end
-
     if opts.auth_backend_name == nil then
         opts.auth_backend_name = 'cartridge.auth-backend'
     end
@@ -979,11 +974,6 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
-    -- Stop roles on shutdown
-    if box.ctl.on_shutdown ~= nil then
-        box.ctl.on_shutdown(roles.stop)
-    end
-
     if opts.twophase_netbox_call_timeout then
         twophase.set_netbox_call_timeout(opts.twophase_netbox_call_timeout)
     end
@@ -1046,6 +1036,21 @@ local function cfg(opts, box_opts)
                 log.info('%s = %s', option, opt_value)
             end
         end
+    end
+
+    -- Stop roles and leave membership in a strict sequential order on shutdown
+    if box.ctl.on_shutdown ~= nil then
+        box.ctl.on_shutdown(function()
+            local ok, err = pcall(roles.stop)
+            if not ok then
+                log.error("Failed to stop roles during shutdown: %s", err)
+            end
+
+            local ok, err = pcall(membership.leave)
+            if not ok then
+                log.error("Failed to leave membership during shutdown: %s", err)
+            end
+        end)
     end
 
     return true
