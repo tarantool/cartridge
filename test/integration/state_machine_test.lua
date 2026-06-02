@@ -587,6 +587,10 @@ function g.test_orphan_connect_timeout()
 end
 
 function g.test_quorum_one()
+    t.skip_if(
+        utils.version_is_at_least(2, 11, 0),
+        "Since 2.11.0 Tarantool uses bootstrap_strategy='auto' and ignores connect quorum on restart"
+    )
     -- It's possible to avoid orphan status by explicitly specifying
     -- TARANTOOL_REPLICATION_CONNECT_QUORUM = 1 (or 0)
 

@@ -4,6 +4,7 @@ local t = require('luatest')
 local g = t.group()
 
 local helpers = require('test.helper')
+local utils = require('cartridge.utils')
 
 local function move(srv, port)
     srv.net_box_port = nil
@@ -91,6 +92,11 @@ function g.test_issues()
 end
 
 function g.test_topology_query()
+    t.skip_if(
+        utils.version_is_at_least(2, 11, 0),
+        "Since Tarantool 2.11.0 bootstrap_strategy='auto' ignores connect quorum, leaving replicas in ro mode"
+    )
+
     local servers = g.cluster.main_server:graphql({
         query = [[{
             servers {
@@ -133,6 +139,11 @@ g.before_test('test_2pc', function()
 end)
 
 function g.test_2pc()
+    t.skip_if(
+        utils.version_is_at_least(2, 11, 0),
+        "Since Tarantool 2.11.0 bootstrap_strategy='auto' triggers ConnectingFullmesh state, blocking 2PC"
+    )
+
     g.cluster.main_server:graphql({
         query = g.query,
         variables = {servers = {
@@ -171,6 +182,11 @@ g.after_test('test_2pc', function()
 end)
 
 g.before_test('test_failover', function()
+    t.skip_if(
+        utils.version_is_at_least(2, 11, 0),
+        "Since Tarantool 2.11.0 bootstrap_strategy='auto' locks config changes due to ConnectingFullmesh state"
+    )
+
     local ok, err = g.A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{mode = 'eventual'}}
