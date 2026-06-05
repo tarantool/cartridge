@@ -300,8 +300,7 @@ local function apply_config(clusterwide_config)
         membership.set_allowed_members(allowed_uris)
     end
 
-    box.cfg({
-        replication_connect_quorum = 0,
+    local cfg = {
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri,
@@ -313,7 +312,13 @@ local function apply_config(clusterwide_config)
                 ssl_password = vars.ssl_client_password,
             }
         ),
-    })
+    }
+
+    if not utils.version_is_at_least(2, 11, 0) then
+        cfg.replication_connect_quorum = 0
+    end
+
+    box.cfg(cfg)
 
     local ok, err = OperationError:pcall(failover.cfg,
         clusterwide_config,
@@ -422,10 +427,13 @@ local function boot_instance(clusterwide_config)
 
     -- Use default values in case they're missing
     box_opts.replication_sync_timeout = box_opts.replication_sync_timeout or 300
-    -- Here we use 100 as a big quorum number to force Tarantool to use full quorum. Result value will be
-    -- min(#box.cfg.replication, box.cfg.replication_connect_quorum).
-    -- replication_connect_quorum will be reworked after https://github.com/tarantool/tarantool/pull/8037
-    box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+
+    -- replication_connect_quorum was reworked in Tarantool 2.11.0 via bootstrap_strategy.
+    if not utils.version_is_at_least(2, 11, 0) then
+        -- We use 100 as a big quorum number to force Tarantool to use full quorum.
+        -- Result value will be min(#box.cfg.replication, box.cfg.replication_connect_quorum).
+        box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+    end
 
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
@@ -481,7 +489,11 @@ local function boot_instance(clusterwide_config)
 
         box_opts.instance_uuid = instance_uuid
         box_opts.replicaset_uuid = assert(replicaset_uuid)
-        box_opts.replication_connect_quorum = 1
+
+        if not utils.version_is_at_least(2, 11, 0) then
+            box_opts.replication_connect_quorum = 1
+        end
+
         box_opts.replication = topology.get_fullmesh_replication(
             topology_cfg, replicaset_uuid,
             -- Workaround for https://github.com/tarantool/tarantool/issues/3760
@@ -534,35 +546,48 @@ local function boot_instance(clusterwide_config)
 
         -- Set up 'star' replication for the bootstrap
         local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
-        local bootstrap_table = {}
         if bootstrap_from ~= nil then
-            bootstrap_table = bootstrap_from:split(',')
-            box_opts.replication = bootstrap_table
+            box_opts.replication = bootstrap_from:split(',')
         elseif instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
-            -- leader should be bootstrapped with quorum = 0, otherwise
-            -- there'll be a race during parallel bootstrap. Leader will
-            -- enter orphan mode (temporarily, until it connects to the
-            -- replica) and replica would fail to join because leader is
-            -- readonly.
-            box_opts.replication_connect_quorum = 0
+            if not utils.version_is_at_least(2, 11, 0) then
+                -- Leader should be bootstrapped with quorum = 0, otherwise
+                -- there'll be a race during parallel bootstrap. Leader will
+                -- enter orphan mode (temporarily, until it connects to the
+                -- replica) and replica would fail to join because leader is
+                -- readonly.
+                box_opts.replication_connect_quorum = 0
+            end
         else
-            if vars.transport == 'ssl' then
-                local uri = {
-                    uri = pool.format_uri(leader.uri),
-                    params = {
-                        transport = 'ssl',
+            if utils.version_is_at_least(2, 11, 0) then
+                box_opts.replication = topology.get_fullmesh_replication(
+                    topology_cfg, replicaset_uuid,
+                    instance_uuid, nil,
+                    {
+                        transport = vars.transport,
                         ssl_ca_file = vars.ssl_client_ca_file,
                         ssl_cert_file = vars.ssl_client_cert_file,
                         ssl_key_file = vars.ssl_client_key_file,
                         ssl_password = vars.ssl_client_password,
                     }
-                }
-                box_opts.replication = {uri}
+                )
             else
-                table.insert(bootstrap_table, pool.format_uri(leader.uri))
-                box_opts.replication = bootstrap_table
+                if vars.transport == 'ssl' then
+                    local uri = {
+                        uri = pool.format_uri(leader.uri),
+                        params = {
+                            transport = 'ssl',
+                            ssl_ca_file = vars.ssl_client_ca_file,
+                            ssl_cert_file = vars.ssl_client_cert_file,
+                            ssl_key_file = vars.ssl_client_key_file,
+                            ssl_password = vars.ssl_client_password,
+                        }
+                    }
+                    box_opts.replication = {uri}
+                else
+                    box_opts.replication = {pool.format_uri(leader.uri)}
+                end
             end
         end
     end

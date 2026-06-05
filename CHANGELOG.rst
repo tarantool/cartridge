@@ -18,6 +18,9 @@ Fixed
 
 - Fixed a race condition during instance shutdown where ``membership.leave()`` 
   could execute before roles were stopped, causing errors. 
+- Fixed compatibility with Tarantool 2.11.0 and newer by using the new 
+  ``bootstrap_strategy = 'auto'`` option instead of the deprecated 
+  ``replication_connect_quorum``.
 
 -------------------------------------------------------------------------------
 [2.17.1] - 2026-05-26

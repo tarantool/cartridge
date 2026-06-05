@@ -3,6 +3,7 @@ local h = require('test.helper')
 local g = t.group()
 
 local fio = require('fio')
+local utils = require('cartridge.utils')
 
 g.before_all(function()
     g.cluster = h.Cluster:new({
@@ -78,6 +79,8 @@ local function set_cookie_clusterwide(cluster, cookie)
 end
 
 function g.test_cluster_restart()
+    t.skip_if(utils.version_is_at_least(2, 11, 0))
+
     local new_cookie = 'test_cluster_restart_cookie'
     set_cookie_clusterwide(g.cluster, new_cookie)
 
@@ -94,6 +97,8 @@ function g.test_cluster_restart()
 end
 
 function g.test_server_restart()
+    t.skip_if(utils.version_is_at_least(2, 11, 0))
+
     local new_cookie = 'test_server_restart_cookie'
     local target = g.cluster:server('A-2')
     set_cookie_clusterwide(g.cluster, new_cookie)
