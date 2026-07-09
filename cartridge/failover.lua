@@ -454,27 +454,53 @@ local function fencing_start()
     vars.fencing_fiber:name('cartridge.fencing')
 end
 
+local SYNCHRO_PROMOTE_RETRY_ATTEMPTS = 3
+local SYNCHRO_PROMOTE_RETRY_DELAY = 1
+
 local function synchro_promote()
-    if vars.enable_synchro_mode == true
-    and vars.mode == 'stateful'
-    and vars.promote_for_leader_required
-    and vars.cache.is_leader
-    and not vars.failover_paused
-    and not vars.failover_suppressed
-    and box.ctl.promote ~= nil
-    then
+    local ok, err
+    for attempt = 1, SYNCHRO_PROMOTE_RETRY_ATTEMPTS do
+        if vars.enable_synchro_mode ~= true
+        or vars.mode ~= 'stateful'
+        or not vars.promote_for_leader_required
+        or not vars.cache.is_leader
+        or vars.failover_paused
+        or vars.failover_suppressed
+        or box.ctl.promote == nil
+        then
+            return
+        end
+
         log.info('Attempting box.ctl.promote()')
 
-        local ok, err = pcall(box.ctl.promote)
-        if ok ~= true then
-            log.error('Failed to promote: %s', err or 'unknown')
-            return err
+        ok, err = pcall(box.ctl.promote)
+        -- Retry only if interfering promote happened
+        if ok or not err or err.code ~= box.error.INTERFERING_PROMOTE then
+            break
         end
-        ok, err = pcall(fiber.testcancel)
-        if ok ~= true then
-            log.error('Fiber was cancelled in synchro_promote')
-            return err
+
+        -- No need to sleep after last failed attempt
+        if attempt < SYNCHRO_PROMOTE_RETRY_ATTEMPTS then
+            log.warn('Failed to promote (will retry): %s.', err)
+            fiber.sleep(SYNCHRO_PROMOTE_RETRY_DELAY)
+
+            local cancel_ok, cancel_err = pcall(fiber.testcancel)
+            if cancel_ok ~= true then
+                log.error('Fiber was cancelled in synchro_promote')
+                return cancel_err
+            end
         end
+    end
+
+    if ok ~= true then
+        log.error('Failed to promote: %s', err or 'unknown')
+        return err
+    end
+
+    ok, err = pcall(fiber.testcancel)
+    if ok ~= true then
+        log.error('Fiber was cancelled in synchro_promote')
+        return err
     end
 end
 
