@@ -16,8 +16,11 @@ Unreleased
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fixed a race condition during instance shutdown where ``membership.leave()`` 
-  could execute before roles were stopped, causing errors. 
+- Fixed a race condition during instance shutdown where ``membership.leave()``
+  could execute before roles were stopped, causing errors.
+- When ``box.ctl.promote()`` returns ER_INTERFERING_PROMOTE during failover
+  retry promotion 3 times with 1 second delay so the new master will not
+  be stuck in read-only mode.
 
 -------------------------------------------------------------------------------
 [2.17.1] - 2026-05-26

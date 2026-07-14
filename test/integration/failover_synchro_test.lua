@@ -261,6 +261,120 @@ local function promote_errors_test(g)
     end)
 end
 
+local function promotion_conflict_test(g)
+    local res
+
+    h.retrying({timeout = 20}, function()
+        promote(g.cluster, storage_1_uuid)
+    end)
+    local master_id
+    h.retrying({timeout = 20}, function()
+        master_id = g.cluster:server(find_alias_by_uuid(storage_1_uuid)):exec(function()
+            assert(box.info.ro == false)
+            assert(box.info.synchro.quorum == 2)
+            assert(box.info.synchro.queue.owner == box.info.id)
+            return box.info.id
+        end)
+    end)
+
+    h.retrying({timeout = 20}, function()
+        g.cluster:server(find_alias_by_uuid(storage_2_uuid)):exec(function(master_id)
+            assert(box.info.ro == true)
+            assert(box.info.synchro.quorum == 2)
+            assert(box.info.synchro.queue.owner == master_id)
+        end, { master_id })
+    end)
+    h.retrying({timeout = 20}, function()
+        g.cluster:server(find_alias_by_uuid(storage_3_uuid)):exec(function(master_id)
+            assert(box.info.ro == true)
+            assert(box.info.synchro.quorum == 2)
+            assert(box.info.synchro.queue.owner == master_id)
+        end, { master_id })
+    end)
+
+    -- Kill storages 2 and 3 to lack quorum
+    kill_server(g, 'storage-2')
+    kill_server(g, 'storage-3')
+
+    -- Add an insert request and kill storage-1 so the request will be stuck in storage-1 limbo
+    -- and storage-1 will have synchro queue term greater than storages 2 and 3.
+    local future = g.cluster:server(find_alias_by_uuid(storage_1_uuid)):exec(function()
+        return box.space.test:insert({123, 'test_key_1', 'test_value_1'})
+    end, {}, { is_async = true })
+    kill_server(g, 'storage-1')
+    res = future:wait_result(20)
+    t.assert_equals(res, nil)
+
+    -- Start all storages
+    start_server(g, 'storage-2')
+    start_server(g, 'storage-3')
+    g.cluster:server(find_alias_by_uuid(storage_2_uuid)):exec(function()
+        rawset(_G, 'old_promote', box.ctl.promote)
+        rawset(_G, 'promotion_log', {
+            attempts = 0,
+            errors = {},
+        })
+        rawset(box.ctl, 'promote', function()
+            _G.promotion_log.attempts = _G.promotion_log.attempts + 1
+            local ok, err = pcall(_G.old_promote)
+            if not ok then
+                table.insert(_G.promotion_log.errors, err)
+                error(err)
+            end
+        end)
+    end)
+
+    require('fiber').sleep(5)
+    start_server(g, 'storage-1')
+
+    g.cluster:wait_until_healthy(nil, { timeout = 20 })
+
+    local storage_2_replica_id = g.cluster:server(find_alias_by_uuid(storage_2_uuid)):exec(function()
+        return box.info.id
+    end)
+
+    -- Storage 2 has a promotion conflict, but retries and becomes the queue owner.
+    h.retrying({timeout = 20}, function()
+        for i, uuid in pairs({storage_1_uuid, storage_2_uuid, storage_3_uuid}) do
+            res = g.cluster:server(find_alias_by_uuid(uuid)):exec(function()
+                return {
+                    ro = box.info.ro,
+                    ro_reason = box.info.ro_reason,
+                    synchro = box.info.synchro,
+                }
+            end)
+
+            -- Storage 2 is RW, other storages are RO
+            if i == 2 then
+                t.assert_equals(res.ro, false)
+                t.assert_equals(res.ro_reason, nil)
+            else
+                t.assert_equals(res.ro, true)
+                t.assert_equals(res.ro_reason, 'synchro')
+            end
+
+            -- Synchro queue is owned by storage 2, it has replica_id = 3
+            t.assert_equals(res.synchro.queue.owner, storage_2_replica_id)
+            t.assert_equals(res.synchro.queue.busy, false)
+            t.assert_equals(res.synchro.queue.len, 0)
+            t.assert_gt(res.synchro.queue.term, 3)
+        end
+    end)
+
+    res = g.cluster:server(find_alias_by_uuid(storage_2_uuid)):exec(function()
+        rawset(box.ctl, 'promote', _G.old_promote)
+        rawset(_G, 'old_promote', nil)
+        local prom_log = rawget(_G, 'promotion_log')
+        rawset(_G, 'promotion_log', nil)
+        return prom_log
+    end)
+
+    -- Check that there were 2 attempts to promote and only 1 promotion conflict.
+    t.assert_equals(res.attempts, 2)
+    t.assert_equals(#res.errors, 1)
+    t.assert_equals(res.errors[1].code, box.error.INTERFERING_PROMOTE)
+end
+
 local function cleanup(g)
     if g.state_provider ~= nil then
         g.state_provider:stop()
@@ -362,6 +476,7 @@ end)
 
 g_stateboard.test_kill_master_stateboard = stateful_test
 g_stateboard.test_promote_errors = promote_errors_test
+g_stateboard.test_promotion_conflict = promotion_conflict_test
 
 g_stateboard.after_all(function(g)
     cleanup(g)
@@ -396,6 +511,7 @@ end)
 
 g_etcd2.test_kill_master = stateful_test
 g_etcd2.test_promote_errors = promote_errors_test
+g_etcd2.test_promotion_conflict = promotion_conflict_test
 
 g_etcd2.after_all(function(g)
     cleanup(g)

@@ -349,8 +349,9 @@ function Cluster:join_server(server)
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
-function Cluster:wait_until_healthy(server)
-    self:retrying({}, function ()
+function Cluster:wait_until_healthy(server, opts)
+    opts = opts or {}
+    self:retrying(opts, function ()
         (server or self.main_server).net_box:eval([[
             local cartridge = package.loaded['cartridge']
             return assert(cartridge) and assert(cartridge.is_healthy())
