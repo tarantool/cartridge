@@ -397,6 +397,26 @@ failover:
     endpoints: ["localhost"]
 ...]])
 
+    -- Test that empty strings in endpoints are silently ignored (issue #2319)
+    check_config(true,
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+failover:
+  mode: stateful
+  state_provider: etcd2
+  etcd2_params:
+    prefix: /myapp
+    endpoints: ["http://localhost:2379", "", "http://localhost:2380"]
+...]])
+
+
     check_config('topology_new.failover.etcd2_params has unknown parameter "unknown"',
 [[---
 failover:
