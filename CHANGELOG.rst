@@ -12,6 +12,14 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Update ``vshard`` dependency to `0.1.42 <https://github.com/tarantool/vshard/releases/tag/0.1.42>`_.
+- Update ``checks`` dependency to `3.4.1 <https://github.com/tarantool/checks/releases/tag/3.4.1>`_.
+- Update ``http`` dependency to `1.9.1 <https://github.com/tarantool/http/releases/tag/1.9.1>`_.
+
 -------------------------------------------------------------------------------
 [2.17.2] - 2026-07-14
 -------------------------------------------------------------------------------
