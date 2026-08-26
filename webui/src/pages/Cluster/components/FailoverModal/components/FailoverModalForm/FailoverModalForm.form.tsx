@@ -177,7 +177,10 @@ export const withFailoverForm = withFormik<FailoverFormProps, FailoverFormValues
           state_provider === 'etcd2'
             ? {
                 ...casted.etcd2_params,
-                endpoints: casted.etcd2_params?.endpoints?.split('\n'),
+                endpoints: casted.etcd2_params?.endpoints
+                  ?.split('\n')
+                  .map((s) => s.trim())
+                  .filter((s) => s !== ''),
               }
             : null,
       };

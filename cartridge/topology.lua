@@ -660,12 +660,14 @@ local function validate_failover_schema(field, topology)
                         '%s.endpoints must be a contiguous array of strings', field
                     )
 
-                    local _, err = pool.format_uri(uri)
-                    e_config:assert(
-                        not err,
-                        '%s.endpoints[%d]: %s',
-                        field, i, err and err.err
-                    )
+                    if uri ~= '' then
+                        local _, err = pool.format_uri(uri)
+                        e_config:assert(
+                            not err,
+                            '%s.endpoints[%d]: %s',
+                            field, i, err and err.err
+                        )
+                    end
                     i = i + 1
                 end
             end
