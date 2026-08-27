@@ -220,7 +220,8 @@ local function communicate(s)
             local step_3 = digest.sha1(s._client_salt:sub(1, 20) .. step_2)
 
             for i = 1, 20 do
-                local ss = scramble:sub(i, i):byte()
+                -- "scramble" can be varbinary (use explicit tostring)
+                local ss = tostring(scramble):sub(i, i):byte()
                 local s1 = step_1:sub(i, i):byte()
                 local s3 = step_3:sub(i, i):byte()
                 if ss ~= bit.bxor(s1, s3) then

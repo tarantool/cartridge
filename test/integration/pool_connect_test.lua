@@ -169,5 +169,9 @@ end
 function g.test_schema_fetch()
     t.skip_if(not helpers.tarantool_version_ge('2.10.0'))
     local conn = pool.connect('localhost:13301')
-    t.assert_equals(conn.space, nil)
+    if helpers.tarantool_version_ge('3.0.0') then
+        t.assert_equals(conn.space, {})
+    else
+        t.assert_equals(conn.space, nil)
+    end
 end

@@ -5,6 +5,7 @@
 
 local json = require('json')
 local errors = require('errors')
+local vshard_util = require('vshard.util')
 
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
@@ -80,8 +81,7 @@ local function get_info(uri)
         end
 
         local topology_cfg = confapplier.get_readonly('topology')
-        local rs_uuid = box_info.cluster.uuid
-        local vshard_group = topology_cfg.replicasets[rs_uuid].vshard_group or 'default'
+        local vshard_group = topology_cfg.replicasets[vshard_util.replicaset_uuid()].vshard_group or 'default'
         local ok, storage_info = pcall(vshard and vshard.storage.info)
         local rebalancer_enabled = vshard and vshard.storage and
             vshard.storage.internal.rebalancer_fiber ~= nil
@@ -145,7 +145,7 @@ local function get_info(uri)
                 pid = box_info.pid,
                 uptime = box_info.uptime,
                 instance_uuid = box_info.uuid,
-                replicaset_uuid = box_info.cluster.uuid,
+                replicaset_uuid = vshard_util.replicaset_uuid(),
                 work_dir = box_cfg.work_dir,
                 memtx_dir = box_cfg.memtx_dir,
                 vinyl_dir = box_cfg.vinyl_dir,

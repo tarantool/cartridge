@@ -118,6 +118,7 @@ local fun = require('fun')
 local fiber = require('fiber')
 local errors = require('errors')
 local membership = require('membership')
+local vshard_util = require('vshard.util')
 
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
@@ -216,7 +217,7 @@ local function list_on_instance(opts)
     if replicaset_uuid == nil or instance_uuid == nil then
         local box_info = box.info
         instance_uuid = box_info.uuid
-        replicaset_uuid = box_info.cluster.uuid
+        replicaset_uuid = vshard_util.replicaset_uuid()
         vars.instance_uuid = instance_uuid
         vars.replicaset_uuid = replicaset_uuid
     end
@@ -615,9 +616,8 @@ local function list_on_cluster()
     end
 
     if vars.replicaset_uuid == nil or vars.instance_uuid == nil then
-        local box_info = box.info
-        vars.instance_uuid = box_info.uuid
-        vars.replicaset_uuid = box_info.cluster.uuid
+        vars.instance_uuid = box.info.uuid
+        vars.replicaset_uuid = vshard_util.replicaset_uuid()
     end
 
     -- Unhealthy replicasets
