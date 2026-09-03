@@ -239,7 +239,8 @@ function Server:graphql(request, http_options)
 
     http_options = table.copy(http_options) or {}
     if self.auth_enabled then
-        http_options.http = { headers = bauth('admin', self.cluster_cookie) }
+        http_options.http = http_options.http or {}
+        http_options.http.headers = bauth('admin', self.cluster_cookie)
     end
     http_options.json = {
         query = request.query,
