@@ -12,6 +12,19 @@ and this project adheres to
 Unreleased
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- New option ``--vshard-bootstrap-timeout`` (env ``TARANTOOL_VSHARD_BOOTSTRAP_TIMEOUT``)
+  of the ``vshard-router`` role to configure the vshard bootstrap timeout.
+  The default value remains 10 seconds, which may be not enough to distribute
+  buckets across the storages on slow CI runners.
+- Optional ``timeout`` argument to ``cartridge.test-helpers.Cluster:start``,
+  ``cartridge.test-helpers.Cluster:bootstrap`` and
+  ``cartridge.test-helpers.Cluster:bootstrap_vshard`` to extend the
+  bootstrap HTTP request timeout.
+
 -------------------------------------------------------------------------------
 [2.17.3] - 2026-08-25
 -------------------------------------------------------------------------------

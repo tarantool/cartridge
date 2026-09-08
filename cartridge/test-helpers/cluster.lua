@@ -236,8 +236,10 @@ function Cluster:apply_zone_distances()
     end
 end
 
--- Configure replicasets and bootstrap vshard if required.
-function Cluster:bootstrap()
+--- Configure replicasets and bootstrap vshard if required.
+-- @param[opt] timeout HTTP request timeout in seconds, forwarded to
+--   @{Cluster:bootstrap_vshard}.
+function Cluster:bootstrap(timeout)
     self.main_server = self.servers[1]
     self:apply_topology()
     self:apply_zone_distances()
@@ -247,18 +249,32 @@ function Cluster:bootstrap()
     end
 
     if self.use_vshard then
-        self:bootstrap_vshard()
+        self:bootstrap_vshard(timeout)
     end
 end
 
-function Cluster:bootstrap_vshard()
+--- Bootstrap vshard in the cluster.
+-- @param[opt] timeout HTTP request timeout in seconds. Distributing buckets
+--   across the storages may take a while, so a greater timeout may be needed
+--   on slow CI runners.
+function Cluster:bootstrap_vshard(timeout)
     local server = self.main_server
     log.debug('Bootstrapping vshard.router on ' .. server.advertise_uri)
-    log.debug({response = server:graphql({query = 'mutation { bootstrap_vshard }'})})
+
+    local http_options
+    if timeout ~= nil then
+        http_options = {http = {timeout = timeout}}
+    end
+
+    log.debug({response = server:graphql({
+        query = 'mutation { bootstrap_vshard }'
+    }, http_options)})
 end
 
 --- Bootstraps cluster if it wasn't bootstrapped before. Otherwise starts servers.
-function Cluster:start()
+-- @param[opt] timeout HTTP request timeout in seconds, forwarded to
+--   @{Cluster:bootstrap} and then to @{Cluster:bootstrap_vshard}.
+function Cluster:start(timeout)
     if self.running then
         return
     end
@@ -276,7 +292,7 @@ function Cluster:start()
             self:wait_until_healthy(server)
         end
     else
-        self:bootstrap()
+        self:bootstrap(timeout)
         self.bootstrapped = true
     end
     if self.failover ~= 'disabled' then
