@@ -272,12 +272,19 @@ local function before_each(g)
     end)
 end
 
+-- These tests take longer than the etcd lock ttl, so the session may lose
+-- the lock in the middle of one. Start every test with a new session.
+local function before_each_synchro(g)
+    g.client:drop_session()
+    before_each(g)
+end
+
 g_etcd2.before_each(function() before_each(g_etcd2) end)
 g_stateboard.before_each(function() before_each(g_stateboard) end)
 g_manual_etcd2.before_each(function() before_each(g_manual_etcd2) end)
 g_manual_stateboard.before_each(function() before_each(g_manual_stateboard) end)
-g_synchro_etcd2.before_each(function() before_each(g_synchro_etcd2) end)
-g_synchro_stateboard.before_each(function() before_each(g_synchro_stateboard) end)
+g_synchro_etcd2.before_each(function() before_each_synchro(g_synchro_etcd2) end)
+g_synchro_stateboard.before_each(function() before_each_synchro(g_synchro_stateboard) end)
 
 local function add(name, fn)
     g_stateboard[name] = fn
