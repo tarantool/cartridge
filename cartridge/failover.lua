@@ -122,6 +122,7 @@ function _G.__cartridge_failover_resume()
 end
 
 local reconfigure_all -- function implemented below
+local synchro_demote -- function implemented below
 
 --- Cancel all pending reconfigure_all tasks.
 -- @function schedule_clear
@@ -433,6 +434,25 @@ local function fencing_watch()
         return
     end
 
+    -- read_only isn't enough in manual election mode: the instance stays a raft
+    -- leader and rolls the pending synchro queue back when
+    -- replication_synchro_timeout expires. Demote freezes the queue instead.
+    -- It's only worth doing when the rest of the replicaset can gather the
+    -- synchro quorum without us, otherwise nobody can take the queue over.
+    if box.cfg.election_mode == 'manual' then
+        local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+        local leaders = topology.get_leaders_order(
+            topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
+        )
+        local quorum = box.info.synchro ~= nil and box.info.synchro.quorum or nil
+        if quorum ~= nil and #leaders - 1 >= quorum then
+            local err = synchro_demote()
+            if err ~= nil then
+                log.error('Fencing: unable to demote: %s', err)
+            end
+        end
+    end
+
     local id = schedule_add()
     log.warn('Fencing actuated, reapply scheduled (fiber %d)', id)
 end
@@ -504,7 +524,7 @@ local function synchro_promote()
     end
 end
 
-local function synchro_demote()
+function synchro_demote()
     local box_info = box.info
     if box_info.synchro ~= nil
     and box_info.synchro.queue ~= nil
