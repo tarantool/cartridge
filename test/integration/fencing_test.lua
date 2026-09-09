@@ -438,3 +438,112 @@ add_synchro('test_fencing_freezes_synchro_queue', function(g)
     end)
     g.cluster:wait_until_healthy()
 end)
+
+-- An isolated leader must hand the synchro queue over cleanly: replication is
+-- broken while the instances are alive, the leadership moves to another
+-- instance, and once the replication is back everything has to converge
+-- without ER_SPLIT_BRAIN. There is no fencing here - the state provider is
+-- available all the time, so the demote comes from the ordinary leadership loss.
+add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+
+    B1:eval([[
+        local space = box.schema.space.create('fencing_sync', {
+            is_sync = true,
+            if_not_exists = true,
+        })
+        space:create_index('pk', {if_not_exists = true})
+        space:replace{1, 'committed'}
+        box.cfg{replication_synchro_timeout = 3}
+    ]])
+
+    -- Break the replication, keeping every instance alive
+    local replication = B1:eval('return box.cfg.replication')
+    local majority = {replication[2], replication[3]}
+    B1:eval('box.cfg{replication = {}}')
+    B2:eval('box.cfg{replication = ...}', {majority})
+    B3:eval('box.cfg{replication = ...}', {majority})
+
+    -- The isolated leader can't reach the quorum, the transaction is pending
+    B1:eval([[
+        require('fiber').create(function()
+            pcall(function() box.space.fencing_sync:replace{2, 'pending'} end)
+        end)
+    ]])
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_synchro_state).queue_len, 1)
+    end)
+
+    -- The leadership moves away while B1 is isolated
+    t.assert(g.session:set_vclockkeeper(uB, uB2))
+    t.assert(g.session:set_leaders({{uB, uB2}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB2)
+        t.assert_equals(B1:eval(q_readonliness), true)
+    end)
+
+    -- B1 gave up the raft leadership and froze the queue
+    local isolated = B1:eval(q_synchro_state)
+    t.assert_equals(isolated.election_state, 'follower')
+    t.assert_equals(isolated.ro_reason, 'election')
+    t.assert_equals(isolated.queue_owner, isolated.id)
+    fiber.sleep(5)
+    t.assert_equals(B1:eval(q_synchro_state).queue_len, 1)
+
+    -- The new leader takes over within its own majority
+    helpers.retrying({timeout = 30}, function()
+        t.assert_equals(B2:eval(q_readonliness), false)
+    end)
+    B2:eval([[box.space.fencing_sync:replace{3, 'by-new-leader'}]])
+
+    -- The replication is back
+    B1:eval('box.cfg{replication = ...}', {replication})
+    B2:eval('box.cfg{replication = ...}', {replication})
+    B3:eval('box.cfg{replication = ...}', {replication})
+
+    helpers.retrying({timeout = 30}, function()
+        local state = B1:eval(q_synchro_state)
+        t.assert_equals(state.queue_owner, B2:eval(q_synchro_state).id)
+        t.assert_equals(state.queue_len, 0)
+        t.assert_equals(
+            B1:eval([[return box.space.fencing_sync:select()]]),
+            B2:eval([[return box.space.fencing_sync:select()]])
+        )
+    end)
+
+    -- Everything is back to normal
+    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    t.assert(g.session:set_vclockkeeper(uB, uB1))
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({timeout = 30}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+    g.cluster:wait_until_healthy()
+end)
+
+-- Fencing has to actuate before the pending synchro tail is rolled back,
+-- otherwise the demote comes too late to prevent ER_SPLIT_BRAIN
+add_synchro('test_fencing_timeout_vs_synchro_timeout', function(g)
+    A1:eval(q_set_fencing_params, {1, 2})
+    B1:eval([[box.cfg{replication_synchro_timeout = 1}]])
+
+    helpers.retrying({}, function()
+        local found = false
+        for _, issue in ipairs(helpers.list_cluster_issues(A1)) do
+            if issue.topic == 'failover'
+            and issue.message:find('needs fencing to actuate', 1, true) ~= nil then
+                found = true
+            end
+        end
+        t.assert(found, 'fencing timeout issue is not reported')
+    end)
+
+    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(A1), {})
+    end)
+end)
