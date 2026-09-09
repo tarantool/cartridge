@@ -1,4 +1,5 @@
 local fio = require('fio')
+local fiber = require('fiber')
 local t = require('luatest')
 local helpers = require('test.helper')
 
@@ -9,6 +10,10 @@ local g_etcd2 = t.group('integration.fencing.etcd2')
 local g_stateboard = t.group('integration.fencing.stateboard')
 local g_manual_etcd2 = t.group('integration.fencing.manual_election.etcd2')
 local g_manual_stateboard = t.group('integration.fencing.manual_election.stateboard')
+-- A separate topology: replicaset B has three instances, so that losing one
+-- replica still leaves a quorum for the synchro queue.
+local g_synchro_etcd2 = t.group('integration.fencing.manual_election_synchro.etcd2')
+local g_synchro_stateboard = t.group('integration.fencing.manual_election_synchro.stateboard')
 
 local manual_env = {
     TARANTOOL_ELECTION_MODE = 'manual',
@@ -20,12 +25,22 @@ local uB = helpers.uuid('b')
 local uA1 = helpers.uuid('a', 1, 1)
 local uB1 = helpers.uuid('b', 1, 1)
 local uB2 = helpers.uuid('b', 2, 2)
+local uB3 = helpers.uuid('b', 3, 3)
 local A1
 local B1
 local B2
+local B3
 
 local function setup_cluster(g, opts)
     opts = opts or {}
+
+    local servers_b = {
+        {alias = 'B1', instance_uuid = uB1},
+        {alias = 'B2', instance_uuid = uB2},
+    }
+    if opts.with_third_replica then
+        table.insert(servers_b, {alias = 'B3', instance_uuid = uB3})
+    end
 
     g.cluster = helpers.Cluster:new({
         datadir = g.datadir,
@@ -43,10 +58,7 @@ local function setup_cluster(g, opts)
         }, {
             uuid = uB,
             roles = {},
-            servers = {
-                {alias = 'B1', instance_uuid = uB1},
-                {alias = 'B2', instance_uuid = uB2},
-            },
+            servers = servers_b,
         }},
     })
 
@@ -54,6 +66,7 @@ local function setup_cluster(g, opts)
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
+    B3 = opts.with_third_replica and g.cluster:server('B3') or nil
 
     g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
@@ -107,6 +120,7 @@ local function setup_stateboard_group(g, opts)
 
     setup_cluster(g, {
         extra_env = opts.extra_env,
+        with_third_replica = opts.with_third_replica,
     })
 
     B1:call('box.schema.sequence.create', {'test'})
@@ -151,6 +165,7 @@ local function setup_etcd2_group(g, opts)
 
     setup_cluster(g, {
         extra_env = opts.extra_env,
+        with_third_replica = opts.with_third_replica,
     })
 
     B1:call('box.schema.sequence.create', {'test'})
@@ -190,6 +205,26 @@ g_manual_stateboard.before_all(function()
     })
 end)
 
+g_synchro_stateboard.before_all(function()
+    setup_stateboard_group(g_synchro_stateboard, {
+        extra_env = manual_env,
+        net_box_port = 14421,
+        require_manual_election = true,
+        with_third_replica = true,
+    })
+end)
+
+g_synchro_etcd2.before_all(function()
+    setup_etcd2_group(g_synchro_etcd2, {
+        extra_env = manual_env,
+        peer_url = 'http://127.0.0.1:17021',
+        prefix = 'manual_synchro_fencing_test',
+        require_manual_election = true,
+        uri = 'http://127.0.0.1:14021',
+        with_third_replica = true,
+    })
+end)
+
 g_manual_etcd2.before_all(function()
     setup_etcd2_group(g_manual_etcd2, {
         extra_env = manual_env,
@@ -222,6 +257,8 @@ g_etcd2.after_all(function() after_all(g_etcd2) end)
 g_stateboard.after_all(function() after_all(g_stateboard) end)
 g_manual_etcd2.after_all(function() after_all(g_manual_etcd2) end)
 g_manual_stateboard.after_all(function() after_all(g_manual_stateboard) end)
+g_synchro_etcd2.after_all(function() after_all(g_synchro_etcd2) end)
+g_synchro_stateboard.after_all(function() after_all(g_synchro_stateboard) end)
 
 local function before_each(g)
     g.session = g.client:get_session()
@@ -239,6 +276,8 @@ g_etcd2.before_each(function() before_each(g_etcd2) end)
 g_stateboard.before_each(function() before_each(g_stateboard) end)
 g_manual_etcd2.before_each(function() before_each(g_manual_etcd2) end)
 g_manual_stateboard.before_each(function() before_each(g_manual_stateboard) end)
+g_synchro_etcd2.before_each(function() before_each(g_synchro_etcd2) end)
+g_synchro_stateboard.before_each(function() before_each(g_synchro_stateboard) end)
 
 local function add(name, fn)
     g_stateboard[name] = fn
@@ -264,6 +303,17 @@ local q_is_vclockkeeper = [[
 local q_leadership = [[
     local failover = require('cartridge.failover')
     return failover.get_active_leaders()[...]
+]]
+local q_synchro_state = [[
+    local info = box.info
+    local queue = info.synchro ~= nil and info.synchro.queue or {}
+    return {
+        id = info.id,
+        ro_reason = info.ro_reason,
+        election_state = info.election ~= nil and info.election.state or nil,
+        queue_owner = queue.owner,
+        queue_len = queue.len,
+    }
 ]]
 
 add('test_basics', function(g)
@@ -319,3 +369,72 @@ add('test_basics', function(g)
     end)
 end)
 
+-- With election_mode="manual" fencing must also revoke the raft leadership,
+-- otherwise the isolated leader keeps an unfrozen synchro queue and rolls its
+-- pending tail back as soon as replication_synchro_timeout expires. The new
+-- leader's PROMOTE then references already rolled back lsn-s and is rejected
+-- with ER_SPLIT_BRAIN (a request mentioning future lsn).
+local function add_synchro(name, fn)
+    g_synchro_stateboard[name] = fn
+    g_synchro_etcd2[name] = fn
+end
+
+add_synchro('test_fencing_freezes_synchro_queue', function(g)
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+
+    A1:eval(q_set_fencing_params, {0.1, 0.1})
+
+    B1:eval([[
+        local space = box.schema.space.create('fencing_sync', {
+            is_sync = true,
+            if_not_exists = true,
+        })
+        space:create_index('pk', {if_not_exists = true})
+        box.cfg{replication_synchro_timeout = 3}
+    ]])
+
+    -- Both replicas are down, the synchro quorum is unreachable,
+    -- so the transaction stays pending in the synchro queue
+    B2:stop()
+    B3:stop()
+    B1:eval([[
+        require('fiber').create(function()
+            pcall(function() box.space.fencing_sync:replace{1, 'pending'} end)
+        end)
+    ]])
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_synchro_state).queue_len, 1)
+    end)
+
+    -- Fencing is triggered
+    g.state_provider:stop()
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), true)
+        t.assert_equals(B1:eval(q_leadership, {uB}), nil)
+    end)
+
+    local state = B1:eval(q_synchro_state)
+    t.assert_equals(state.election_state, 'follower')
+    t.assert_equals(state.ro_reason, 'election')
+    -- The queue is still ours, it's taken over by a PROMOTE with a quorum
+    t.assert_equals(state.queue_owner, state.id)
+
+    -- The frozen queue outlives replication_synchro_timeout
+    fiber.sleep(5)
+    t.assert_equals(B1:eval(q_synchro_state).queue_len, 1)
+
+    -- Everything is back to normal
+    B2:start()
+    B3:start()
+    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    g.state_provider:start()
+
+    helpers.retrying({timeout = 30}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+    g.cluster:wait_until_healthy()
+end)
