@@ -123,6 +123,7 @@ end
 
 local reconfigure_all -- function implemented below
 local synchro_demote -- function implemented below
+local demote_in_manual_mode -- function implemented below
 
 --- Cancel all pending reconfigure_all tasks.
 -- @function schedule_clear
@@ -434,24 +435,7 @@ local function fencing_watch()
         return
     end
 
-    -- read_only isn't enough in manual election mode: the instance stays a raft
-    -- leader and rolls the pending synchro queue back when
-    -- replication_synchro_timeout expires. Demote freezes the queue instead.
-    -- It's only worth doing when the rest of the replicaset can gather the
-    -- synchro quorum without us, otherwise nobody can take the queue over.
-    if box.cfg.election_mode == 'manual' then
-        local topology_cfg = vars.clusterwide_config:get_readonly('topology')
-        local leaders = topology.get_leaders_order(
-            topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
-        )
-        local quorum = box.info.synchro ~= nil and box.info.synchro.quorum or nil
-        if quorum ~= nil and #leaders - 1 >= quorum then
-            local err = synchro_demote()
-            if err ~= nil then
-                log.error('Fencing: unable to demote: %s', err)
-            end
-        end
-    end
+    demote_in_manual_mode()
 
     local id = schedule_add()
     log.warn('Fencing actuated, reapply scheduled (fiber %d)', id)
@@ -546,6 +530,39 @@ function synchro_demote()
     end
 end
 
+--- Give up the raft leadership along with the cartridge one.
+--
+-- In manual election mode read_only isn't enough: the instance stays a raft
+-- leader and rolls the pending synchro queue back as soon as
+-- replication_synchro_timeout expires. The new leader's PROMOTE then mentions
+-- already rolled back lsn-s and is rejected with ER_SPLIT_BRAIN. Demote
+-- freezes the queue until a PROMOTE with a quorum arrives.
+--
+-- It's only worth doing when the rest of the replicaset can gather the synchro
+-- quorum without us, otherwise nobody can take the queue over anyway.
+--
+-- @function demote_in_manual_mode
+-- @local
+function demote_in_manual_mode()
+    if box.cfg.election_mode ~= 'manual' then
+        return
+    end
+
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local leaders = topology.get_leaders_order(
+        topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
+    )
+    local quorum = box.info.synchro ~= nil and box.info.synchro.quorum or nil
+    if quorum == nil or #leaders - 1 < quorum then
+        return
+    end
+
+    local err = synchro_demote()
+    if err ~= nil then
+        log.error('Unable to demote: %s', err)
+    end
+end
+
 local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
@@ -558,6 +575,7 @@ local function constitute_oneself(active_leaders, opts)
         vars.cache.is_vclockkeeper = false
         vars.cache.is_leader = false
         vars.cache.is_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw
+        demote_in_manual_mode()
         return true
     end
 
@@ -871,6 +889,22 @@ local function validate_manual_election_mode_config(topology_cfg, failover_cfg)
         log.error(
             'Stateful failover with election_mode="manual" should use election_fencing_mode="off"; got %s',
             tostring(box.cfg.election_fencing_mode)
+        )
+    end
+
+    -- Fencing must freeze the synchro queue before the pending tail is rolled
+    -- back, otherwise the new leader's PROMOTE is rejected with ER_SPLIT_BRAIN
+    if failover_cfg.fencing_enabled
+    and failover_cfg.fencing_timeout + failover_cfg.fencing_pause
+        >= box.cfg.replication_synchro_timeout then
+        log.error(
+            'Stateful failover with election_mode="manual" needs fencing to actuate' ..
+                ' before the synchro queue is rolled back: fencing_timeout (%s)' ..
+                ' + fencing_pause (%s) should be less than' ..
+                ' replication_synchro_timeout (%s)',
+            failover_cfg.fencing_timeout,
+            failover_cfg.fencing_pause,
+            box.cfg.replication_synchro_timeout
         )
     end
 end
