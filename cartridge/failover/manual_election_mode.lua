@@ -8,10 +8,33 @@ local checks = require('checks')
 local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
+local argparse = require('cartridge.argparse')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 
 local FailoverError = errors.new_class('FailoverError')
+
+-- Tarantool's own default, restored when switching back to election_mode="off"
+local DEFAULT_REPLICATION_SYNCHRO_TIMEOUT = 5
+
+--- Keep the synchro queue frozen in manual election mode.
+--
+-- See the comment in cartridge.cfg() about replication_synchro_timeout.
+-- The option is left alone if it was configured explicitly.
+--
+-- @function set_synchro_timeout
+-- @local
+local function set_synchro_timeout(value)
+    local box_opts = argparse.get_box_opts()
+    if box_opts == nil or box_opts.replication_synchro_timeout ~= nil then
+        return
+    end
+
+    local ok, err = pcall(box.cfg, {replication_synchro_timeout = value})
+    if ok ~= true then
+        log.error('Unable to set replication_synchro_timeout: %s', err or 'unknown')
+    end
+end
 
 function _G.__cartridge_failover_probe_manual_election_mode()
     return {
@@ -26,6 +49,7 @@ function _G.__cartridge_failover_switch_to_manual_election_mode()
 
     if prev_election_mode == 'manual'
     and prev_election_fencing_mode == 'off' then
+        set_synchro_timeout(math.huge)
         return {
             changed = false,
             prev_election_mode = prev_election_mode,
@@ -53,6 +77,8 @@ function _G.__cartridge_failover_switch_to_manual_election_mode()
         )
     end
 
+    set_synchro_timeout(math.huge)
+
     return {
         changed = true,
         prev_election_mode = prev_election_mode,
@@ -78,6 +104,10 @@ function _G.__cartridge_failover_rollback_manual_election_mode(
         )
     end
 
+    if prev_election_mode ~= 'manual' then
+        set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
+    end
+
     return true
 end
 
@@ -101,6 +131,7 @@ function _G.__cartridge_failover_switch_to_off_election_mode(target_fencing_mode
 
     if prev_election_mode == 'off'
     and prev_election_fencing_mode == target_fencing_mode then
+        set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
         return {
             changed = false,
             prev_election_mode = prev_election_mode,
@@ -118,6 +149,8 @@ function _G.__cartridge_failover_switch_to_off_election_mode(target_fencing_mode
             err or 'unknown'
         )
     end
+
+    set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
 
     return {
         changed = true,
