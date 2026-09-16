@@ -102,10 +102,18 @@ function g.test_finish()
 
     local ok, err = _G.__cartridge_upload_finish('upload_id')
     t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'UploadError',
-        err = 'msgpack.decode: invalid MsgPack',
-    })
+
+    if helpers.tarantool_version_ge('3.5.0') then
+        t.assert_covers(err, {
+            class_name = 'UploadError',
+        })
+        t.assert_equals(tostring(err.err), 'Invalid MsgPack - truncated input')
+    else
+        t.assert_covers(err, {
+            class_name = 'UploadError',
+            err = 'msgpack.decode: invalid MsgPack',
+        })
+    end
 
     _G.__cartridge_upload_transmit('upload_id', msgpack.encode('data'))
 

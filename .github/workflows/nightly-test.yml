@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ["1.10", "2.11"]
+        tarantool: ["2.11", "3.6"]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +23,10 @@ jobs:
           tarantool-version: "${{ matrix.tarantool }}"
           nightly-build: true
       - name: Setup tt
+        env:
+          TT_MAJOR: ${{ startsWith(matrix.tarantool, '2') && '2' || '3' }}
         run: |
-          curl -L https://tarantool.io/release/2/installer.sh | sudo bash
+          curl -L https://tarantool.io/release/${TT_MAJOR}/installer.sh | sudo bash
           sudo apt install -y tt
           tt version
       - name: Set up etcd
