@@ -15,6 +15,7 @@ local membership = require('membership')
 local uri_tools = require('uri')
 local socket = require('socket')
 local json = require('json')
+local vshard_util = require('vshard.util')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -365,7 +366,7 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --    (https://github.com/tarantool/tarantool/issues/4691)
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local leaders_order = errors.pcall('E',
-        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid, {only_enabled = true}
+        topology.get_leaders_order, topology_cfg, vshard_util.replicaset_uuid(), {only_enabled = true}
     )
 
     if leaders_order == nil then
@@ -694,7 +695,7 @@ local function boot_instance(clusterwide_config)
 
     local box_info = box.info
     vars.instance_uuid = box_info.uuid
-    vars.replicaset_uuid = box_info.cluster.uuid
+    vars.replicaset_uuid = vshard_util.replicaset_uuid()
     membership.set_payload('uuid', box_info.uuid)
 
     if topology_cfg.servers == nil
@@ -742,18 +743,19 @@ local function boot_instance(clusterwide_config)
         return nil, err
     end
 
-    if box.info.status == 'orphan' then
+    local status = box.info.status
+    if status == 'orphan' or status == 'waiting_for_own_rows' then
         set_state('ConnectingFullmesh')
-        local estr = 'Replication setup failed, instance orphaned'
+        local estr = string.format('Replication setup failed, instance in %s mode', status)
         log.warn(estr)
 
         fiber.new(function()
             fiber.name('orphan-adoption')
-            while box.info.status == 'orphan' do
+            while box.info.status == 'orphan' or box.info.status == 'waiting_for_own_rows' do
                 fiber.sleep(1)
             end
 
-            log.info("Orphan mode abandoned. Resuming configuration...")
+            log.info('Resuming configuration: %q mode abandoned...', status)
             set_state('BoxConfigured')
             apply_config(clusterwide_config)
         end)
