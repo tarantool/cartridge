@@ -300,7 +300,7 @@ local function apply_config(clusterwide_config)
         membership.set_allowed_members(allowed_uris)
     end
 
-    box.cfg({
+    local box_cfg_opts = {
         replication_connect_quorum = 0,
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
@@ -313,7 +313,11 @@ local function apply_config(clusterwide_config)
                 ssl_password = vars.ssl_client_password,
             }
         ),
-    })
+    }
+    if utils.version_is_at_least(2, 11, 0) then
+        box_cfg_opts.bootstrap_strategy = 'legacy'
+    end
+    box.cfg(box_cfg_opts)
 
     local ok, err = OperationError:pcall(failover.cfg,
         clusterwide_config,
@@ -424,8 +428,12 @@ local function boot_instance(clusterwide_config)
     box_opts.replication_sync_timeout = box_opts.replication_sync_timeout or 300
     -- Here we use 100 as a big quorum number to force Tarantool to use full quorum. Result value will be
     -- min(#box.cfg.replication, box.cfg.replication_connect_quorum).
-    -- replication_connect_quorum will be reworked after https://github.com/tarantool/tarantool/pull/8037
     box_opts.replication_connect_quorum = box_opts.replication_connect_quorum or 100
+    -- Cartridge relies on the legacy bootstrap strategy, so stay on it and
+    -- silence the replication_connect_quorum deprecation warning.
+    if utils.version_is_at_least(2, 11, 0) then
+        box_opts.bootstrap_strategy = 'legacy'
+    end
 
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
