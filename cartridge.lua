@@ -517,6 +517,16 @@ local function cfg(opts, box_opts)
         title.update(box_opts.custom_proc_title)
     end
 
+    -- Rolling the pending synchro queue back on an isolated leader is what
+    -- leads to ER_SPLIT_BRAIN, let a PROMOTE with a quorum resolve the queue
+    -- instead. Set replication_synchro_timeout explicitly to get the rollback
+    -- back. Only manual election mode is affected: with election_mode="off"
+    -- box.ctl.promote() waits for the queue with this very timeout.
+    if box_opts.replication_synchro_timeout == nil
+    and box_opts.election_mode == 'manual' then
+        box_opts.replication_synchro_timeout = math.huge
+    end
+
     if opts.rebalancer_mode == nil then
         opts.rebalancer_mode = 'auto'
     elseif not (opts.rebalancer_mode == 'auto'

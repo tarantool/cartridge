@@ -378,6 +378,27 @@ local function list_on_instance(opts)
         })
     end
 
+    if box.cfg.election_mode == 'manual'
+    and failover_cfg.fencing_enabled
+    and failover_cfg.fencing_timeout + failover_cfg.fencing_pause
+        >= box.cfg.replication_synchro_timeout then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Stateful failover with election_mode="manual" needs fencing to actuate' ..
+                ' before the synchro queue is rolled back: fencing_timeout (%s)' ..
+                ' + fencing_pause (%s) should be less than' ..
+                ' replication_synchro_timeout (%s)',
+                failover_cfg.fencing_timeout,
+                failover_cfg.fencing_pause,
+                box.cfg.replication_synchro_timeout
+            ),
+        })
+    end
+
     local sync_spaces_list = sync_spaces.spaces_list_str()
     if sync_spaces_list ~= '' and failover.is_leader() and not failover.is_sync_spaces_supported() then
         table.insert(ret, {
