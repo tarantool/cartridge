@@ -725,6 +725,9 @@ type ServerInfo {
 
   """List of vshard router parameters"""
   vshard_router: [VshardRouter]
+
+  """Crud storage parameters. Null if the crud storage is not initialized"""
+  crud: ServerInfoCrud
 }
 
 type ServerInfoCartridge {
@@ -745,6 +748,13 @@ type ServerInfoCartridge {
 
   """List of rocks and their versions"""
   rocks: [String]
+}
+
+type ServerInfoCrud {
+  """
+  Whether the rebalance safe mode is enabled. Null if crud does not support it
+  """
+  safe_mode: Boolean
 }
 
 type ServerInfoGeneral {

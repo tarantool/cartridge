@@ -50,6 +50,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
             : server.rebalancer === false
             ? 'false'
             : undefined,
+          crudSafeMode: server.boxinfo?.crud?.safe_mode === true,
         },
       };
     });

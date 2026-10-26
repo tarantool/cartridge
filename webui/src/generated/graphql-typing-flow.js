@@ -595,6 +595,8 @@ export type Server = {|
 export type ServerInfo = {|
   __typename?: 'ServerInfo',
   cartridge: ServerInfoCartridge,
+  /** Crud storage parameters. Null if the crud storage is not initialized */
+  crud?: ?ServerInfoCrud,
   general: ServerInfoGeneral,
   membership: ServerInfoMembership,
   network: ServerInfoNetwork,
@@ -619,6 +621,12 @@ export type ServerInfoCartridge = {|
   ddl_version?: $ElementType<Scalars, 'String'>,
   /** Rocks Versions */
   rocks?: ?Array<?$ElementType<Scalars, 'String'>>,
+|};
+
+export type ServerInfoCrud = {|
+  __typename?: 'ServerInfoCrud',
+  /** Whether the rebalance safe mode is enabled. Null if crud does not support it */
+  safe_mode?: ?$ElementType<Scalars, 'Boolean'>,
 |};
 
 export type ServerInfoGeneral = {|
@@ -1313,6 +1321,9 @@ export type ServerListQuery = ({
         }), vshard_storage?: ?({
             ...{ __typename?: 'ServerInfoVshardStorage' },
           ...$Pick<ServerInfoVshardStorage, {| rebalancer_enabled?: * |}>
+        }), crud?: ?({
+            ...{ __typename?: 'ServerInfoCrud' },
+          ...$Pick<ServerInfoCrud, {| safe_mode?: * |}>
         }) |}
       }), replicaset?: ?({
           ...{ __typename?: 'Replicaset' },
