@@ -446,6 +446,20 @@ local boxinfo_schema = {
                     }
                 }
             }),
+            crud = {
+                kind = gql_types.object({
+                    name = 'ServerInfoCrud',
+                    fields = {
+                        safe_mode = {
+                            kind = gql_types.boolean,
+                            description = 'Whether the rebalance safe mode is enabled.' ..
+                                ' Null if crud does not support it',
+                        },
+                    }
+                }),
+                description = 'Crud storage parameters.' ..
+                    ' Null if the crud storage is not initialized',
+            },
         }
     }),
     arguments = {},

@@ -16,6 +16,7 @@ import type {
 
 import ClusterIssuesModal from '../../../ClusterIssuesModal';
 import ReplicasetRoles from '../../../ReplicasetRoles';
+import { ReplicasetCrudSafeModeTag } from '../CrudSafeModeTag';
 import { IconRebalancer } from '../IconRebalancer';
 import ReplicasetListStatus from '../ReplicasetListStatus';
 import ReplicasetListTag from '../ReplicasetListTag';
@@ -88,6 +89,7 @@ const ReplicasetList = ({
                   {replicaset.alias}
                 </Text>
                 <div className={cx(styles.div, styles.grow)} />
+                <ReplicasetCrudSafeModeTag className={styles.crudSafeMode} replicaset={replicaset} />
                 {(replicaset.rebalancer === true || replicaset.rebalancer === false) && (
                   <div className={styles.rebalancer}>
                     <IconRebalancer type={replicaset.rebalancer ? 'true' : 'false'} />

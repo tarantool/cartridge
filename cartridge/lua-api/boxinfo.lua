@@ -23,6 +23,24 @@ end
 
 local rocks_cache = {}
 
+-- Cartridge doesn't depend on crud, so the storage API exported by
+-- crud.init_storage() is used. Returns box.NULL if crud storage isn't
+-- initialized, safe_mode is nil if crud doesn't support it.
+local function get_crud_info()
+    local crud_storage = rawget(_G, '_crud')
+    if crud_storage == nil then
+        return box.NULL
+    end
+
+    local safe_mode
+    if crud_storage.rebalance_safe_mode_status ~= nil then
+        safe_mode = crud_storage.rebalance_safe_mode_status()
+    end
+    return {
+        safe_mode = safe_mode,
+    }
+end
+
 --- Retrieve `box.cfg` and `box.info` of a remote server.
 -- @function get_info
 -- @local
@@ -224,6 +242,7 @@ local function get_info(uri)
             },
             vshard_router = router_info,
             vshard_storage = storage_info,
+            crud = get_crud_info(),
         }
 
         for i = 1, table.maxn(box_info.replication) do

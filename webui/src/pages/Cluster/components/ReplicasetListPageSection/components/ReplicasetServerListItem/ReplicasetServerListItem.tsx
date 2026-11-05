@@ -11,6 +11,7 @@ import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 
 import ServerDropdown from '../../../ServerDropdown';
+import { CrudSafeModeTag } from '../CrudSafeModeTag';
 import { IconRebalancer } from '../IconRebalancer';
 import { NonElectableFlag } from '../NonElectableFlag';
 import ReplicasetListBuckets from '../ReplicasetListBuckets';
@@ -52,6 +53,7 @@ export interface ReplicasetServerListItemServerAdditional {
   statistics?: Maybe<ReplicasetServerListItemStatistic>;
   filterMatching?: boolean;
   vshardStorageRebalancer?: 'true' | 'false' | 'instance';
+  crudSafeMode?: boolean;
 }
 
 export interface ReplicasetServerListItemProps {
@@ -72,6 +74,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
       statistics,
       filterMatching,
       vshardStorageRebalancer,
+      crudSafeMode,
     },
     showFailoverPromote,
   } = props;
@@ -139,6 +142,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
           {labels?.length ? <div className={styles.wrapSL}>{labelsParse}</div> : null}
         </div>
         <div className={cx(styles.div, styles.grow)} />
+        {crudSafeMode && <CrudSafeModeTag className={styles.crudSafeMode} />}
         {vshardStorageRebalancer && (
           <div className={styles.rebalancer}>
             <IconRebalancer type={vshardStorageRebalancer} />

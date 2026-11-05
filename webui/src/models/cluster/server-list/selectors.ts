@@ -32,6 +32,19 @@ export const serverRo = (server: ServerListServer): boolean | undefined => serve
 export const replicasetServerRo = (server: ServerListReplicasetServer): boolean | undefined =>
   server.boxinfo?.general?.ro;
 
+// Only instances which report the crud safe mode status are counted.
+export const replicasetCrudSafeMode = (
+  replicaset: Pick<ServerListReplicaset, 'servers'>
+): { enabledCount: number; totalCount: number } => {
+  const statuses = (replicaset.servers ?? [])
+    .map((server) => server.boxinfo?.crud?.safe_mode)
+    .filter((status): status is boolean => typeof status === 'boolean');
+  return {
+    enabledCount: statuses.filter((status) => status).length,
+    totalCount: statuses.length,
+  };
+};
+
 export const clusterVshardGroups = (cluster: Maybe<GetClusterCluster>): GetClusterVshardGroup[] =>
   compact(cluster?.vshard_groups ?? []);
 

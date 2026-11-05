@@ -140,4 +140,7 @@ export const styles = {
   rebalancer: css`
     margin-right: 8px;
   `,
+  crudSafeMode: css`
+    margin-right: 8px;
+  `,
 };

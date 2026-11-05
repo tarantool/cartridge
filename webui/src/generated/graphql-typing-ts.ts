@@ -572,6 +572,8 @@ export type Server = {
 export type ServerInfo = {
   __typename?: 'ServerInfo';
   cartridge: ServerInfoCartridge;
+  /** Crud storage parameters. Null if the crud storage is not initialized */
+  crud?: Maybe<ServerInfoCrud>;
   general: ServerInfoGeneral;
   membership: ServerInfoMembership;
   network: ServerInfoNetwork;
@@ -596,6 +598,12 @@ export type ServerInfoCartridge = {
   ddl_version?: Maybe<Scalars['String']>;
   /** Rocks versions */
   rocks?: Maybe<Array<Maybe<Scalars['String']>>>;
+};
+
+export type ServerInfoCrud = {
+  __typename?: 'ServerInfoCrud';
+  /** Whether the rebalance safe mode is enabled. Null if crud does not support it */
+  safe_mode?: Maybe<Scalars['Boolean']>;
 };
 
 export type ServerInfoGeneral = {
@@ -1639,6 +1647,7 @@ export type ServerListQuery = {
         __typename?: 'ServerInfo';
         general: { __typename?: 'ServerInfoGeneral'; ro: boolean };
         vshard_storage?: { __typename?: 'ServerInfoVshardStorage'; rebalancer_enabled?: boolean | null } | null;
+        crud?: { __typename?: 'ServerInfoCrud'; safe_mode?: boolean | null } | null;
       } | null;
       replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
     }>;

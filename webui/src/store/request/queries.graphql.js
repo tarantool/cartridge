@@ -377,6 +377,9 @@ export const listQuery = gql`
           vshard_storage {
             rebalancer_enabled
           }
+          crud {
+            safe_mode
+          }
         }
         message
         replicaset {
