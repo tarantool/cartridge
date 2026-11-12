@@ -58,7 +58,8 @@ end
 local function get_leader(srv)
     return srv:eval([[
         local failover = require('cartridge.failover')
-        return failover.get_active_leaders()[box.info.cluster.uuid]
+        local vshard_util = require('vshard.util')
+        return failover.get_active_leaders()[vshard_util.replicaset_uuid()]
     ]])
 end
 

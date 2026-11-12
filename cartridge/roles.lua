@@ -15,6 +15,7 @@ local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 local clock = require('clock')
+local vshard_util = require('vshard.util')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
@@ -363,7 +364,7 @@ local function validate_config(conf_new, conf_old)
     local disabled_roles = {}
     local state = require('cartridge.confapplier').get_state()
     if state == 'RolesConfigured' or state == 'OperationError' then
-        local my_replicaset = conf_new.topology.replicasets[box.info.cluster.uuid]
+        local my_replicaset = conf_new.topology.replicasets[vshard_util.replicaset_uuid()]
         local enabled_roles = get_enabled_roles(my_replicaset.roles)
 
         for _, role in ipairs(vars.roles_by_number) do
@@ -420,7 +421,7 @@ local function apply_config(conf, opts)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vshard_util.replicaset_uuid()]
 
     local err
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
@@ -653,7 +654,7 @@ local function before_apply_config(conf)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vshard_util.replicaset_uuid()]
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then
@@ -683,7 +684,7 @@ local function on_apply_config(conf, state)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vshard_util.replicaset_uuid()]
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then

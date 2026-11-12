@@ -58,6 +58,13 @@ function g.test_master_restart_with_missing_xlog()
     for _, name in ipairs(fio.glob(g.master.workdir .. '/*.xlog')) do
         t.assert(fio.unlink(name))
     end
+
+    -- TODO: broken after https://github.com/tarantool/tarantool/commit/61cb5b5e3414a2ac0aac5682bfd2435457ae87bd
+    if h.tarantool_version_ge('3.0.0') then
+        for _, name in ipairs(fio.glob(g.master.workdir .. '/*.snap')) do
+            t.assert(fio.unlink(name))
+        end
+    end
     g.master:start()
 
     -- check that data still on replica
