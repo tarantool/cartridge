@@ -20,6 +20,9 @@ Added
   ``crud`` rebalance safe mode enabled.
 - New GraphQL section ``boxinfo.crud`` with the ``safe_mode`` field. It's
   ``null`` if the ``crud`` storage isn't initialized on the instance.
+- New issues about expiring, expired and unreadable SSL certificates
+  configured in ``box.cfg.listen`` and ``box.cfg.replication``. Requires
+  Tarantool Enterprise 2.11 with SSL certificate monitoring.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

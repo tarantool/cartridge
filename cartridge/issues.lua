@@ -88,6 +88,12 @@
 --
 -- * warning: "Instance had Error and was disabled"
 --
+-- SSL certificates (Tarantool Enterprise 2.11 with certificate monitoring):
+--
+-- * warning: "SSL certificate ... expires at ... (components: ...) on ...";
+-- * warning: "SSL certificate ... expired at ... (components: ...) on ...";
+-- * warning: "Unable to check SSL certificate ...: ... on ...";
+--
 -- Custom issues (defined by user):
 --
 -- * Custom roles can announce more issues with their own level, topic
@@ -561,6 +567,23 @@ local function list_on_instance(opts)
                 describe(self_uri)
             ),
         })
+    end
+
+    -- Tarantool Enterprise 2.11 monitors SSL certificates from box.cfg.
+    local ok, ssl_certificate = pcall(require, 'internal.ssl_certificate')
+    if ok and type(ssl_certificate) == 'table'
+    and type(ssl_certificate.alerts) == 'function' then
+        for _, alert in ipairs(ssl_certificate.alerts()) do
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'ssl_certificate',
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = string.format(
+                    '%s on %s', alert.message, describe(self_uri)
+                ),
+            })
+        end
     end
 
     -- add custom issues from each role
