@@ -1221,3 +1221,45 @@ function g_stateboard_synchro.test_sync_spaces_allowed(g)
     end)
 end
 
+
+function g.test_ssl_certificate_issues()
+    local function test(alerts, expected_issues)
+        g.master:exec(function(alerts)
+            rawset(_G, '__ssl_certificate_backup', rawget(_G,
+                '__ssl_certificate_backup') or
+                {package.loaded['internal.ssl_certificate']})
+            package.loaded['internal.ssl_certificate'] = {
+                apply = function() end,
+                alerts = alerts ~= nil and function()
+                    return alerts
+                end or nil,
+            }
+        end, {alerts})
+
+        return t.assert_items_equals(
+            helpers.list_cluster_issues(g.master),
+            expected_issues
+        )
+    end
+
+    local message = 'SSL certificate "/tmp/server.crt" expires at' ..
+        ' 2030-01-01T00:00:00Z (components: listen)'
+    test({{message = message}}, {{
+        level = 'warning',
+        topic = 'ssl_certificate',
+        message = message .. ' on ' .. g.master.advertise_uri .. ' (master)',
+        instance_uuid = g.master.instance_uuid,
+        replicaset_uuid = g.master.replicaset_uuid,
+    }})
+
+    test({}, {})
+
+    -- The module without alerts() is ignored.
+    test(nil, {})
+
+    g.master:exec(function()
+        package.loaded['internal.ssl_certificate'] =
+            rawget(_G, '__ssl_certificate_backup')[1]
+        rawset(_G, '__ssl_certificate_backup', nil)
+    end)
+end
