@@ -43,26 +43,31 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.18.0
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.3
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.2
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.1
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.0
      - \+
      - \-
