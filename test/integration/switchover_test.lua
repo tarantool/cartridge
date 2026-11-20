@@ -814,10 +814,12 @@ add('test_api', function(g)
     -- Disrupt successfull switchover
     t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
 
-    -- Hack set_vclockkeeper (inconcistency forcing) to fail
     A1:eval([[
-        local vars = require('cartridge.vars').new('cartridge.failover')
-        vars.client.session.set_vclockkeeper = function()
+        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+        local session = vars.client.session
+        local set_vclockkeeper = session.set_vclockkeeper
+        session.set_vclockkeeper = function(self)
+            self.set_vclockkeeper = set_vclockkeeper
             return nil, require('errors').new('ArtificialError', 'Boo')
         end
     ]])
@@ -851,13 +853,6 @@ add('test_api', function(g)
                 " (B2) isn't reached yet",
         }}
     )
-
-    -- Revert the hack
-    A1:eval([[
-        local vars = require('cartridge.vars').new('cartridge.failover')
-        vars.client:drop_session()
-        vars.client:get_session()
-    ]])
 
     -- Consistent promotion fails because the keeper is still "nobody"
     t.assert_error_msg_equals(

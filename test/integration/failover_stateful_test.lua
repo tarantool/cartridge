@@ -358,6 +358,144 @@ add('test_coordinator_restart', function(g)
     end)
 end)
 
+add('test_manual_appointment_after_automatic_decision', function(g)
+    local appointments = R1:exec(function(rs, old_leader, automatic_leader, manual_leader)
+        local fiber = require('fiber')
+        local coordinator = require('cartridge').service_get('failover-coordinator')
+        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+        local session = vars.client.session
+        local healthcheck = vars.healthcheck
+        local set_vclockkeeper = session.set_vclockkeeper
+        local set_leaders = session.set_leaders
+
+        local paused = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local published = fiber.channel(2)
+        local order = {}
+
+        session.set_vclockkeeper = function(self, replicaset_uuid, instance_uuid, ...)
+            if replicaset_uuid == rs and instance_uuid == automatic_leader then
+                paused:put(true)
+                assert(resume:get(5), 'Automatic appointment was not resumed')
+            end
+            return set_vclockkeeper(self, replicaset_uuid, instance_uuid, ...)
+        end
+
+        session.set_leaders = function(self, updates)
+            for _, update in ipairs(updates) do
+                if update[1] == rs then
+                    table.insert(order, update[2])
+                    local ok, err = set_leaders(self, updates)
+                    published:put({ok, err}, 0)
+                    return ok, err
+                end
+            end
+            return set_leaders(self, updates)
+        end
+
+        vars.healthcheck = function(members, uuid)
+            return uuid ~= old_leader and healthcheck(members, uuid)
+        end
+
+        local ok, err = pcall(function()
+            vars.membership_notification:broadcast()
+            assert(paused:get(5), 'Automatic appointment did not pause')
+
+            local manual = fiber.channel(1)
+            fiber.create(function()
+                manual:put({coordinator.appoint_leaders({[rs] = manual_leader})}, 0)
+            end)
+            resume:put(true)
+
+            local result = assert(manual:get(5), 'Manual appointment did not finish')
+            assert(result[1], result[2])
+            for _ = 1, 2 do
+                local result = assert(published:get(5), 'Appointment was not published')
+                assert(result[1], result[2])
+            end
+        end)
+
+        vars.healthcheck = healthcheck
+        session.set_vclockkeeper = set_vclockkeeper
+        session.set_leaders = set_leaders
+        assert(ok, err)
+        return order
+    end, {storage_uuid, storage_1_uuid, storage_2_uuid, storage_3_uuid})
+
+    t.assert_equals(appointments, {storage_2_uuid, storage_3_uuid})
+    t.assert_equals(g.client:get_session():get_leaders()[storage_uuid], storage_3_uuid)
+end)
+
+add('test_concurrent_forced_promotion', function()
+    local state = R1:exec(function(rs, forced_leader, next_leader)
+        local fiber = require('fiber')
+        local cartridge = require('cartridge')
+        local vars = require('cartridge.vars')
+        local coordinator = vars.new('cartridge.roles.coordinator').client.session
+        local failover = vars.new('cartridge.failover').client:get_session()
+        local paused = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local reset = fiber.channel(1)
+        local promoted = fiber.channel(1)
+        local setters = {}
+
+        for _, session in ipairs({coordinator, failover}) do
+            local set_vclockkeeper = session.set_vclockkeeper
+            setters[session] = set_vclockkeeper
+            session.set_vclockkeeper = function(self, uuid, instance, ...)
+                if uuid ~= rs or instance ~= forced_leader then
+                    return set_vclockkeeper(self, uuid, instance, ...)
+                end
+                paused:put(true, 0)
+                assert(resume:get(10))
+                local ok, err = set_vclockkeeper(self, uuid, instance, ...)
+                reset:put({ok, err}, 0)
+                return ok, err
+            end
+        end
+
+        local first = fiber.create(cartridge.failover_promote, {
+            [rs] = forced_leader,
+        }, {force_inconsistency = true})
+
+        local ok, result = pcall(function()
+            assert(paused:get(5))
+            fiber.create(function()
+                promoted:put({cartridge.failover_promote({[rs] = next_leader})})
+            end)
+            local deadline = fiber.clock() + 5
+            while promoted:is_empty() and not coordinator.appointments_lock:has_writers() do
+                assert(fiber.clock() < deadline)
+                fiber.sleep(0.01)
+            end
+
+            resume:put(true, 0)
+            local reply = assert(promoted:get(10))
+            assert(reply[1], reply[2])
+            local reply = assert(reset:get(5))
+            assert(reply[1], reply[2])
+            return {
+                leader = coordinator:get_leaders()[rs],
+                keeper = failover:get_vclockkeeper(rs).instance_uuid,
+            }
+        end)
+        resume:put(true, 0)
+        for session, set_vclockkeeper in pairs(setters) do
+            session.set_vclockkeeper = set_vclockkeeper
+        end
+        if first:status() ~= 'dead' then
+            first:cancel()
+        end
+        assert(ok, result)
+        return result
+    end, {storage_uuid, storage_2_uuid, storage_3_uuid})
+
+    t.assert(R1:call('package.loaded.cartridge.failover_promote', {
+        {[storage_uuid] = storage_1_uuid}, {force_inconsistency = true},
+    }))
+    t.assert_equals(state, {leader = storage_3_uuid, keeper = storage_3_uuid})
+end)
+
 add('test_leader_restart', function(g)
     -----------------------------------------------------
     g.client:longpoll(0)

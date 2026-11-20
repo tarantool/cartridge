@@ -268,7 +268,7 @@ local function promote(replicaset_leaders, opts)
         ok, err = rpc.call(
             'failover-coordinator',
             'appoint_leaders',
-            {replicaset_leaders},
+            {replicaset_leaders, opts},
             { uri = coordinator.uri }
         )
     else
@@ -276,16 +276,6 @@ local function promote(replicaset_leaders, opts)
     end
     if ok == nil then
         return nil, err
-    end
-
-    if opts ~= nil and opts.force_inconsistency == true then
-        local ok, err = failover.force_inconsistency(replicaset_leaders, opts.skip_error_on_change)
-        if ok == nil then
-            return nil, PromoteLeaderError:new(
-                "Promotion succeeded, but inconsistency wasn't forced: %s",
-                errors.is_error_object(err) and err.err or err
-            )
-        end
     end
 
     local ok, err = failover.wait_consistency(replicaset_leaders)

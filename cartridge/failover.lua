@@ -1280,47 +1280,6 @@ local function check_cookie_hash_error()
     return vars.cookie_check_err
 end
 
---- Force inconsistent leader switching.
--- Do it by resetting vclockkeepers in state provider.
---
--- @function force_inconsistency
--- @local
--- @tparam {[string]=string,...} replicaset_uuid to leader_uuid mapping
---
--- @treturn[1] boolean true
--- @treturn[2] nil
--- @treturn[2] table Error description
-local function force_inconsistency(leaders, skip_error_on_change)
-    if vars.client == nil then
-        return nil, StateProviderError:new("No state provider configured")
-    end
-
-    local session = vars.client.session
-    if session == nil or not session:is_alive() then
-        return nil, StateProviderError:new('State provider unavailable')
-    end
-
-    local err
-    for replicaset_uuid, instance_uuid in pairs(leaders) do
-        local _ok, _err = session:set_vclockkeeper(
-            replicaset_uuid, instance_uuid, nil, skip_error_on_change
-        )
-        if _ok == nil then
-            err = _err
-            log.warn(
-                'Forcing inconsistency for %s failed: %s', instance_uuid,
-                errors.is_error_object(_err) and _err.err or _err
-            )
-        end
-    end
-
-    if err ~= nil then
-        return nil, err
-    end
-
-    return true
-end
-
 --- Wait when promoted instances become vclockkeepers.
 --
 -- @function wait_consistency
@@ -1400,7 +1359,6 @@ return {
     is_synchro_mode_enabled = is_synchro_mode_enabled,
     mode = mode,
     is_sync_spaces_supported = is_sync_spaces_supported,
-    force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
     switch_to_manual_election_mode = manual_election_mode.switch_to_manual_election_mode,
     switch_to_off_election_mode = manual_election_mode.switch_to_off_election_mode,
