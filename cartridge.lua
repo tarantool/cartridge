@@ -45,6 +45,7 @@ local service_registry = require('cartridge.service-registry')
 local logging_whitelist = require('cartridge.logging_whitelist')
 local pool = require('cartridge.pool')
 local cartridge_utils = require('cartridge.utils')
+local failover_vars = require('cartridge.vars').new('cartridge.failover')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -515,6 +516,16 @@ local function cfg(opts, box_opts)
 
     if box_opts.custom_proc_title ~= nil then
         title.update(box_opts.custom_proc_title)
+    end
+
+    failover_vars.default_synchro_timeout = nil
+    if box_opts.replication_synchro_timeout == nil then
+        failover_vars.default_synchro_timeout = box_opts.election_mode == 'manual' and math.huge or 5
+    end
+    -- Let the next leader resolve the pending queue instead of rolling it back.
+    if box_opts.replication_synchro_timeout == nil
+    and box_opts.election_mode == 'manual' then
+        box_opts.replication_synchro_timeout = math.huge
     end
 
     if opts.rebalancer_mode == nil then
