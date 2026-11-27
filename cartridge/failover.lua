@@ -70,6 +70,8 @@ vars:new('cookie_check_err', nil)
 vars:new('enable_synchro_mode', false)
 vars:new('disable_raft_on_small_clusters', true)
 vars:new('schedule', {})
+vars:new('activations', {})
+vars:new('activation_finished', fiber.cond())
 vars:new('client')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
@@ -100,13 +102,36 @@ vars:new('suppress_timeout', math.huge)
 vars:new('suppress_fiber', nil)
 
 
+local function finish_activation()
+    local id = fiber.id()
+    if vars.activations[id] then
+        vars.activations[id] = nil
+        vars.activation_finished:broadcast()
+    end
+end
+
+local function with_activation_cleanup(fn, ...)
+    local ok, result, err = pcall(fn, ...)
+    finish_activation()
+    if not ok then
+        error(result, 0)
+    end
+    return result, err
+end
+
 function _G.__cartridge_failover_get_lsn(timeout)
-    box.ctl.wait_ro(timeout)
-    local box_info = box.info
-    return {
-        id  = box_info.id,
-        lsn = box_info.lsn,
-    }
+    local deadline = fiber.clock() + (timeout or math.huge)
+    while true do
+        box.ctl.wait_ro(math.max(0, deadline - fiber.clock()))
+        -- A keeper can still be read-only while its activation is in flight.
+        if next(vars.activations) == nil then
+            local box_info = box.info
+            return {id = box_info.id, lsn = box_info.lsn}
+        end
+        if not vars.activation_finished:wait(math.max(0, deadline - fiber.clock())) then
+            box.error(box.error.TIMEOUT)
+        end
+    end
 end
 
 function _G.__cartridge_failover_wait_rw(timeout)
@@ -144,7 +169,7 @@ end
 -- @local
 local function schedule_add()
     schedule_clear()
-    local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
+    local task = fiber.new(with_activation_cleanup, reconfigure_all, vars.cache.active_leaders)
     local id = task:id()
     task:name('cartridge.failover.task')
     vars.schedule[id] = task
@@ -504,6 +529,28 @@ local function synchro_promote()
     end
 end
 
+local function apply_writability()
+    local activating = vars.activations[fiber.id()]
+    if activating then
+        -- Elections may complete after the caller has timed out.
+        box.cfg({read_only = true})
+        local ok, err = pcall(synchro_promote)
+        if not ok or err ~= nil then
+            vars.cache.is_vclockkeeper = false
+            vars.cache.is_leader = false
+            vars.cache.is_rw = false
+            return err
+        end
+    end
+
+    box.cfg({read_only = not vars.cache.is_rw})
+    if activating then
+        finish_activation()
+        return
+    end
+    return synchro_promote()
+end
+
 local function synchro_demote()
     local box_info = box.info
     if box_info.synchro ~= nil
@@ -628,6 +675,7 @@ local function constitute_oneself(active_leaders, opts)
     -- The last one thing: persist our vclock
     ::activate::
     local vclock = box.info.vclock
+    vars.activations[fiber.id()] = true
 
     -- WARNING: implicit yield
     local ok, err = session:activate(
@@ -636,6 +684,7 @@ local function constitute_oneself(active_leaders, opts)
     fiber.testcancel()
 
     if ok == nil then
+        finish_activation()
         return nil, SwitchoverError:new(err)
     end
 
@@ -693,10 +742,7 @@ function reconfigure_all(active_leaders)
     local apply_total_start = fiber.clock()
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
-        box.cfg({
-            read_only = not vars.cache.is_rw,
-        })
-        err = synchro_promote()
+        err = apply_writability()
         if err ~= nil then
             error(err)
         end
@@ -1154,14 +1200,10 @@ local function cfg(clusterwide_config, opts)
         fencing_start()
     end
 
-    box.cfg({
-        read_only = not vars.cache.is_rw,
-    })
-
     vars.mode = failover_cfg.mode
-    err = synchro_promote()
+    err = apply_writability()
     if err ~= nil then
-        ApplyConfigError:new(
+        return nil, ApplyConfigError:new(
             'Unable to promote: %q',
             err
         )
@@ -1348,7 +1390,9 @@ local function set_options(opts)
 end
 
 return {
-    cfg = cfg,
+    cfg = function(...)
+        return with_activation_cleanup(cfg, ...)
+    end,
     get_active_leaders = get_active_leaders,
     get_coordinator = get_coordinator,
     get_error = get_error,

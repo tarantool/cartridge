@@ -576,6 +576,88 @@ add('test_promotion_late', function(g)
     end)
 end)
 
+add('test_lsn_waits_for_activation', function(g)
+    B2:exec(function()
+        local fiber = require('fiber')
+        local reached = fiber.channel(1)
+        local resume = fiber.channel(1)
+
+        if box.cfg.election_mode == 'manual' then
+            local promote = box.ctl.promote
+            rawset(box.ctl, 'promote', function(...)
+                rawset(box.ctl, 'promote', promote)
+                reached:put(true)
+                assert(resume:get(10))
+                return promote(...)
+            end)
+        else
+            local session = require('cartridge.vars').new('cartridge.failover').client:get_session()
+            local activate = session.activate
+            session.activate = function(self, ...)
+                local ok, err = activate(self, ...)
+                if ok then
+                    self.activate = activate
+                    reached:put(true)
+                    assert(resume:get(10))
+                end
+                return ok, err
+            end
+        end
+        rawset(_G, 'test_activation_reached', reached)
+        rawset(_G, 'test_resume_activation', resume)
+    end)
+
+    t.assert(g.session:set_leaders({{uB, uB2}}))
+    local reached = B2:exec(function()
+        local reached = _G.test_activation_reached
+        rawset(_G, 'test_activation_reached', nil)
+        return reached:get(5)
+    end)
+    t.assert(reached)
+    t.assert_equals(g.session:get_vclockkeeper(uB).instance_uuid, uB2)
+    t.assert_equals(B2:eval(q_readonliness), true)
+
+    local ok, err = pcall(B2.call, B2, '__cartridge_failover_get_lsn', {0.1})
+    B2:exec(function()
+        local resume = _G.test_resume_activation
+        rawset(_G, 'test_resume_activation', nil)
+        resume:put(true)
+    end)
+    t.assert_equals(ok, false, err)
+    helpers.retrying({}, function()
+        t.assert_equals(B2:eval(q_readonliness), false)
+    end)
+
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+end)
+
+register_test(manual_groups, 'test_failed_promotion_keeps_read_only', function(g)
+    B2:exec(function()
+        local promote = box.ctl.promote
+        rawset(box.ctl, 'promote', function()
+            rawset(box.ctl, 'promote', promote)
+            error('Promotion failed', 0)
+        end)
+    end)
+    t.assert(g.session:set_leaders({{uB, uB2}}))
+
+    helpers.retrying({}, function()
+        t.assert_equals(g.session:get_vclockkeeper(uB).instance_uuid, uB2)
+        t.assert_equals(B2:eval(q_is_vclockkeeper), false)
+    end)
+    t.assert_equals(B2:eval('return box.cfg.read_only'), true)
+    B2:call('box.ctl.promote')
+    t.assert_equals(B2:eval(q_readonliness), true)
+
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+end)
+
 add('test_vclockkeeper_caching', function(g)
     -- Scenario:
     -- 1. B1 is a vclockkeeper
