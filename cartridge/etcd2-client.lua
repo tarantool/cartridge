@@ -3,7 +3,6 @@ local etcd2 = require('cartridge.etcd2')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local log = require('log')
 
 local ClientError  = errors.new_class('ClientError')
 local SessionError = errors.new_class('SessionError')
@@ -41,8 +40,6 @@ local function update_state(session, update, ...)
         local state, err = update(session, state, index, ...)
         if state == nil then
             return nil, err
-        elseif state == false then
-            return true
         end
 
         local args = index == 0 and {prevExist = false} or {prevIndex = index}
@@ -332,9 +329,7 @@ local function get_vclockkeeper(session, replicaset_uuid)
 end
 
 local function store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
-    if vclock ~= nil then
-        setmetatable(vclock, {_serialize = 'sequence'})
-    end
+    setmetatable(vclock, {_serialize = 'sequence'})
     local replicaset = state.replicasets[replicaset_uuid] or {}
     replicaset.vclockkeeper = {
         instance_uuid = instance_uuid,
@@ -345,7 +340,30 @@ local function store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, 
     return state
 end
 
-local function activate_impl(_, state, index, replicaset_uuid, instance_uuid, appointment, vclock)
+local function recover_vclockkeeper(session, state, index, replicaset_uuid, instance_uuid, vclock)
+    if state.coordinator ~= nil or (state.version == nil and index ~= 0) then
+        return nil, SessionError:new('Appointment changed')
+    elseif state.version == nil then
+        local err
+        state, err = migrate_state(session, state, index)
+        if state == nil then
+            return nil, err
+        end
+    end
+
+    local replicaset = state.replicasets[replicaset_uuid]
+    local keeper = replicaset and replicaset.vclockkeeper
+    if keeper ~= nil and keeper.instance_uuid ~= instance_uuid then
+        return nil, SessionError:new('Vclockkeeper changed between calls')
+    end
+    return store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
+end
+
+local function activate_impl(session, state, index, replicaset_uuid, instance_uuid, appointment, vclock)
+    if appointment == nil then
+        return recover_vclockkeeper(session, state, index, replicaset_uuid, instance_uuid, vclock)
+    end
+
     local replicaset = state.replicasets and state.replicasets[replicaset_uuid]
     if replicaset == nil
     or replicaset.instance_uuid ~= instance_uuid
@@ -363,43 +381,8 @@ local function activate_impl(_, state, index, replicaset_uuid, instance_uuid, ap
 end
 
 local function activate(session, replicaset_uuid, instance_uuid, appointment, vclock)
-    checks('etcd2_session', 'string', 'string', 'table', 'table')
+    checks('etcd2_session', 'string', 'string', '?table', 'table')
     return update_state(session, activate_impl, replicaset_uuid, instance_uuid, appointment, vclock)
-end
-
-local function set_vclockkeeper_impl(_, state, index, replicaset_uuid, instance_uuid, vclock, revision)
-    if state.version == nil then
-        return nil, SessionError:new('Failover state has not been migrated')
-    end
-
-    local replicaset = state.replicasets[replicaset_uuid]
-    local keeper = replicaset and replicaset.vclockkeeper
-    if keeper ~= nil and keeper.instance_uuid == instance_uuid and vclock == nil then
-        return false
-    end
-    if revision ~= (keeper and keeper.revision or 0) then
-        return nil, SessionError:new('Vclockkeeper changed between calls')
-    end
-    return store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
-end
-
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, skip_error_on_change, revision)
-    checks('etcd2_session', 'string', 'string', '?table', '?boolean', '?number|cdata')
-
-    if revision == nil then
-        local _, err, current_revision = get_vclockkeeper(session, replicaset_uuid)
-        if err ~= nil then
-            return nil, err
-        end
-        revision = current_revision
-    end
-
-    local ok, err = update_state(session, set_vclockkeeper_impl, replicaset_uuid, instance_uuid, vclock, revision)
-    if ok == nil and skip_error_on_change and err.err == 'Vclockkeeper changed between calls' then
-        log.error(err.err)
-        return true
-    end
-    return ok, err
 end
 
 local function is_locked(session)
@@ -443,7 +426,6 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
-        set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
         get_vclockkeepers = get_vclockkeepers,
         get_appointment = get_appointment,

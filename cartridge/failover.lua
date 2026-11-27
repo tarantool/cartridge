@@ -562,18 +562,23 @@ local function constitute_oneself(active_leaders, opts)
 
     -- Query current vclockkeeper
     -- WARNING: implicit yield
-    local vclockkeeper, err, revision = session:get_vclockkeeper(vars.replicaset_uuid)
+    local appointment, err = session:get_appointment(vars.replicaset_uuid)
     fiber.testcancel()
     if err ~= nil then
         return nil, SwitchoverError:new(err)
+    elseif appointment == nil and not vars.cache.is_rw then
+        return nil, SwitchoverError:new('Appointment changed')
+    elseif appointment ~= nil and appointment.instance_uuid ~= vars.instance_uuid then
+        return nil, SwitchoverError:new('Appointment changed')
     end
 
+    local vclockkeeper = appointment and appointment.vclockkeeper
     if vclockkeeper == nil then
         -- It's absent, no need to wait anyone
-        goto set_vclockkeeper
+        goto activate
     elseif vclockkeeper.instance_uuid == vars.instance_uuid then
         -- It's me already, but vclock still should be persisted
-        goto set_vclockkeeper
+        goto activate
     end
 
     do
@@ -621,12 +626,12 @@ local function constitute_oneself(active_leaders, opts)
     end
 
     -- The last one thing: persist our vclock
-    ::set_vclockkeeper::
+    ::activate::
     local vclock = box.info.vclock
 
     -- WARNING: implicit yield
-    local ok, err = session:set_vclockkeeper(
-        vars.replicaset_uuid, vars.instance_uuid, vclock, nil, revision
+    local ok, err = session:activate(
+        vars.replicaset_uuid, vars.instance_uuid, appointment, vclock
     )
     fiber.testcancel()
 

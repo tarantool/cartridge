@@ -241,7 +241,7 @@ end
 -- @tparam ?boolean opts.force_inconsistency
 --   (default: **false**)
 -- @tparam ?boolean opts.skip_error_on_change
---   Skip etcd error if vclockkeeper was changed between calls (default: **false**)
+--   Accepted for compatibility. Stateful promotion uses an atomic operation.
 --
 -- @treturn[1] boolean true On success
 -- @treturn[2] nil
@@ -265,10 +265,11 @@ local function promote(replicaset_leaders, opts)
             return nil, PromoteLeaderError:new('There is no active coordinator')
         end
 
+        local fn = opts and opts.force_inconsistency and 'force_appoint_leaders' or 'appoint_leaders'
         ok, err = rpc.call(
             'failover-coordinator',
-            'appoint_leaders',
-            {replicaset_leaders, opts},
+            fn,
+            {replicaset_leaders},
             { uri = coordinator.uri }
         )
     else

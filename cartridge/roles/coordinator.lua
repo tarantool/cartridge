@@ -12,7 +12,6 @@ local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 
 local AppointmentError = errors.new_class('AppointmentError')
-local PromoteLeaderError = errors.new_class('PromoteLeaderError')
 local CoordinatorError = errors.new_class('CoordinatorError')
 
 vars:new('membership_notification', membership.subscribe())
@@ -149,7 +148,6 @@ local function make_decision(ctx, replicaset_uuid)
         -- First appointment is always made according to `topology_cfg`
         -- without regard to the healthcheck
         local decision = pack_decision(candidates[1])
-        ctx.decisions[replicaset_uuid] = decision
         return decision, {
             reason = DECISION_REASONS.FIRST_APPOINTMENT,
             checked = CHECKED_FIRST,
@@ -161,7 +159,6 @@ local function make_decision(ctx, replicaset_uuid)
         checked_count = checked_count + 1
         if vars.healthcheck(ctx.members, instance_uuid) then
             local decision = pack_decision(instance_uuid)
-            ctx.decisions[replicaset_uuid] = decision
             return decision, {
                 reason = DECISION_REASONS.NEW_LEADER_SELECTED,
                 checked = checked_count,
@@ -183,6 +180,11 @@ local function with_appointments_lock(session, fn, ...)
     return result, err
 end
 
+local function drop_session(session)
+    session:drop()
+    session.reconnect:put(true, 0)
+end
+
 local function publish_decisions(session)
     local ctx = session.ctx
     log.info('Making decisions')
@@ -190,6 +192,7 @@ local function publish_decisions(session)
     ctx.members = membership.members()
 
     local updates = {}
+    local decisions = {}
 
     for replicaset_uuid, replicaset in pairs(vars.topology_cfg.replicasets) do
         local prev = ctx.decisions[replicaset_uuid]
@@ -198,6 +201,7 @@ local function publish_decisions(session)
 
         if decision ~= nil then
             table.insert(updates, {replicaset_uuid, decision.leader})
+            decisions[replicaset_uuid] = decision
             log.info(
                 'Replicaset %s%s: appoint new leader %s, previous leader %s (reason=%s, checked=%d)',
                 replicaset_uuid,
@@ -220,13 +224,12 @@ local function publish_decisions(session)
 
     local now = fiber.clock()
     if next(updates) ~= nil then
-        for _, update in ipairs(updates) do
-            session:set_vclockkeeper(update[1], update[2], nil)
-        end
-
-        local ok, err = session:set_leaders(updates)
+        local ok, err = session:set_leaders(updates, true)
         if ok == nil then
             return nil, err
+        end
+        for replicaset_uuid, decision in pairs(decisions) do
+            ctx.decisions[replicaset_uuid] = decision
         end
     end
     return now
@@ -260,6 +263,50 @@ local function control_loop(session)
     end
 end
 
+local function remove_replicasets(session, replicasets)
+    if #replicasets == 0 then
+        return true
+    end
+
+    log.info('Removing replicasets from state provider:')
+    log.info(replicasets)
+    return session:delete_replicasets(replicasets)
+end
+
+local function reconcile_appointments(session)
+    local leaders, err = session:get_leaders()
+    if leaders == nil then
+        return nil, err
+    end
+    local keepers, err = session:get_vclockkeepers()
+    if keepers == nil then
+        return nil, err
+    end
+
+    for replicaset_uuid, instance_uuid in pairs(leaders) do
+        keepers[replicaset_uuid] = instance_uuid
+    end
+
+    local cfg = vars.topology_cfg
+    local expelled = {}
+    for replicaset_uuid, instance_uuid in pairs(keepers) do
+        if cfg.replicasets[replicaset_uuid] == nil
+        and topology.expelled(instance_uuid, cfg.servers[instance_uuid])
+        then
+            table.insert(expelled, replicaset_uuid)
+        end
+    end
+
+    local ok, err = remove_replicasets(session, expelled)
+    if ok == nil then
+        return nil, err
+    end
+    for _, replicaset_uuid in ipairs(expelled) do
+        leaders[replicaset_uuid] = nil
+    end
+    return leaders
+end
+
 local function take_control(client)
     checks('stateboard_client|etcd2_client')
 
@@ -290,8 +337,9 @@ local function take_control(client)
         end
     end
 
-    local leaders, err = session:get_leaders()
+    local leaders, err = CoordinatorError:pcall(reconcile_appointments, session)
     if leaders == nil then
+        session:drop()
         return nil, err
     end
 
@@ -303,17 +351,22 @@ local function take_control(client)
         ctx.decisions[replicaset_uuid] = pack_decision(leader_uuid)
     end
     session.appointments_lock = fiber.channel(1)
+    session.reconnect = fiber.channel(1)
     session.ctx = ctx
 
     log.info('Lock acquired')
     --------------------------------------------------------------------
-    local control_fiber = fiber.new(control_loop, session)
+    local control_fiber = fiber.new(function()
+        control_loop(session)
+        session.reconnect:put(true, 0)
+    end)
     control_fiber:name('failover-coordinate')
 
     -- Warning: fragile code.
     -- The goal: perform garbage collection when the fiber is cancelled
     repeat
-        if not pcall(fiber.sleep, lock_delay/2) then
+        local ok, reconnect = pcall(session.reconnect.get, session.reconnect, lock_delay/2)
+        if not ok or reconnect then
             break
         end
 
@@ -364,7 +417,7 @@ end
 
 local function delete_expelled_replicasets(session, old_topology)
     if not session:is_locked() then
-        return
+        return true
     end
 
     local replicasets = vars.topology_cfg.replicasets
@@ -373,18 +426,11 @@ local function delete_expelled_replicasets(session, old_topology)
         local replicaset = replicasets[rs_uuid]
         if replicaset == nil or replicaset.master == nil or #replicaset.master == 0 then
             session.ctx.decisions[rs_uuid] = nil
-            if session.leaders ~= nil then
-                session.leaders[rs_uuid] = nil
-            end
             table.insert(rs_expelled, rs_uuid)
         end
     end
 
-    if #rs_expelled > 0 then
-        log.info('Removing replicasets from state provider:')
-        log.info(rs_expelled)
-        session:delete_replicasets(rs_expelled)
-    end
+    return remove_replicasets(session, rs_expelled)
 end
 
 local function apply_config(conf, _)
@@ -456,34 +502,17 @@ local function apply_config(conf, _)
 
     local session = vars.client.session
     if old_topology ~= nil and session ~= nil and session.ctx ~= nil then
-        with_appointments_lock(session, delete_expelled_replicasets, old_topology)
+        local ok, err = with_appointments_lock(session, delete_expelled_replicasets, old_topology)
+        if ok == nil then
+            log.error('Failed to remove replicasets from state provider: %s', err)
+            drop_session(session)
+        end
     end
     vars.membership_notification:broadcast()
     return true
 end
 
-local function force_inconsistency(session, updates, skip_error_on_change)
-    local err
-    for _, update in ipairs(updates) do
-        local replicaset_uuid, instance_uuid = unpack(update)
-        local ok, keeper_err = session:set_vclockkeeper(
-            replicaset_uuid, instance_uuid, nil, skip_error_on_change
-        )
-        if ok == nil then
-            err = keeper_err
-            log.warn('Forcing inconsistency for %s failed: %s', instance_uuid, err)
-        end
-    end
-    if err ~= nil then
-        return nil, PromoteLeaderError:new(
-            "Promotion succeeded, but inconsistency wasn't forced: %s",
-            errors.is_error_object(err) and err.err or err
-        )
-    end
-    return true
-end
-
-local function publish_appointments(session, leaders, opts)
+local function publish_appointments(session, leaders, force)
     if not session:is_locked() then
         return nil, AppointmentError:new("No active coordinator session")
     end
@@ -517,10 +546,10 @@ local function publish_appointments(session, leaders, opts)
         table.insert(updates, {replicaset_uuid, leader_uuid})
     end
 
-    local ok, err = session:set_leaders(updates)
+    local ok, err = session:set_leaders(updates, force)
     vars.membership_notification:broadcast()
     if ok == nil then
-        session:drop()
+        drop_session(session)
         return nil, AppointmentError:new(
             type(err) == 'table' and err.err or err
         )
@@ -528,9 +557,6 @@ local function publish_appointments(session, leaders, opts)
 
     for _, update in ipairs(updates) do
         session.ctx.decisions[update[1]] = pack_decision(update[2])
-    end
-    if opts ~= nil and opts.force_inconsistency then
-        return force_inconsistency(session, updates, opts.skip_error_on_change)
     end
     return true
 end
@@ -540,17 +566,12 @@ end
 -- @function appoint_leaders
 -- @tparam {[string]=string,...} replicaset_uuid to leader_uuid mapping
 --
--- @tparam[opt] table opts
--- @tparam ?boolean opts.force_inconsistency
--- @tparam ?boolean opts.skip_error_on_change
+-- @tparam ?boolean force Change the vclockkeeper in the same operation
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function appoint_leaders(leaders, opts)
-    checks('table', {
-        force_inconsistency = '?boolean',
-        skip_error_on_change = '?boolean',
-    })
+local function appoint_leaders(leaders, force)
+    checks('table', '?boolean')
 
     if vars.client == nil then
         return nil, AppointmentError:new("No state provider configured")
@@ -560,7 +581,11 @@ local function appoint_leaders(leaders, opts)
         return nil, AppointmentError:new("No active coordinator session")
     end
 
-    return with_appointments_lock(session, publish_appointments, leaders, opts)
+    return with_appointments_lock(session, publish_appointments, leaders, force)
+end
+
+local function force_appoint_leaders(leaders)
+    return appoint_leaders(leaders, true)
 end
 
 return {
@@ -570,4 +595,5 @@ return {
 
     -- rpc
     appoint_leaders = appoint_leaders,
+    force_appoint_leaders = force_appoint_leaders,
 }

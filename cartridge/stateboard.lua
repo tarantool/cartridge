@@ -152,33 +152,12 @@ local function get_coordinator()
     end
 end
 
-local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vclock)
-    checks('string', 'string', '?number', '?table')
-
-    local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
-    local current_ordinal = vclockkeeper and vclockkeeper.ordinal
-    if ordinal ~= current_ordinal then
-        if vclockkeeper ~= nil and vclockkeeper.instance_uuid == instance_uuid and vclock == nil then
-            return true
-        end
-        return nil, string.format(
-            "Ordinal comparison failed (requested %s, current %s)",
-            ordinal, current_ordinal
-        )
-    end
-
+local function store_vclockkeeper(replicaset_uuid, instance_uuid, vclock)
     local audit = box.space.vclockkeeper_audit:insert({nil, fiber.time(),
         replicaset_uuid, instance_uuid, vclock
     })
 
-    box.space.vclockkeeper:upsert(
-        {replicaset_uuid, instance_uuid, audit.ordinal, vclock},
-        {
-            {'=', 2, instance_uuid},
-            {'=', 3, audit.ordinal},
-            {'=', 4, vclock or box.NULL},
-        }
-    )
+    box.space.vclockkeeper:replace({replicaset_uuid, instance_uuid, audit.ordinal, vclock})
 
     box.on_commit(function()
         log.info('Replicaset %s: new vclockkeeper %s%s',
@@ -186,12 +165,6 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
             vclock == nil and ' (forceful)' or ''
         )
     end)
-
-    return true
-end
-
-local function set_vclockkeeper(...)
-    return box.atomic(set_vclockkeeper_impl, ...)
 end
 
 local function force_appoint_leaders_impl(leaders)
@@ -204,7 +177,7 @@ local function force_appoint_leaders_impl(leaders)
         local replicaset_uuid, instance_uuid = unpack(leader)
         local keeper = box.space.vclockkeeper:get(replicaset_uuid)
         if keeper == nil or keeper.instance_uuid ~= instance_uuid then
-            assert(set_vclockkeeper_impl(replicaset_uuid, instance_uuid, keeper and keeper.ordinal))
+            store_vclockkeeper(replicaset_uuid, instance_uuid)
         end
     end
     return true
@@ -270,14 +243,24 @@ local function get_appointment(replicaset_uuid)
 end
 
 local function activate_impl(replicaset_uuid, instance_uuid, revision, keeper_revision, vclock)
-    checks('string', 'string', 'number', 'number', 'table')
+    checks('string', 'string', '?number', '?number', 'table')
     local leader = box.space.leader:get(replicaset_uuid)
-    if leader == nil or leader.instance_uuid ~= instance_uuid or (leader.ordinal or 0) ~= revision then
+    local keeper = box.space.vclockkeeper:get(replicaset_uuid)
+    if revision == nil then
+        if leader ~= nil or lock.coordinator ~= nil or box.space.coordinator_audit:len() ~= 0 then
+            return nil, 'Appointment changed'
+        end
+        if keeper ~= nil and keeper.instance_uuid ~= instance_uuid then
+            return nil, 'Vclockkeeper changed between calls'
+        end
+    elseif leader == nil or leader.instance_uuid ~= instance_uuid or (leader.ordinal or 0) ~= revision then
         return nil, 'Appointment changed'
+    elseif keeper_revision ~= (keeper and keeper.ordinal or 0) then
+        return nil, 'Vclockkeeper changed between calls'
     end
 
-    local ordinal = keeper_revision ~= 0 and keeper_revision or nil
-    return set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vclock)
+    store_vclockkeeper(replicaset_uuid, instance_uuid, vclock)
+    return true
 end
 
 local function activate(...)
@@ -357,7 +340,6 @@ local function cfg()
     rawset(_G, 'get_leaders', get_leaders)
     rawset(_G, 'longpoll', longpoll)
     rawset(_G, 'get_coordinator', get_coordinator)
-    rawset(_G, 'set_vclockkeeper', set_vclockkeeper)
     rawset(_G, 'get_vclockkeeper', get_vclockkeeper)
     rawset(_G, 'delete_replicasets', delete_replicasets)
     rawset(_G, 'set_identification_string', set_identification_string)
@@ -377,7 +359,7 @@ local function cfg()
     box.schema.func.create('get_vclockkeepers', { if_not_exists = true })
     box.schema.func.create('get_leaders', { if_not_exists = true })
     box.schema.func.create('longpoll', { if_not_exists = true })
-    box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
+    box.schema.func.drop('set_vclockkeeper', { if_exists = true })
     box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
     box.schema.func.create('delete_replicasets', { if_not_exists = true })
     box.schema.func.create('set_identification_string', { if_not_exists = true })
@@ -520,7 +502,6 @@ local function cfg()
     box.schema.user.grant('client', 'execute', 'function', 'get_appointment', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeepers', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_leaders', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })

@@ -180,9 +180,7 @@ end
 local function before_each(g)
     g.session = g.client:get_session()
     t.assert(g.session:acquire_lock({uuid = 'test-uuid', uri = 'test'}))
-    t.assert(g.session:set_vclockkeeper(uA, uA1))
-    t.assert(g.session:set_vclockkeeper(uB, uB1))
-    t.assert(g.session:set_leaders({{uA, uA1}, {uB, uB1}}))
+    t.assert(g.session:set_leaders({{uA, uA1}, {uB, uB1}}, true))
 
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(A1), {})
@@ -326,8 +324,7 @@ add('test_2pc_forceful', function(g)
     -- 6. Expect it to become rw
 
     -- Prevent wait_lsn from accomplishing successfully
-    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
-    t.assert(g.session:set_leaders({{uB, 'nobody'}}))
+    t.assert(g.session:set_leaders({{uB, 'nobody'}}, true))
     helpers.retrying({}, function()
         t.assert_equals(B1:eval(q_leadership, {uB}), 'nobody')
     end)
@@ -373,7 +370,7 @@ add('test_2pc_forceful', function(g)
     )
 
     -- Manually set B1 as vclockkeeper
-    t.assert(g.session:set_vclockkeeper(uB, uB1))
+    t.assert(g.session:set_leaders({{uB, uB1}}, true))
 
     -- Expect it to become rw
     helpers.retrying({}, function()
@@ -412,7 +409,7 @@ local function test_promotion_forceful(g, opts)
     })
 
     -- Manually set B2 as vclockkeeper
-    t.assert(g.session:set_vclockkeeper(uB, uB2))
+    t.assert(g.session:set_leaders({{uB, uB2}}, true))
 
     -- Expect it to become rw
     helpers.retrying({}, function()
@@ -595,8 +592,8 @@ add('test_vclockkeeper_caching', function(g)
 
     B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
-        _get_vclockkeeper_backup = vars.client.session.get_vclockkeeper
-        vars.client.session.get_vclockkeeper = function()
+        _get_appointment_backup = vars.client.session.get_appointment
+        vars.client.session.get_appointment = function()
             error('Banned', 0)
         end
     ]])
@@ -627,7 +624,7 @@ add('test_vclockkeeper_caching', function(g)
     -- Revert all hacks in fixtures
     B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
-        vars.client.session.get_vclockkeeper = _get_vclockkeeper_backup
+        vars.client.session.get_appointment = _get_appointment_backup
     ]])
 end)
 
@@ -665,7 +662,11 @@ add('test_enabling', function(g)
 
     -- Constituting oneself fails, but it remains writable
     t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1:eval(q_readonliness), false)
+    local manual = B1:eval('return box.cfg.election_mode') == 'manual'
+    t.assert_equals(B1:eval('return box.cfg.read_only'), false)
+    if not manual then
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end
     t.assert_equals(B1:eval(q_is_vclockkeeper), false)
     if helpers.tarantool_version_ge('2.10.0') then
         local issues = helpers.list_cluster_issues(A1)
@@ -736,7 +737,9 @@ add('test_enabling', function(g)
         instance_uuid = uB1,
     })
 
-    t.assert_equals(vclock, transform_vclock(vclockkeeper_data.vclock))
+    if not manual then
+        t.assert_equals(vclock, transform_vclock(vclockkeeper_data.vclock))
+    end
 
     -- Enable coordinator
     A1:eval(
@@ -749,17 +752,7 @@ add('test_enabling', function(g)
         t.assert_covers(g.session:get_leaders(), {[uB] = uB1})
     end)
 
-    local vclockkeeper_data = g.session:get_vclockkeeper(uB)
-    local vclock = B1:eval('return box.info.vclock')
-    t.assert_equals({
-        replicaset_uuid = vclockkeeper_data.replicaset_uuid,
-        instance_uuid = vclockkeeper_data.instance_uuid,
-    }, {
-        replicaset_uuid = uB,
-        instance_uuid = uB1,
-    })
-
-    t.assert_equals(vclock, transform_vclock(vclockkeeper_data.vclock))
+    t.assert_equals(g.session:get_vclockkeeper(uB), vclockkeeper_data)
     -- Everything is fine now
     helpers.retrying({}, function()
         t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
@@ -778,8 +771,40 @@ add('test_enabling', function(g)
     end)
 end)
 
+add('test_activation_rejects_replaced_appointment', function(g)
+    local session = g.session
+    local rs = helpers.uuid('c')
+    t.assert(session:set_leaders({{rs, 'a1'}}, true))
+    local appointment = t.assert(session:get_appointment(rs))
+
+    for _, leader in ipairs({'a2', 'a1'}) do
+        t.assert(session:set_leaders({{rs, leader}}))
+        local current = t.assert(session:get_appointment(rs))
+        t.assert_equals(current.keeper_revision, appointment.keeper_revision)
+
+        local ok, err = session:activate(rs, 'a1', appointment, {10})
+        t.assert_equals(ok, nil)
+        t.assert_equals(err.err, 'Appointment changed')
+    end
+    t.assert(session:delete_replicasets({rs}))
+end)
+
 add('test_api', function(g)
-   -- Enable coordinator
+    local function wait_for_coordinator()
+        helpers.retrying({}, function()
+            t.assert(A1:exec(function()
+                local client = require('cartridge.vars').new('cartridge.roles.coordinator').client
+                local session = client and client.session
+                return session ~= nil and session.ctx ~= nil and session:is_locked()
+            end))
+        end)
+    end
+
+    -- Keep the target read-only until a forced promotion commits.
+    t.assert(g.session:set_leaders({{uB, 'nobody'}}, true))
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+
+    -- Enable coordinator
     g.client:drop_session()
     g.session = g.client:get_session()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
@@ -792,9 +817,7 @@ add('test_api', function(g)
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
     )
-    helpers.retrying({}, function()
-        t.assert_covers(g.session:get_coordinator(), {uuid = uA1})
-    end)
+    wait_for_coordinator()
 
     local query = [[
         mutation(
@@ -811,21 +834,19 @@ add('test_api', function(g)
         }
     }]]
 
-    -- Disrupt successfull switchover
-    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
-
     A1:eval([[
         local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
         local session = vars.client.session
-        local set_vclockkeeper = session.set_vclockkeeper
-        session.set_vclockkeeper = function(self)
-            self.set_vclockkeeper = set_vclockkeeper
+        local set_leaders = session.set_leaders
+        session.set_leaders = function(self, _, force)
+            self.set_leaders = set_leaders
+            assert(force)
             return nil, require('errors').new('ArtificialError', 'Boo')
         end
     ]])
     helpers.retrying({}, function()
         t.assert_error_msg_equals(
-            "Promotion succeeded, but inconsistency wasn't forced: Boo",
+            '"localhost:13301": Boo',
             A1.graphql, A1, {
                 query = query,
                 variables = {
@@ -837,7 +858,24 @@ add('test_api', function(g)
         )
     end)
 
-    -- Check intermediate state: B2 is a leader, but can't sync up
+    t.assert_equals(g.session:get_leaders()[uB], uB1)
+    t.assert_equals(g.session:get_vclockkeeper(uB).instance_uuid, 'nobody')
+    t.assert_equals(B2:eval(q_readonliness), true)
+
+    wait_for_coordinator()
+
+    -- Consistent promotion fails because the keeper is still "nobody"
+    t.assert_error_msg_equals(
+        '"localhost:13303": timed out',
+        A1.graphql, A1, {
+            query = query,
+            variables = {
+                replicaset_uuid = uB,
+                instance_uuid = uB2,
+            },
+        }
+    )
+
     helpers.retrying({}, function()
         t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
     end)
@@ -852,18 +890,6 @@ add('test_api', function(g)
             message = "Consistency on " .. B2.advertise_uri ..
                 " (B2) isn't reached yet",
         }}
-    )
-
-    -- Consistent promotion fails because the keeper is still "nobody"
-    t.assert_error_msg_equals(
-        '"localhost:13303": timed out',
-        A1.graphql, A1, {
-            query = query,
-            variables = {
-                replicaset_uuid = uB,
-                instance_uuid = uB2,
-            },
-        }
     )
 
     -- Now force inconsistency

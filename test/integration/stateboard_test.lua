@@ -116,8 +116,7 @@ end
 function g.test_delete_replicasets_requires_lock()
     local coordinator = create_client(g.stateboard):get_session()
     t.assert(coordinator:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
-    t.assert(coordinator:set_leaders({{'A', 'a1'}}))
-    t.assert(coordinator:set_vclockkeeper('A', 'a1'))
+    t.assert(coordinator:set_leaders({{'A', 'a1'}}, true))
 
     local ret, err = g.stateboard:call('delete_replicasets', {{'A'}})
     t.assert_equals(ret, nil)
@@ -149,7 +148,8 @@ function g.test_appointments()
         {A = 'a1', B = 'b1'}
     )
 
-    t.assert(c:set_vclockkeeper('A', 'a1', {[1] = 10}))
+    local appointment = t.assert(c:get_appointment('A'))
+    t.assert(c:activate('A', 'a1', appointment, {10}))
     t.assert(c:set_leaders({{'A', 'a2'}}))
     local appointment = c:get_appointment('A')
 
@@ -399,90 +399,36 @@ function g.test_box_options()
     )
 end
 
-function g.test_vclockkeeper_ordinal_after_delete()
-    local ok, err = g.stateboard:call('set_vclockkeeper', {'A', 'a1', 1})
-    t.assert_equals(ok, nil)
-    t.assert_equals(err, 'Ordinal comparison failed (requested 1, current nil)')
-end
-
 function g.test_vclockkeeper()
-    local client = create_client(g.stateboard)
-    local session = client:get_session()
+    local session = create_client(g.stateboard):get_session()
+    t.assert_equals(session:get_leaders(), {})
+    t.assert_equals(session.set_vclockkeeper, nil)
+    t.assert_error_msg_contains('set_vclockkeeper', session.connection.call,
+        session.connection, 'set_vclockkeeper', {'A', 'a1'})
 
-    local ok, err = session:get_vclockkeeper('A')
+    t.assert(session:activate('A', 'a1', nil, {10}))
+    local ok, err = session:activate('A', 'a2', nil, {20})
     t.assert_equals(ok, nil)
-    t.assert_equals(err, nil)
+    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
 
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
+    t.assert(session:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(session:set_leaders({{'A', 'a1'}}, true))
     t.assert_equals(session:get_vclockkeeper('A'), {
         replicaset_uuid = 'A',
         instance_uuid = 'a1',
+        vclock = {10},
     })
 
-    local ok, err = session:set_vclockkeeper('A', 'a1', {[1] = 10})
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
+    local appointment = t.assert(session:get_appointment('A'))
+    t.assert(session:activate('A', 'a1', appointment, {101}))
+    local ok, err = session:activate('A', 'a1', appointment, {102})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
+    t.assert_equals(session:get_vclockkeeper('A').vclock, {101})
 
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
-
-    local ok, err = session:set_vclockkeeper('A', 'a2')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a2',
-    })
-
-    local function set_vclockkeeper_async(r, s, vclock)
-        local chan = fiber.channel(1)
-        fiber.new(function()
-            chan:put({session:set_vclockkeeper(r, s, vclock)})
-        end)
-        return chan
-    end
-
-    g.stateboard.process:kill('STOP')
-    local c1 = set_vclockkeeper_async('A', 'a3', {[1] = 101})
-    local c2 = set_vclockkeeper_async('A', 'a3', {[1] = 102})
-    fiber.sleep(0)
-    g.stateboard.process:kill('CONT')
-
-    t.assert_equals(c1:get(), {true, nil})
-    local ret2, err2 = unpack(c2:get())
-    t.assert_equals(ret2, nil)
-    t.assert_equals(err2.class_name, 'SessionError')
-    t.assert_str_matches(err2.err,
-        'Ordinal comparison failed %(requested %d+, current %d+%)'
-    )
-
-    t.assert_equals(session:get_vclockkeeper('A').vclock, {[1] = 101})
-
-    g.stateboard.process:kill('STOP')
-    local c1 = set_vclockkeeper_async('B', 'b1')
-    local c2 = set_vclockkeeper_async('B', 'b2')
-    fiber.sleep(0)
-    g.stateboard.process:kill('CONT')
-
-    t.assert_equals(c1:get(), {true, nil})
-    local ret2, err2 = unpack(c2:get())
-    t.assert_equals(ret2, nil)
-    t.assert_equals(err2.class_name, 'SessionError')
-    t.assert_str_matches(err2.err,
-        'Ordinal comparison failed %(requested nil, current %d+%)'
-    )
-
-    t.assert_equals(session:get_vclockkeeper('B'), {
-        replicaset_uuid = 'B',
-        instance_uuid = 'b1',
-    })
+    t.assert(session:delete_replicasets({'A'}))
+    local ok, err = session:activate('A', 'a1', nil, {103})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Appointment changed')
+    t.assert_equals(session:get_vclockkeeper('A'), nil)
 end

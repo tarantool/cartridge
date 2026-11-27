@@ -365,7 +365,6 @@ add('test_manual_appointment_after_automatic_decision', function(g)
         local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
         local session = vars.client.session
         local healthcheck = vars.healthcheck
-        local set_vclockkeeper = session.set_vclockkeeper
         local set_leaders = session.set_leaders
 
         local paused = fiber.channel(1)
@@ -373,24 +372,21 @@ add('test_manual_appointment_after_automatic_decision', function(g)
         local published = fiber.channel(2)
         local order = {}
 
-        session.set_vclockkeeper = function(self, replicaset_uuid, instance_uuid, ...)
-            if replicaset_uuid == rs and instance_uuid == automatic_leader then
-                paused:put(true)
-                assert(resume:get(5), 'Automatic appointment was not resumed')
-            end
-            return set_vclockkeeper(self, replicaset_uuid, instance_uuid, ...)
-        end
-
-        session.set_leaders = function(self, updates)
+        session.set_leaders = function(self, updates, force)
             for _, update in ipairs(updates) do
                 if update[1] == rs then
+                    if update[2] == automatic_leader then
+                        assert(force)
+                        paused:put(true)
+                        assert(resume:get(5), 'Automatic appointment was not resumed')
+                    end
                     table.insert(order, update[2])
-                    local ok, err = set_leaders(self, updates)
+                    local ok, err = set_leaders(self, updates, force)
                     published:put({ok, err}, 0)
                     return ok, err
                 end
             end
-            return set_leaders(self, updates)
+            return set_leaders(self, updates, force)
         end
 
         vars.healthcheck = function(members, uuid)
@@ -416,7 +412,6 @@ add('test_manual_appointment_after_automatic_decision', function(g)
         end)
 
         vars.healthcheck = healthcheck
-        session.set_vclockkeeper = set_vclockkeeper
         session.set_leaders = set_leaders
         assert(ok, err)
         return order
@@ -432,26 +427,20 @@ add('test_concurrent_forced_promotion', function()
         local cartridge = require('cartridge')
         local vars = require('cartridge.vars')
         local coordinator = vars.new('cartridge.roles.coordinator').client.session
-        local failover = vars.new('cartridge.failover').client:get_session()
+        local set_leaders = coordinator.set_leaders
         local paused = fiber.channel(1)
         local resume = fiber.channel(1)
         local reset = fiber.channel(1)
         local promoted = fiber.channel(1)
-        local setters = {}
-
-        for _, session in ipairs({coordinator, failover}) do
-            local set_vclockkeeper = session.set_vclockkeeper
-            setters[session] = set_vclockkeeper
-            session.set_vclockkeeper = function(self, uuid, instance, ...)
-                if uuid ~= rs or instance ~= forced_leader then
-                    return set_vclockkeeper(self, uuid, instance, ...)
-                end
+        coordinator.set_leaders = function(self, updates, force)
+            if force and updates[1][1] == rs and updates[1][2] == forced_leader then
                 paused:put(true, 0)
                 assert(resume:get(10))
-                local ok, err = set_vclockkeeper(self, uuid, instance, ...)
+                local ok, err = set_leaders(self, updates, force)
                 reset:put({ok, err}, 0)
                 return ok, err
             end
+            return set_leaders(self, updates, force)
         end
 
         local first = fiber.create(cartridge.failover_promote, {
@@ -476,19 +465,23 @@ add('test_concurrent_forced_promotion', function()
             assert(reply[1], reply[2])
             return {
                 leader = coordinator:get_leaders()[rs],
-                keeper = failover:get_vclockkeeper(rs).instance_uuid,
+                keeper = coordinator:get_vclockkeeper(rs).instance_uuid,
             }
         end)
         resume:put(true, 0)
-        for session, set_vclockkeeper in pairs(setters) do
-            session.set_vclockkeeper = set_vclockkeeper
-        end
+        coordinator.set_leaders = set_leaders
         if first:status() ~= 'dead' then
             first:cancel()
         end
         assert(ok, result)
         return result
     end, {storage_uuid, storage_2_uuid, storage_3_uuid})
+
+    helpers.retrying({}, function()
+        t.assert_equals(S1:eval(q_readonliness), true)
+        t.assert_equals(S2:eval(q_readonliness), true)
+        t.assert_equals(S3:eval(q_readonliness), false)
+    end)
 
     t.assert(R1:call('package.loaded.cartridge.failover_promote', {
         {[storage_uuid] = storage_1_uuid}, {force_inconsistency = true},
@@ -908,7 +901,7 @@ add('test_force_promote_timeout', function(g)
     --
     --                [-]           constitute_oneself()
     --                []              get_vsckockkeeper (~0 sec)
-    --                 []             set_vclockkeeper (~0 sec)
+    --                 []             activate (~0 sec)
     --                  ^             become rw
     --
     -- 0----1----2----3----4----5---- (t)

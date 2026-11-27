@@ -152,7 +152,8 @@ function g.test_appointments()
         {A = 'a1', B = 'b1'}
     )
 
-    t.assert(c:set_vclockkeeper('A', 'a1', {[1] = 10}))
+    local appointment = t.assert(c:get_appointment('A'))
+    t.assert(c:activate('A', 'a1', appointment, {10}))
     t.assert(c:set_leaders({{'A', 'a2'}}))
     local appointment = c:get_appointment('A')
 
@@ -487,56 +488,35 @@ function g.test_migrate_vclockkeepers()
 end
 
 function g.test_vclockkeeper()
-    local client = create_client()
-    local session = client:get_session()
-    t.assert(session:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    local session = create_client():get_session()
+    t.assert_equals(session:get_leaders(), {})
+    t.assert_equals(session.set_vclockkeeper, nil)
 
-    local ok, err = session:get_vclockkeeper('A')
+    t.assert(session:activate('A', 'a1', nil, {10}))
+    local ok, err = session:activate('A', 'a2', nil, {20})
     t.assert_equals(ok, nil)
-    t.assert_equals(err, nil)
+    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
 
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
+    t.assert(session:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(session:set_leaders({{'A', 'a1'}}, true))
     t.assert_equals(session:get_vclockkeeper('A'), {
         replicaset_uuid = 'A',
         instance_uuid = 'a1',
+        vclock = {10},
     })
 
-    local ok, err = session:set_vclockkeeper('A', 'a1', {[1] = 10})
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
-
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
-
-    local ok, err = session:set_vclockkeeper('A', 'a2')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a2',
-    })
-
-    local _, _, revision = session:get_vclockkeeper('A')
-    t.assert(session:set_vclockkeeper('A', 'a3', {101}, nil, revision))
-    local ok, err = session:set_vclockkeeper('A', 'a3', {102}, nil, revision)
+    local appointment = t.assert(session:get_appointment('A'))
+    t.assert(session:activate('A', 'a1', appointment, {101}))
+    local ok, err = session:activate('A', 'a1', appointment, {102})
     t.assert_equals(ok, nil)
     t.assert_equals(err.err, 'Vclockkeeper changed between calls')
     t.assert_equals(session:get_vclockkeeper('A').vclock, {101})
 
-    t.assert(session:set_vclockkeeper('B', 'b1', nil, nil, 0))
-    local ok, err = session:set_vclockkeeper('B', 'b2', nil, nil, 0)
+    t.assert(session:delete_replicasets({'A'}))
+    local ok, err = session:activate('A', 'a1', nil, {103})
     t.assert_equals(ok, nil)
-    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
-    t.assert_equals(session:get_vclockkeeper('B').instance_uuid, 'b1')
+    t.assert_equals(err.err, 'Appointment changed')
+    t.assert_equals(session:get_vclockkeeper('A'), nil)
 end
 
 function g.test_quorum()

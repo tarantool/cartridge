@@ -133,9 +133,10 @@ local function get_appointment(session, replicaset_uuid)
 end
 
 local function activate(session, replicaset_uuid, instance_uuid, appointment, vclock)
-    checks('stateboard_session', 'string', 'string', 'table', 'table')
+    checks('stateboard_session', 'string', 'string', '?table', 'table')
     local ok, err = errors.netbox_call(session.connection, 'activate', {
-        replicaset_uuid, instance_uuid, appointment.revision, appointment.keeper_revision, vclock,
+        replicaset_uuid, instance_uuid,
+        appointment and appointment.revision, appointment and appointment.keeper_revision, vclock,
     }, {timeout = session.call_timeout})
 
     if ok == nil then
@@ -162,42 +163,6 @@ local function get_vclockkeeper(session, replicaset_uuid)
     local ordinal = vclockkeeper.ordinal
     vclockkeeper.ordinal = nil
     return vclockkeeper, nil, ordinal
-end
-
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, _, ordinal)
-    checks('stateboard_session', 'string', 'string', '?table', '?boolean', '?number|cdata')
-    assert(session.connection ~= nil)
-
-    if ordinal == nil then
-        local keeper, err, current_ordinal = get_vclockkeeper(session, replicaset_uuid)
-        if err ~= nil then
-            return nil, err
-        end
-        if keeper ~= nil and keeper.instance_uuid == instance_uuid and vclock == nil then
-            return true
-        end
-        ordinal = current_ordinal
-    end
-
-    if ordinal == 0 then
-        ordinal = nil
-    end
-
-    local ok, err = errors.netbox_call(session.connection,
-        'set_vclockkeeper', {
-            replicaset_uuid,
-            instance_uuid,
-            ordinal,
-            vclock,
-        },
-        {timeout = session.call_timeout}
-    )
-
-    if ok == nil then
-        return nil, SessionError:new(err)
-    end
-
-    return true
 end
 
 local function is_locked(session)
@@ -236,7 +201,6 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
-        set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
         get_vclockkeepers = get_vclockkeepers,
         get_appointment = get_appointment,
