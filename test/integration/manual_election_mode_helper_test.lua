@@ -19,6 +19,7 @@ local function get_state(server)
         return {
             election_mode = box.cfg.election_mode or 'off',
             election_fencing_mode = box.cfg.election_fencing_mode,
+            synchro_timeout = box.cfg.replication_synchro_timeout,
             is_leader = failover.is_leader(),
             is_ro = box.info.ro,
             synchro_owner = queue.owner,
@@ -36,6 +37,12 @@ local function call_switch_to_manual(server)
             err = err and tostring(err) or nil,
         }
     end)
+end
+
+local function assert_synchro_timeout(expected)
+    for _, server in ipairs({g.leader, g.replica_1, g.replica_2}) do
+        t.assert_equals(get_state(server).synchro_timeout, expected)
+    end
 end
 
 local function call_switch_to_off(server, opts)
@@ -362,6 +369,7 @@ end)
 
 g.test_switch_to_manual_election_mode = function()
     assert_cluster_is_off()
+    assert_synchro_timeout(5)
 
     local res = call_switch_to_manual(g.leader)
     t.assert_equals(res, {
@@ -370,6 +378,7 @@ g.test_switch_to_manual_election_mode = function()
     })
 
     assert_cluster_is_manual()
+    assert_synchro_timeout(math.huge)
 end
 
 g.test_switch_to_off_election_mode = function()
@@ -391,6 +400,49 @@ g.test_switch_to_off_election_mode = function()
 
     assert_cluster_is_off()
     assert_cluster_fencing_mode('soft')
+    assert_synchro_timeout(5)
+end
+
+for name, env in pairs({
+    lua = {TEST_SYNCHRO_TIMEOUT = '37'},
+    lua_default = {TEST_SYNCHRO_TIMEOUT = '5'},
+    env = {TARANTOOL_REPLICATION_SYNCHRO_TIMEOUT = '37'},
+    infinite = {TARANTOOL_REPLICATION_SYNCHRO_TIMEOUT = 'inf'},
+}) do
+    g['test_preserve_synchro_timeout_' .. name] = function()
+        stop_cluster()
+        start_cluster({env = env})
+        local expected = tonumber(env.TEST_SYNCHRO_TIMEOUT or env.TARANTOOL_REPLICATION_SYNCHRO_TIMEOUT)
+        assert_synchro_timeout(expected)
+
+        t.assert_equals(call_switch_to_manual(g.leader).ok, true)
+        assert_synchro_timeout(expected)
+        t.assert_equals(call_switch_to_off(g.leader).ok, true)
+        assert_synchro_timeout(expected)
+    end
+end
+
+g.test_preserve_runtime_synchro_timeout = function()
+    for _, server in ipairs(g.cluster.servers) do
+        server:eval('box.cfg{replication_synchro_timeout = 37}')
+    end
+    t.assert_equals(call_switch_to_manual(g.leader).ok, true)
+    assert_synchro_timeout(37)
+    t.assert_equals(call_switch_to_off(g.leader).ok, true)
+    assert_synchro_timeout(37)
+end
+
+g.test_preserve_synchro_timeout_started_in_manual = function()
+    stop_cluster()
+    start_cluster({env = {
+        TARANTOOL_ELECTION_MODE = 'manual',
+        TARANTOOL_ELECTION_FENCING_MODE = 'off',
+        TEST_SYNCHRO_TIMEOUT = '37',
+    }})
+    assert_cluster_is_manual()
+    assert_synchro_timeout(37)
+    t.assert_equals(call_switch_to_off(g.leader).ok, true)
+    assert_synchro_timeout(37)
 end
 
 g.test_switch_to_off_converges_manual_and_off_mix = function()
@@ -456,6 +508,7 @@ g.test_switch_to_manual_rolls_back_after_promote_error_and_retries = function()
     assert_cluster_is_off()
 
     restore_promote(g.leader)
+    assert_synchro_timeout(5)
 
     res = call_switch_to_manual(g.leader)
     t.assert_equals(res, {
@@ -485,6 +538,7 @@ g.test_switch_to_manual_rolls_back_after_peer_switch_error = function()
     restore_switch_error(failing_peer)
 
     assert_cluster_is_off()
+    assert_synchro_timeout(5)
 end
 
 g.test_switch_to_manual_fails_when_called_on_non_leader = function()
@@ -695,6 +749,7 @@ for _, replica_1_state in ipairs(peer_start_states) do
             })
 
             assert_cluster_is_manual()
+            assert_synchro_timeout(math.huge)
         end
     end
 end

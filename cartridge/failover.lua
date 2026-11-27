@@ -549,11 +549,16 @@ function demote_in_manual_mode()
     end
 
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
-    local leaders = topology.get_leaders_order(
-        topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
+    local servers = topology.get_leaders_order(
+        topology_cfg, vars.replicaset_uuid, nil,
+        {only_enabled = true, only_electable = false}
     )
+    local other_replicas_count = #servers
+    if utils.table_find(servers, vars.instance_uuid) then
+        other_replicas_count = other_replicas_count - 1
+    end
     local quorum = box.info.synchro ~= nil and box.info.synchro.quorum or nil
-    if quorum == nil or #leaders - 1 < quorum then
+    if quorum == nil or other_replicas_count < quorum then
         return
     end
 
@@ -895,9 +900,10 @@ local function validate_manual_election_mode_config(topology_cfg, failover_cfg)
     -- Fencing must freeze the synchro queue before the pending tail is rolled
     -- back, otherwise the new leader's PROMOTE is rejected with ER_SPLIT_BRAIN
     if failover_cfg.fencing_enabled
+    and box.cfg.replication_synchro_timeout < math.huge
     and failover_cfg.fencing_timeout + failover_cfg.fencing_pause
         >= box.cfg.replication_synchro_timeout then
-        log.error(
+        log.warn(
             'Stateful failover with election_mode="manual" needs fencing to actuate' ..
                 ' before the synchro queue is rolled back: fencing_timeout (%s)' ..
                 ' + fencing_pause (%s) should be less than' ..

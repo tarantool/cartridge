@@ -380,6 +380,7 @@ local function list_on_instance(opts)
 
     if box.cfg.election_mode == 'manual'
     and failover_cfg.fencing_enabled
+    and box.cfg.replication_synchro_timeout < math.huge
     and failover_cfg.fencing_timeout + failover_cfg.fencing_pause
         >= box.cfg.replication_synchro_timeout then
         table.insert(ret, {

@@ -8,7 +8,6 @@ local checks = require('checks')
 local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
-local argparse = require('cartridge.argparse')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 
@@ -16,23 +15,13 @@ local FailoverError = errors.new_class('FailoverError')
 
 -- Tarantool's own default, restored when switching back to election_mode="off"
 local DEFAULT_REPLICATION_SYNCHRO_TIMEOUT = 5
+vars:new('default_synchro_timeout')
 
---- Keep the synchro queue frozen in manual election mode.
---
--- See the comment in cartridge.cfg() about replication_synchro_timeout.
--- The option is left alone if it was configured explicitly.
---
--- @function set_synchro_timeout
--- @local
-local function set_synchro_timeout(value)
-    local box_opts = argparse.get_box_opts()
-    if box_opts == nil or box_opts.replication_synchro_timeout ~= nil then
-        return
-    end
-
-    local ok, err = pcall(box.cfg, {replication_synchro_timeout = value})
-    if ok ~= true then
-        log.error('Unable to set replication_synchro_timeout: %s', err or 'unknown')
+local function get_synchro_timeout(value)
+    -- Preserve a timeout changed at runtime as well.
+    if vars.default_synchro_timeout ~= nil
+    and box.cfg.replication_synchro_timeout == vars.default_synchro_timeout then
+        return value
     end
 end
 
@@ -40,22 +29,15 @@ function _G.__cartridge_failover_probe_manual_election_mode()
     return {
         election_mode = box.cfg.election_mode,
         election_fencing_mode = box.cfg.election_fencing_mode,
+        synchro_timeout = box.cfg.replication_synchro_timeout,
     }
 end
 
 function _G.__cartridge_failover_switch_to_manual_election_mode()
     local prev_election_mode = box.cfg.election_mode
     local prev_election_fencing_mode = box.cfg.election_fencing_mode
-
-    if prev_election_mode == 'manual'
-    and prev_election_fencing_mode == 'off' then
-        set_synchro_timeout(math.huge)
-        return {
-            changed = false,
-            prev_election_mode = prev_election_mode,
-            prev_election_fencing_mode = prev_election_fencing_mode,
-        }
-    end
+    local prev_synchro_timeout = box.cfg.replication_synchro_timeout
+    local synchro_timeout = get_synchro_timeout(math.huge)
 
     if prev_election_mode ~= 'off'
     and prev_election_mode ~= 'manual' then
@@ -68,6 +50,7 @@ function _G.__cartridge_failover_switch_to_manual_election_mode()
     local ok, err = pcall(box.cfg, {
         election_mode = 'manual',
         election_fencing_mode = 'off',
+        replication_synchro_timeout = synchro_timeout,
     })
 
     if ok ~= true then
@@ -77,24 +60,27 @@ function _G.__cartridge_failover_switch_to_manual_election_mode()
         )
     end
 
-    set_synchro_timeout(math.huge)
-
+    vars.default_synchro_timeout = synchro_timeout
     return {
-        changed = true,
+        changed = prev_election_mode ~= 'manual' or prev_election_fencing_mode ~= 'off'
+            or (synchro_timeout ~= nil and prev_synchro_timeout ~= synchro_timeout),
         prev_election_mode = prev_election_mode,
         prev_election_fencing_mode = prev_election_fencing_mode,
+        prev_synchro_timeout = prev_synchro_timeout,
     }
 end
 
 function _G.__cartridge_failover_rollback_manual_election_mode(
     prev_election_mode,
-    prev_election_fencing_mode
+    prev_election_fencing_mode,
+    prev_synchro_timeout
 )
-    checks('?string', '?string')
+    checks('?string', '?string', '?number')
 
     local ok, err = pcall(box.cfg, {
         election_mode = prev_election_mode,
         election_fencing_mode = prev_election_fencing_mode,
+        replication_synchro_timeout = prev_synchro_timeout,
     })
     if ok ~= true then
         return nil, FailoverError:new(
@@ -104,10 +90,9 @@ function _G.__cartridge_failover_rollback_manual_election_mode(
         )
     end
 
-    if prev_election_mode ~= 'manual' then
-        set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
+    if vars.default_synchro_timeout ~= nil then
+        vars.default_synchro_timeout = prev_synchro_timeout
     end
-
     return true
 end
 
@@ -120,6 +105,8 @@ function _G.__cartridge_failover_switch_to_off_election_mode(target_fencing_mode
 
     local prev_election_mode = box.cfg.election_mode
     local prev_election_fencing_mode = box.cfg.election_fencing_mode
+    local prev_synchro_timeout = box.cfg.replication_synchro_timeout
+    local synchro_timeout = get_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
 
     if prev_election_mode ~= 'off'
     and prev_election_mode ~= 'manual' then
@@ -129,19 +116,10 @@ function _G.__cartridge_failover_switch_to_off_election_mode(target_fencing_mode
         )
     end
 
-    if prev_election_mode == 'off'
-    and prev_election_fencing_mode == target_fencing_mode then
-        set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
-        return {
-            changed = false,
-            prev_election_mode = prev_election_mode,
-            prev_election_fencing_mode = prev_election_fencing_mode,
-        }
-    end
-
     local ok, err = pcall(box.cfg, {
         election_mode = 'off',
         election_fencing_mode = target_fencing_mode,
+        replication_synchro_timeout = synchro_timeout,
     })
     if ok ~= true then
         return nil, FailoverError:new(
@@ -150,12 +128,13 @@ function _G.__cartridge_failover_switch_to_off_election_mode(target_fencing_mode
         )
     end
 
-    set_synchro_timeout(DEFAULT_REPLICATION_SYNCHRO_TIMEOUT)
-
+    vars.default_synchro_timeout = synchro_timeout
     return {
-        changed = true,
+        changed = prev_election_mode ~= 'off' or prev_election_fencing_mode ~= target_fencing_mode
+            or (synchro_timeout ~= nil and prev_synchro_timeout ~= synchro_timeout),
         prev_election_mode = prev_election_mode,
         prev_election_fencing_mode = prev_election_fencing_mode,
+        prev_synchro_timeout = prev_synchro_timeout,
     }
 end
 
@@ -307,6 +286,7 @@ local function switch_to_manual_election_mode()
     local local_state = {
         election_mode = box.cfg.election_mode,
         election_fencing_mode = box.cfg.election_fencing_mode,
+        synchro_timeout = box.cfg.replication_synchro_timeout,
     }
     local peer_states = {}
     for _, server in ipairs(servers_to_switch) do
@@ -358,10 +338,11 @@ local function switch_to_manual_election_mode()
         for index = #changed_servers, 1, -1 do
             local server = changed_servers[index]
             if server.uuid == vars.instance_uuid then
-                local ok, rollback_err = pcall(box.cfg, {
-                    election_mode = server.prev_election_mode,
-                    election_fencing_mode = server.prev_election_fencing_mode,
-                })
+                local ok, rollback_err = _G.__cartridge_failover_rollback_manual_election_mode(
+                    server.prev_election_mode,
+                    server.prev_election_fencing_mode,
+                    server.prev_synchro_timeout
+                )
                 if ok ~= true then
                     table.insert(rollback_errors, string.format(
                         'local instance %q: %s',
@@ -396,6 +377,7 @@ local function switch_to_manual_election_mode()
                     {
                         server.prev_election_mode,
                         server.prev_election_fencing_mode,
+                        server.prev_synchro_timeout,
                     },
                     {timeout = vars.options.NETBOX_CALL_TIMEOUT}
                 )
@@ -432,7 +414,8 @@ local function switch_to_manual_election_mode()
         if server.uuid ~= vars.instance_uuid then
             local state = peer_states[server.uuid]
             if state.election_mode == 'manual'
-            and state.election_fencing_mode == 'off' then
+            and state.election_fencing_mode == 'off'
+            and state.synchro_timeout == math.huge then
                 log.info(
                     'Skipping instance %q: election_mode is already "manual"',
                     server.uuid
@@ -460,6 +443,7 @@ local function switch_to_manual_election_mode()
                         uri = server.uri,
                         prev_election_mode = res.prev_election_mode,
                         prev_election_fencing_mode = res.prev_election_fencing_mode,
+                        prev_synchro_timeout = res.prev_synchro_timeout,
                     })
                 end
 
@@ -486,15 +470,12 @@ local function switch_to_manual_election_mode()
         )
     end
 
-    local ok, err = pcall(box.cfg, {
-        election_mode = 'manual',
-        election_fencing_mode = 'off',
-    })
-    if ok ~= true then
+    local res, switch_err = _G.__cartridge_failover_switch_to_manual_election_mode()
+    if res == nil then
         return rollback(string.format(
             'Unable to switch local instance %q to election_mode="manual": %s',
             vars.instance_uuid,
-            err or 'unknown'
+            switch_err or 'unknown'
         ))
     end
 
@@ -502,6 +483,7 @@ local function switch_to_manual_election_mode()
         uuid = vars.instance_uuid,
         prev_election_mode = local_state.election_mode,
         prev_election_fencing_mode = local_state.election_fencing_mode,
+        prev_synchro_timeout = local_state.synchro_timeout,
     })
 
     if box.cfg.election_mode ~= 'manual'
@@ -629,7 +611,8 @@ local function switch_to_off_election_mode(opts)
         if server.uuid ~= vars.instance_uuid then
             local state = peer_states[server.uuid]
             if state.election_mode == 'off'
-            and state.election_fencing_mode == target_fencing_mode then
+            and state.election_fencing_mode == target_fencing_mode
+            and state.synchro_timeout ~= math.huge then
                 log.info(
                     'Skipping instance %q: election mode is already "off"',
                     server.uuid

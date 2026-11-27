@@ -22,11 +22,31 @@ Added
   ``null`` if the ``crud`` storage isn't initialized on the instance.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **Breaking change:** in ``election_mode = 'manual'``, the default
+  ``replication_synchro_timeout`` is now infinite. Synchronous writes without
+  a quorum wait until the quorum is restored or a new leader resolves the
+  queue, instead of failing after 5 seconds. This can increase write latency
+  and the number of waiting fibers; write timeout errors no longer signal
+  quorum loss. Explicitly configured values are preserved. Switching back to
+  ``election_mode = 'off'`` restores the Tarantool default for this option
+  unless it was configured explicitly.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Fixed the ``replication_connect_quorum`` deprecation warning on
   Tarantool 2.11+ by explicitly setting ``bootstrap_strategy = 'legacy'``.
+
+- Demote a manual election leader when Cartridge fencing actuates or another
+  leader is appointed, provided the remaining replicas can form a synchronous
+  quorum. This freezes the pending queue and prevents conflicting ROLLBACK
+  and PROMOTE records from causing ``ER_SPLIT_BRAIN`` on reconnection.
+- Report a warning in the log and cluster issues when a finite synchronous
+  replication timeout is too short for the configured Cartridge fencing.
 
 -------------------------------------------------------------------------------
 [2.18.1] - 2026-09-16

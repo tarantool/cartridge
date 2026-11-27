@@ -35,7 +35,9 @@ local function setup_cluster(g, opts)
     opts = opts or {}
 
     local servers_b = {
-        {alias = 'B1', instance_uuid = uB1},
+        {alias = 'B1', instance_uuid = uB1, env = {
+            TARANTOOL_LOG = fio.pathjoin(g.datadir, 'B1.log'),
+        }},
         {alias = 'B2', instance_uuid = uB2},
     }
     if opts.with_third_replica then
@@ -63,6 +65,11 @@ local function setup_cluster(g, opts)
     })
 
     g.cluster:start()
+    if opts.extra_env ~= nil and opts.extra_env.TARANTOOL_ELECTION_MODE == 'manual' then
+        for _, server in ipairs(g.cluster.servers) do
+            t.assert_equals(server:eval('return box.cfg.replication_synchro_timeout'), math.huge)
+        end
+    end
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
@@ -437,7 +444,7 @@ add_synchro('test_fencing_freezes_synchro_queue', function(g)
     -- Everything is back to normal
     B2:start()
     B3:start()
-    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    B1:eval([[box.cfg{replication_synchro_timeout = math.huge}]])
     g.state_provider:start()
 
     helpers.retrying({timeout = 30}, function()
@@ -449,9 +456,8 @@ end)
 -- An isolated leader must hand the synchro queue over cleanly: replication is
 -- broken while the instances are alive, the leadership moves to another
 -- instance, and once the replication is back everything has to converge
--- without ER_SPLIT_BRAIN. There is no fencing here - the state provider is
--- available all the time, so the demote comes from the ordinary leadership loss.
-add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
+-- without ER_SPLIT_BRAIN. B3 is unelectable but still counts towards the quorum.
+local function test_isolated_leader_hands_over_synchro_queue(g, use_fencing)
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
         t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
@@ -467,6 +473,9 @@ add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
         space:replace{1, 'committed'}
         box.cfg{replication_synchro_timeout = 3}
     ]])
+
+    B1:eval([[assert(require('cartridge.lua-api.topology').set_unelectable_servers({...}))]], {uB3})
+    A1:eval(q_set_fencing_params, {0.1, 0.1})
 
     -- Break the replication, keeping every instance alive
     local replication = B1:eval('return box.cfg.replication')
@@ -484,6 +493,31 @@ add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
     helpers.retrying({}, function()
         t.assert_equals(B1:eval(q_synchro_state).queue_len, 1)
     end)
+
+    if use_fencing then
+        B1:eval([[
+            local vars = require('cartridge.vars').new('cartridge.failover')
+            local client = vars.client
+            local membership = require('membership')
+            local uri = vars.clusterwide_config:get_readonly('topology').servers[...].uri
+            local check_quorum = client.check_quorum
+            local get_member = membership.get_member
+            client.check_quorum = function() return false end
+            membership.get_member = function(member_uri)
+                if member_uri ~= uri then
+                    return get_member(member_uri)
+                end
+            end
+            rawset(_G, 'restore_fencing_connections', function()
+                client.check_quorum = check_quorum
+                membership.get_member = get_member
+            end)
+        ]], {uB2})
+        helpers.retrying({}, function()
+            t.assert_equals(B1:eval(q_leadership, {uB}), nil)
+            t.assert_equals(B1:eval(q_synchro_state).election_state, 'follower')
+        end)
+    end
 
     -- The leadership moves away while B1 is isolated
     t.assert(g.session:set_vclockkeeper(uB, uB2))
@@ -507,6 +541,10 @@ add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
     end)
     B2:eval([[box.space.fencing_sync:replace{3, 'by-new-leader'}]])
 
+    if use_fencing then
+        B1:eval('restore_fencing_connections(); restore_fencing_connections = nil')
+    end
+
     -- The replication is back
     B1:eval('box.cfg{replication = ...}', {replication})
     B2:eval('box.cfg{replication = ...}', {replication})
@@ -522,21 +560,35 @@ add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
         )
     end)
 
+    B2:eval([[assert(require('cartridge.lua-api.topology').set_electable_servers({...}))]], {uB3})
+
     -- Everything is back to normal
-    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    B1:eval([[box.cfg{replication_synchro_timeout = math.huge}]])
     t.assert(g.session:set_vclockkeeper(uB, uB1))
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({timeout = 30}, function()
         t.assert_equals(B1:eval(q_readonliness), false)
     end)
     g.cluster:wait_until_healthy()
+end
+
+add_synchro('test_isolated_leader_hands_over_synchro_queue', function(g)
+    test_isolated_leader_hands_over_synchro_queue(g, false)
+end)
+
+add_synchro('test_fenced_leader_hands_over_synchro_queue', function(g)
+    test_isolated_leader_hands_over_synchro_queue(g, true)
 end)
 
 -- Fencing has to actuate before the pending synchro tail is rolled back,
 -- otherwise the demote comes too late to prevent ER_SPLIT_BRAIN
 add_synchro('test_fencing_timeout_vs_synchro_timeout', function(g)
-    A1:eval(q_set_fencing_params, {1, 2})
     B1:eval([[box.cfg{replication_synchro_timeout = 1}]])
+    A1:eval(q_set_fencing_params, {1, 2})
+
+    t.assert(B1:grep_log('W> .*needs fencing to actuate', nil, {
+        filename = fio.pathjoin(g.datadir, 'B1.log'),
+    }))
 
     helpers.retrying({}, function()
         local found = false
@@ -549,7 +601,7 @@ add_synchro('test_fencing_timeout_vs_synchro_timeout', function(g)
         t.assert(found, 'fencing timeout issue is not reported')
     end)
 
-    B1:eval([[box.cfg{replication_synchro_timeout = 5}]])
+    B1:eval([[box.cfg{replication_synchro_timeout = math.huge}]])
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(A1), {})
     end)

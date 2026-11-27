@@ -221,6 +221,38 @@ Manual election mode is supported only when all of the following are true:
    automatically. If you need fencing in stateful failover, prefer Cartridge
    fencing (``failover.fencing_enabled``).
 
+Cartridge demotes a manual election leader when fencing actuates or the
+instance loses its appointment, if the remaining enabled replicas can form a
+synchronous quorum. Demotion freezes the pending synchronous queue until a
+new leader takes it over. Setting ``read_only`` alone doesn't freeze the
+queue: its owner can still confirm or roll back pending transactions.
+
+.. warning::
+
+   The default ``replication_synchro_timeout`` in manual election mode is
+   infinite. This changes the behavior of manual mode introduced in Cartridge
+   ``2.17.0``: synchronous writes without a quorum can wait indefinitely,
+   increasing latency and the number of waiting fibers. Monitor quorum loss
+   and pending writes; write timeout errors no longer indicate this condition.
+   The default in ``election_mode = 'off'`` remains 5 seconds.
+
+An explicit ``replication_synchro_timeout`` in the second argument of
+``cartridge.cfg()``, command-line options, environment, or instance configuration
+is preserved. To retain timeout-based rollback, set a finite value explicitly
+on every instance, for example:
+
+.. code-block:: bash
+
+   export TARANTOOL_REPLICATION_SYNCHRO_TIMEOUT=60
+
+With a finite timeout, enable Cartridge fencing and allow enough time for it
+to detect isolation and demote the old leader before a transaction times out.
+Cartridge reports a log warning and a cluster issue when
+``fencing_timeout + fencing_pause >= replication_synchro_timeout``. A smaller
+sum is not a timing guarantee: state provider requests, failure detection,
+and scheduling also take time. Changing the timeout doesn't protect writes
+to asynchronous spaces.
+
 To migrate a replicaset with restart, set startup configuration on every
 instance of the replicaset:
 
@@ -242,6 +274,10 @@ at runtime via Lua API:
 Call the helper on the current appointed leader of the replicaset. The helper
 switches only the current replicaset and fails unless all instances in it are
 enabled and healthy.
+
+The helper applies the infinite default on every instance, including the
+current leader, unless a timeout was configured explicitly. If migration
+fails, it restores the previous timeouts along with election settings.
 
 .. important::
 
@@ -273,6 +309,10 @@ override the fencing mode explicitly:
 Just like ``switch_to_manual_election_mode()``, the rollback helper affects
 only the current replicaset and must be called on its current appointed
 leader.
+
+The rollback helper also restores the 5-second default for
+``replication_synchro_timeout`` when Cartridge manages this option. Explicit
+values are preserved.
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

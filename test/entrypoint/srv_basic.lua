@@ -221,6 +221,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
 },
 {
     log = '',
+    replication_synchro_timeout = tonumber(os.getenv('TEST_SYNCHRO_TIMEOUT')),
 })
 if not ok then
     log.error('%s', err)
