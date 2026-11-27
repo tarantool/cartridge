@@ -191,6 +191,7 @@ local function after_each(g)
     for _, srv in pairs(g.cluster.servers) do
         srv.process:kill('CONT')
     end
+    g.client:drop_session()
 end
 
 local regular_groups = {g_stateboard, g_etcd2}
