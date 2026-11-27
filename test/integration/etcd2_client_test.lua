@@ -431,6 +431,15 @@ function g.test_authentication()
     t.assert_equals({ok, err}, {true, nil})
 end
 
+function g.test_vclockkeeper_read_error()
+    local session = create_client():get_session()
+    session:drop()
+
+    local keeper, err = session:get_vclockkeeper('A')
+    t.assert_equals(keeper, nil)
+    t.assert_str_contains(err.err, 'Connection closed')
+end
+
 function g.test_vclockkeeper()
     local client = create_client()
     local session = client:get_session()

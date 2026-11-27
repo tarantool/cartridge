@@ -302,7 +302,7 @@ local function get_vclockkeeper(session, replicaset_uuid)
         if err.etcd_code == etcd2.EcodeKeyNotFound then
             return nil
         else
-            return SessionError:new(err)
+            return nil, SessionError:new(err)
         end
     end
 
