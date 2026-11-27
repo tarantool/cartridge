@@ -506,7 +506,7 @@ add('test_leader_restart', function(g)
         t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
 
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 20}, function()
         t.assert_equals(R1:eval(q_readonliness), false)
         t.assert_equals(S2:eval(q_readonliness), false)
         t.assert_equals(S3:eval(q_readonliness), true)

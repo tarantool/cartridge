@@ -659,6 +659,27 @@ register_test(manual_groups, 'test_failed_promotion_keeps_read_only', function(g
     end)
 end)
 
+register_test(manual_groups, 'test_promotion_retries_after_quorum_loss', function(g)
+    B2:exec(function()
+        local promote = box.ctl.promote
+        rawset(box.ctl, 'promote', function()
+            rawset(box.ctl, 'promote', promote)
+            box.error(box.error.NO_ELECTION_QUORUM, 1, 2)
+        end)
+    end)
+
+    t.assert(g.session:set_leaders({{uB, uB2}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), true)
+        t.assert_equals(B2:eval(q_readonliness), false)
+    end)
+
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+end)
+
 add('test_vclockkeeper_caching', function(g)
     -- Scenario:
     -- 1. B1 is a vclockkeeper

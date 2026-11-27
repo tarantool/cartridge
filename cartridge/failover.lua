@@ -702,6 +702,7 @@ end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
+    local retrying_promotion = false
 ::start_over::
 
     local t1 = fiber.clock()
@@ -740,11 +741,14 @@ function reconfigure_all(active_leaders)
     end
 
     local apply_total_start = fiber.clock()
+    local promote_err
     local ok, err = FailoverError:pcall(function()
-        vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
-        err = apply_writability()
-        if err ~= nil then
-            error(err)
+        if not retrying_promotion then
+            vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
+        end
+        promote_err = apply_writability()
+        if promote_err ~= nil then
+            error(promote_err)
         end
 
         local state = 'RolesConfigured'
@@ -786,6 +790,25 @@ function reconfigure_all(active_leaders)
         log.warn('Failover step failed after %.6f sec: %s', apply_total_elapsed, err)
     end
     confapplier.set_state('RolesConfigured')
+
+    local code = promote_err and promote_err.code
+    if code == nil or code ~= box.error.NO_ELECTION_QUORUM
+    or not vars.activations[fiber.id()]
+    then
+        return
+    end
+
+    finish_activation()
+    fiber.self().storage.is_busy = false
+    repeat
+        fiber.sleep(SYNCHRO_PROMOTE_RETRY_DELAY)
+        fiber.testcancel()
+        if active_leaders ~= vars.cache.active_leaders then
+            return
+        end
+    until not vars.failover_paused and not vars.failover_suppressed
+    retrying_promotion = true
+    goto start_over
 end
 
 --- Lock failover if failover suppressing is on.
