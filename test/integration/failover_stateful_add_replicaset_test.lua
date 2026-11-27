@@ -1,4 +1,5 @@
 local fio = require('fio')
+local json = require('json')
 local t = require('luatest')
 local helpers = require('test.helper')
 
@@ -116,6 +117,14 @@ g_etcd2.before_all(function()
         request_timeout = 1,
     })
 
+    local connection = g.client:get_session().connection
+    t.assert(connection:request('PUT', '/leaders', {
+        value = json.encode({[router_uuid] = router_1_uuid, [storage1_uuid] = storage1_1_uuid}),
+    }))
+    t.assert(connection:request('PUT', '/vclockkeeper/' .. storage1_uuid, {
+        value = json.encode({instance_uuid = storage1_1_uuid, vclock = {0}}),
+    }))
+
     setup_cluster(g)
 
     t.assert(g.cluster.main_server:call(
@@ -151,6 +160,18 @@ g_etcd2.after_all(function() after_all(g_etcd2) end)
 local function add(name, fn)
     g_stateboard[name] = fn
     g_etcd2[name] = fn
+end
+
+function g_etcd2.test_migrate_vclockkeepers(g)
+    local session = g.client:get_session()
+    helpers.retrying({}, function()
+        local resp = t.assert(session.connection:request('GET', '/leaders'))
+        t.assert_equals(json.decode(resp.node.value).version, 1)
+        t.assert_equals(session:get_leaders()[storage1_uuid], storage1_1_uuid)
+        t.assert_equals(session:get_vclockkeeper(storage1_uuid).instance_uuid, storage1_1_uuid)
+        t.assert_equals(g.cluster:server('storage-1-leader'):eval('return box.info.ro'), false)
+        t.assert_equals(g.cluster:server('storage-1-replica'):eval('return box.info.ro'), true)
+    end)
 end
 
 add('test_add_new_replicaset_gets_leader', function(g)
