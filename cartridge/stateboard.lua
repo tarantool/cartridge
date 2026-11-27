@@ -154,16 +154,14 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
     checks('string', 'string', '?number', '?table')
 
     local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
-    if ordinal ~= (vclockkeeper and vclockkeeper.ordinal)
-    and vclockkeeper.instance_uuid == instance_uuid
-    and vclock == nil
-    then
-        -- No update needed
-        return true
-    elseif ordinal ~= (vclockkeeper and vclockkeeper.ordinal) then
+    local current_ordinal = vclockkeeper and vclockkeeper.ordinal
+    if ordinal ~= current_ordinal then
+        if vclockkeeper ~= nil and vclockkeeper.instance_uuid == instance_uuid and vclock == nil then
+            return true
+        end
         return nil, string.format(
             "Ordinal comparison failed (requested %s, current %s)",
-            ordinal, (vclockkeeper and vclockkeeper.ordinal)
+            ordinal, current_ordinal
         )
     end
 

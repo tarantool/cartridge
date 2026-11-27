@@ -361,6 +361,12 @@ function g.test_box_options()
     )
 end
 
+function g.test_vclockkeeper_ordinal_after_delete()
+    local ok, err = g.stateboard:call('set_vclockkeeper', {'A', 'a1', 1})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, 'Ordinal comparison failed (requested 1, current nil)')
+end
+
 function g.test_vclockkeeper()
     local client = create_client(g.stateboard)
     local session = client:get_session()
