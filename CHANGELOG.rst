@@ -22,6 +22,16 @@ Added
   ``null`` if the ``crud`` storage isn't initialized on the instance.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Stateful failover commits the leader and vclockkeeper together during
+  automatic failover and forced promotion. Updating a stateful cluster
+  requires a coordinated restart. Stateboard must be updated with Cartridge.
+  With etcd v2, Cartridge migrates the existing state into ``<prefix>/leaders``
+  when the first coordinator takes control. See :ref:`upgrade-stateful-failover`.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
