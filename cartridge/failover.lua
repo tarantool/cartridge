@@ -567,6 +567,53 @@ local function synchro_queue_is_ready()
         and queue.term == election.term and not queue.busy
 end
 
+local function synchro_demote()
+    local box_info = box.info
+    if box_info.synchro ~= nil
+    and box_info.synchro.queue ~= nil
+    and box_info.synchro.queue.owner ~= 0
+    and box_info.synchro.queue.owner == box_info.id
+    and box.ctl.demote ~= nil then
+        log.info('Attempting box.ctl.demote()')
+
+        local ok, err = pcall(box.ctl.demote)
+        if ok ~= true then
+            log.error('Failed to demote: %s', err or 'unknown')
+            return err
+        end
+        ok, err = pcall(fiber.testcancel)
+        if ok ~= true then
+            log.error('Fiber was cancelled in synchro_demote')
+            return err
+        end
+    end
+end
+
+local function demote_on_leadership_loss()
+    if box.info.election.state == 'follower' then
+        return false
+    end
+
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local replicas = topology.get_leaders_order(
+        topology_cfg, vars.replicaset_uuid, nil,
+        {only_enabled = true, only_electable = false}
+    )
+    local remaining = #replicas
+    if utils.table_find(replicas, vars.instance_uuid) then
+        remaining = remaining - 1
+    end
+    if remaining < box.info.synchro.quorum then
+        return false
+    end
+
+    set_synchro_pending(true)
+    if synchro_queue_is_ready() then
+        synchro_demote()
+    end
+    return box.info.election.state ~= 'follower'
+end
+
 local function owns_appointment()
     local session = vars.client:get_session()
     local appointment, err = session:get_appointment(vars.replicaset_uuid)
@@ -603,6 +650,9 @@ local function apply_manual_writability(active_leaders)
         end
         if active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid then
             fencing_cancel()
+            if demote_on_leadership_loss() then
+                return nil, true
+            end
         end
     else
         if not synchro_queue_is_ready() then
@@ -678,28 +728,6 @@ local function apply_writability(active_leaders)
         return
     end
     return synchro_promote()
-end
-
-local function synchro_demote()
-    local box_info = box.info
-    if box_info.synchro ~= nil
-    and box_info.synchro.queue ~= nil
-    and box_info.synchro.queue.owner ~= 0
-    and box_info.synchro.queue.owner == box_info.id
-    and box.ctl.demote ~= nil then
-        log.info('Attempting box.ctl.demote()')
-
-        local ok, err = pcall(box.ctl.demote)
-        if ok ~= true then
-            log.error('Failed to demote: %s', err or 'unknown')
-            return err
-        end
-        ok, err = pcall(fiber.testcancel)
-        if ok ~= true then
-            log.error('Fiber was cancelled in synchro_demote')
-            return err
-        end
-    end
 end
 
 local function constitute_oneself(active_leaders, opts)
@@ -942,7 +970,8 @@ function reconfigure_all(active_leaders)
         if active_leaders ~= vars.cache.active_leaders then
             return
         end
-    until not vars.failover_paused and not vars.failover_suppressed
+    until active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid
+        or (not vars.failover_paused and not vars.failover_suppressed)
     retrying = true
     goto start_over
 end
