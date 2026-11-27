@@ -635,6 +635,40 @@ add('test_lsn_waits_for_activation', function(g)
     end)
 end)
 
+register_test(manual_groups, 'test_activation_waits_for_synchro_queue', function(g)
+    B2:exec(function()
+        local promote = box.ctl.promote
+        rawset(box.ctl, 'promote', function()
+            rawset(box.ctl, 'promote', promote)
+            promote()
+            local synchro = box.info.synchro
+            rawset(synchro.queue, 'term', 0)
+            rawset(box.info, 'synchro', synchro)
+        end)
+    end)
+
+    local ok, err = pcall(function()
+        t.assert(g.session:set_leaders({{uB, uB2}}))
+        helpers.retrying({}, function()
+            t.assert(B2:eval([[return rawget(box.info, 'synchro') ~= nil]]))
+        end)
+        t.assert_equals(B2:eval('return box.cfg.read_only'), true)
+
+        local reported, lsn = pcall(B2.call, B2, '__cartridge_failover_get_lsn', {0.1})
+        t.assert_equals(reported, false, lsn)
+    end)
+    B2:exec(function() rawset(box.info, 'synchro', nil) end)
+    t.assert(ok, err)
+
+    helpers.retrying({}, function()
+        t.assert_equals(B2:eval(q_readonliness), false)
+    end)
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_readonliness), false)
+    end)
+end)
+
 register_test(manual_groups, 'test_failed_promotion_keeps_read_only', function(g)
     B2:exec(function()
         local promote = box.ctl.promote

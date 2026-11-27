@@ -72,6 +72,7 @@ vars:new('disable_raft_on_small_clusters', true)
 vars:new('schedule', {})
 vars:new('activations', {})
 vars:new('activation_finished', fiber.cond())
+vars:new('synchro_pending', false)
 vars:new('client')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
@@ -110,6 +111,16 @@ local function finish_activation()
     end
 end
 
+local function set_synchro_pending(pending)
+    if pending == vars.synchro_pending then
+        return
+    end
+    vars.synchro_pending = pending
+    if not pending then
+        vars.activation_finished:broadcast()
+    end
+end
+
 local function with_activation_cleanup(fn, ...)
     local ok, result, err = pcall(fn, ...)
     finish_activation()
@@ -124,7 +135,7 @@ function _G.__cartridge_failover_get_lsn(timeout)
     while true do
         box.ctl.wait_ro(math.max(0, deadline - fiber.clock()))
         -- A keeper can still be read-only while its activation is in flight.
-        if next(vars.activations) == nil then
+        if next(vars.activations) == nil and not vars.synchro_pending then
             local box_info = box.info
             return {id = box_info.id, lsn = box_info.lsn}
         end
@@ -473,7 +484,9 @@ local function fencing_cancel()
 end
 
 local function fencing_start()
-    fencing_cancel()
+    if vars.fencing_fiber ~= nil and vars.fencing_fiber:status() ~= 'dead' then
+        return
+    end
 
     vars.fencing_fiber = fiber.new(fencing_watch)
     vars.fencing_fiber:name('cartridge.fencing')
@@ -489,6 +502,7 @@ local function synchro_promote()
         or vars.mode ~= 'stateful'
         or not vars.promote_for_leader_required
         or not vars.cache.is_leader
+        or vars.cache.active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid
         or vars.failover_paused
         or vars.failover_suppressed
         or box.ctl.promote == nil
@@ -529,21 +543,136 @@ local function synchro_promote()
     end
 end
 
-local function apply_writability()
+local function revoke_writability()
+    vars.cache.is_vclockkeeper = false
+    vars.cache.is_leader = false
+    vars.cache.is_rw = false
+end
+
+local function promote_on_activation(active_leaders)
+    local ok, err = pcall(synchro_promote)
+    if not ok or err ~= nil then
+        if active_leaders == vars.cache.active_leaders then
+            revoke_writability()
+        end
+        return err
+    end
+end
+
+local function synchro_queue_is_ready()
+    local box_info = box.info
+    local election = box_info.election
+    local queue = box_info.synchro.queue
+    return election.state == 'leader' and queue.owner == box_info.id
+        and queue.term == election.term and not queue.busy
+end
+
+local function owns_appointment()
+    local session = vars.client:get_session()
+    local appointment, err = session:get_appointment(vars.replicaset_uuid)
+    fiber.testcancel()
+    if err ~= nil then
+        return nil
+    end
+
+    local keeper
+    if appointment == nil then
+        keeper, err = session:get_vclockkeeper(vars.replicaset_uuid)
+        fiber.testcancel()
+        if err ~= nil then
+            return nil
+        end
+    elseif appointment.instance_uuid == vars.instance_uuid then
+        keeper = appointment.vclockkeeper
+    end
+    return keeper ~= nil and keeper.instance_uuid == vars.instance_uuid
+end
+
+local function apply_manual_writability(active_leaders)
+    if active_leaders ~= vars.cache.active_leaders then
+        return nil, true
+    end
+
+    if not vars.cache.is_leader
+    or active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid
+    then
+        set_synchro_pending(true)
+        box.cfg({read_only = true})
+        if active_leaders ~= vars.cache.active_leaders then
+            return nil, true
+        end
+        if active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid then
+            fencing_cancel()
+        end
+    else
+        if not synchro_queue_is_ready() then
+            -- Raft elections finish before the leader can claim the queue.
+            set_synchro_pending(true)
+            box.cfg({read_only = true})
+            if box.info.election.state ~= 'leader' then
+                local err = promote_on_activation(active_leaders)
+                if err ~= nil then
+                    set_synchro_pending(false)
+                    return err
+                end
+            end
+        end
+        if vars.synchro_pending then
+            if vars.failover_paused or vars.failover_suppressed
+            or not synchro_queue_is_ready()
+            then
+                return nil, true
+            end
+            if vars.consistency_needed then
+                local owns = owns_appointment()
+                if active_leaders ~= vars.cache.active_leaders then
+                    return nil, true
+                end
+                if owns == false then
+                    revoke_writability()
+                end
+                if not owns then
+                    return nil, true
+                end
+            end
+        end
+        if active_leaders ~= vars.cache.active_leaders
+        or not vars.cache.is_leader or not synchro_queue_is_ready()
+        then
+            return nil, true
+        end
+        box.cfg({read_only = false})
+        if active_leaders ~= vars.cache.active_leaders then
+            box.cfg({read_only = true})
+            return nil, true
+        end
+        if box.info.ro then
+            set_synchro_pending(true)
+            return nil, true
+        end
+    end
+    set_synchro_pending(false)
+    finish_activation()
+end
+
+local function apply_writability(active_leaders)
+    if vars.mode == 'stateful' and vars.enable_synchro_mode
+    and vars.promote_for_leader_required and box.cfg.election_mode == 'manual'
+    then
+        return apply_manual_writability(active_leaders)
+    end
+
     local activating = vars.activations[fiber.id()]
     if activating then
-        -- Elections may complete after the caller has timed out.
         box.cfg({read_only = true})
-        local ok, err = pcall(synchro_promote)
-        if not ok or err ~= nil then
-            vars.cache.is_vclockkeeper = false
-            vars.cache.is_leader = false
-            vars.cache.is_rw = false
+        local err = promote_on_activation(active_leaders)
+        if err ~= nil then
             return err
         end
     end
 
     box.cfg({read_only = not vars.cache.is_rw})
+    set_synchro_pending(false)
     if activating then
         finish_activation()
         return
@@ -702,7 +831,7 @@ end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
-    local retrying_promotion = false
+    local retrying = false
 ::start_over::
 
     local t1 = fiber.clock()
@@ -741,14 +870,17 @@ function reconfigure_all(active_leaders)
     end
 
     local apply_total_start = fiber.clock()
-    local promote_err
+    local promote_err, pending
     local ok, err = FailoverError:pcall(function()
-        if not retrying_promotion then
+        if not retrying then
             vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         end
-        promote_err = apply_writability()
+        promote_err, pending = apply_writability(active_leaders)
         if promote_err ~= nil then
             error(promote_err)
+        end
+        if pending then
+            return true
         end
 
         local state = 'RolesConfigured'
@@ -784,7 +916,11 @@ function reconfigure_all(active_leaders)
     end)
 
     local apply_total_elapsed = fiber.clock() - apply_total_start
-    if ok then
+    if pending then
+        if not retrying then
+            log.info('Waiting for the synchronous queue')
+        end
+    elseif ok then
         log.info('Failover step finished in %.6f sec', apply_total_elapsed)
     else
         log.warn('Failover step failed after %.6f sec: %s', apply_total_elapsed, err)
@@ -792,9 +928,9 @@ function reconfigure_all(active_leaders)
     confapplier.set_state('RolesConfigured')
 
     local code = promote_err and promote_err.code
-    if code == nil or code ~= box.error.NO_ELECTION_QUORUM
-    or not vars.activations[fiber.id()]
-    then
+    local no_quorum = code ~= nil and code == box.error.NO_ELECTION_QUORUM
+        and vars.activations[fiber.id()]
+    if not pending and not no_quorum then
         return
     end
 
@@ -807,7 +943,7 @@ function reconfigure_all(active_leaders)
             return
         end
     until not vars.failover_paused and not vars.failover_suppressed
-    retrying_promotion = true
+    retrying = true
     goto start_over
 end
 
@@ -1202,7 +1338,8 @@ local function cfg(clusterwide_config, opts)
 
     accept_appointments(first_appointments)
 
-    local ok, err = constitute_oneself(vars.cache.active_leaders, {
+    local active_leaders = vars.cache.active_leaders
+    local ok, err = constitute_oneself(active_leaders, {
         timeout = vars.options.WAITLSN_TIMEOUT
     })
     if ok == nil then
@@ -1224,12 +1361,24 @@ local function cfg(clusterwide_config, opts)
     end
 
     vars.mode = failover_cfg.mode
-    err = apply_writability()
+    local pending
+    if ok == nil and vars.cache.is_rw and not box.cfg.read_only
+    and not vars.synchro_pending
+    and active_leaders == vars.cache.active_leaders
+    then
+        -- Keep the existing write setting during provider recovery.
+        err = synchro_promote()
+    else
+        err, pending = apply_writability(active_leaders)
+    end
     if err ~= nil then
         return nil, ApplyConfigError:new(
             'Unable to promote: %q',
             err
         )
+    end
+    if pending and next(vars.schedule) == nil then
+        schedule_add()
     end
 
     local sync_spaces_list = sync_spaces.spaces_list_str()
@@ -1259,7 +1408,7 @@ end
 -- @local
 -- @treturn boolean true / false
 local function is_leader()
-    return vars.cache.is_leader
+    return vars.cache.is_leader and not vars.synchro_pending
 end
 
 --- Check current instance writability.
