@@ -315,6 +315,33 @@ function g.test_server_info_schema()
     log.info(resp['data']['servers'][1])
 end
 
+g.after_test('test_server_info_listen', function()
+    if g.original_listen ~= nil then
+        g.cluster:server('storage'):eval('box.cfg({listen = ...})', {g.original_listen})
+        g.original_listen = nil
+    end
+end)
+
+function g.test_server_info_listen()
+    local storage = g.cluster:server('storage')
+    local address = '127.0.0.1:' .. storage.advertise_port
+    g.original_listen = storage:eval('return box.cfg.listen')
+    storage:eval('box.cfg({listen = ...})', {'fixture:sample-password@' .. address})
+
+    local router = g.cluster:server('router')
+    local resp = router:graphql({
+        query = [[
+            query($uuid: String!) {
+                servers(uuid: $uuid) {
+                    boxinfo { general { listen } }
+                }
+            }
+        ]],
+        variables = {uuid = storage.instance_uuid},
+    })
+    t.assert_equals(resp.data.servers[1].boxinfo.general.listen, address)
+end
+
 function g.test_replication_info_schema()
     local router = g.cluster:server('router')
     local resp = router:graphql({
