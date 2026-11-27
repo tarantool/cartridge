@@ -60,6 +60,11 @@ local function acquire_lock(lock_args)
     return true
 end
 
+local function owns_lock()
+    return lock.session_id == box.session.id()
+        and clock.monotonic() < lock.session_expiry
+end
+
 local function set_leaders_impl(leaders)
     if type(leaders) ~= 'table' then
         local err = string.format(
@@ -69,7 +74,7 @@ local function set_leaders_impl(leaders)
         error(err, 2)
     end
 
-    if lock.session_id ~= box.session.id() then
+    if not owns_lock() then
         return nil, 'You are not holding the lock'
     end
 
@@ -194,6 +199,9 @@ end
 
 local function delete_replicasets(replicasets)
     checks('table')
+    if not owns_lock() then
+        return nil, 'You are not holding the lock'
+    end
     box.begin()
     for _, replicaset_uuid in ipairs(replicasets) do
         local deleted = box.space.leader:delete(replicaset_uuid)

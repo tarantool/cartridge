@@ -113,6 +113,24 @@ function g.test_locks()
     )
 end
 
+function g.test_delete_replicasets_requires_lock()
+    local coordinator = create_client(g.stateboard):get_session()
+    t.assert(coordinator:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(coordinator:set_leaders({{'A', 'a1'}}))
+    t.assert(coordinator:set_vclockkeeper('A', 'a1'))
+
+    local ret, err = g.stateboard:call('delete_replicasets', {{'A'}})
+    t.assert_equals(ret, nil)
+    t.assert_equals(err, 'You are not holding the lock')
+    t.assert_equals(coordinator:get_leaders(), {A = 'a1'})
+    t.assert_equals(coordinator:get_vclockkeeper('A').instance_uuid, 'a1')
+
+    local _, err = coordinator.connection:call('delete_replicasets', {{'A'}})
+    t.assert_equals(err, nil)
+    t.assert_equals(coordinator:get_leaders(), {})
+    t.assert_equals(coordinator:get_vclockkeeper('A'), nil)
+end
+
 function g.test_appointments()
     local c = create_client(g.stateboard):get_session()
     local kid = uuid.str()
@@ -243,6 +261,14 @@ function g.test_outage()
         {c1:acquire_lock(payload)},
         {true}
     )
+
+    local ok, err = c1:set_leaders({{'A', 'a1'}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'SessionError',
+        err = 'You are not holding the lock'
+    })
+    t.assert_equals(c1:get_leaders(), {})
 
     local c2 = create_client(g.stateboard):get_session()
     t.assert_equals(
