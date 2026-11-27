@@ -45,10 +45,9 @@ local function request(connection, method, path, args, opts)
     end
     local body = table.concat(body, '&')
     local path = fio.pathjoin('/v2/keys', connection.prefix, path)
-    -- Workaround for https://github.com/tarantool/tarantool/issues/4173
-    -- Built-in taratool http.client substitutes GET with POST if
-    -- body is not nil.
-    if method == 'GET' and body ~= '' then
+    -- http.client substitutes GET with POST if the body is not nil.
+    -- etcd reads DELETE conditions from the query string.
+    if (method == 'GET' or method == 'DELETE') and body ~= '' then
         path = path .. '?' .. body
         body = nil
     end

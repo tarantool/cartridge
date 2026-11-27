@@ -317,6 +317,20 @@ function g.test_client_drop_session()
     t.assert_is_not(client:get_session(), session)
 end
 
+function g.test_stale_session_drop()
+    local c1 = create_client():get_session()
+    local c2 = create_client():get_session()
+    local next_coordinator = {uuid = uuid.str(), uri = 'localhost:11'}
+
+    t.assert(c1:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(c2.connection:request('DELETE', '/lock'))
+    t.assert(c2:acquire_lock(next_coordinator))
+
+    t.assert(c1:drop())
+    t.assert_equals(c2:get_coordinator(), next_coordinator)
+    t.assert(c2:acquire_lock(next_coordinator))
+end
+
 function g.test_outage()
     local payload = {uuid = uuid.str(), uri = 'localhost:9'}
     local c1 = create_client():get_session()
