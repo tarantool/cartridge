@@ -323,20 +323,46 @@ add('test_expel_instances', function(g)
         t.assert(res.instance_uuid)
     end)
 
-    g.cluster.main_server:graphql({
+    local appointment = t.assert(session:get_appointment(storage1_uuid))
+    local coordinator = t.assert(session:get_coordinator())
+    local server = t.assert(helpers.table_find_by_attr(g.cluster.servers, 'advertise_uri', coordinator.uri))
+    server:exec(function(replicaset_uuid)
+        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+        local session = vars.client.session
+        local delete_replicasets = session.delete_replicasets
+        rawset(_G, 'test_expel_failed', false)
+        session.delete_replicasets = function(self, replicasets)
+            for _, uuid in ipairs(replicasets) do
+                if uuid == replicaset_uuid then
+                    self.delete_replicasets = delete_replicasets
+                    rawset(_G, 'test_expel_failed', true)
+                    return nil, 'Failed to remove replicasets'
+                end
+            end
+            return delete_replicasets(self, replicasets)
+        end
+    end, {storage1_uuid})
+    local response = g.cluster.main_server:graphql({
         query = q_expel,
         variables = {
             uuid = storage1_1_uuid
         }
     })
+    t.assert_equals(response.data.expel_server, true)
+    t.assert_equals(server:eval('return test_expel_failed'), true)
 
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 15}, function()
         local res = session:get_leaders()
         t.assert_not(res[storage1_uuid])
 
         local res = session:get_vclockkeeper(storage1_uuid)
         t.assert_not(res)
     end)
+
+    local ok, err = session:activate(storage1_uuid, appointment.instance_uuid, appointment, {10})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Appointment changed')
+    t.assert_equals(session:get_vclockkeeper(storage1_uuid), nil)
 
     local server = add_new_instance(g)
     assert_replacement_recovered(g, session, server)

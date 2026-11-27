@@ -1,4 +1,5 @@
 local fio = require('fio')
+local json = require('json')
 local t = require('luatest')
 local helpers = require('test.helper')
 
@@ -116,6 +117,14 @@ g_etcd2.before_all(function()
         request_timeout = 1,
     })
 
+    local connection = g.client:get_session().connection
+    t.assert(connection:request('PUT', '/leaders', {
+        value = json.encode({[router_uuid] = router_1_uuid, [storage1_uuid] = storage1_1_uuid}),
+    }))
+    t.assert(connection:request('PUT', '/vclockkeeper/' .. storage1_uuid, {
+        value = json.encode({instance_uuid = storage1_1_uuid, vclock = {0}}),
+    }))
+
     setup_cluster(g)
 
     t.assert(g.cluster.main_server:call(
@@ -153,6 +162,18 @@ local function add(name, fn)
     g_etcd2[name] = fn
 end
 
+function g_etcd2.test_migrate_vclockkeepers(g)
+    local session = g.client:get_session()
+    helpers.retrying({}, function()
+        local resp = t.assert(session.connection:request('GET', '/leaders'))
+        t.assert_equals(json.decode(resp.node.value).version, 1)
+        t.assert_equals(session:get_leaders()[storage1_uuid], storage1_1_uuid)
+        t.assert_equals(session:get_vclockkeeper(storage1_uuid).instance_uuid, storage1_1_uuid)
+        t.assert_equals(g.cluster:server('storage-1-leader'):eval('return box.info.ro'), false)
+        t.assert_equals(g.cluster:server('storage-1-replica'):eval('return box.info.ro'), true)
+    end)
+end
+
 add('test_add_new_replicaset_gets_leader', function(g)
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
@@ -161,6 +182,20 @@ add('test_add_new_replicaset_gets_leader', function(g)
     helpers.retrying({}, function()
         local leaders = g.client:get_session():get_leaders()
         t.assert(leaders[storage1_uuid], 'storage-1 must have a leader')
+    end)
+
+    local main = g.cluster.main_server
+    local function edit_topology(args)
+        main:exec(function(args)
+            assert(require('cartridge').admin_edit_topology(args))
+        end, {args})
+    end
+
+    edit_topology({
+        replicasets = {{uuid = router_uuid, roles = {'vshard-router'}}},
+    })
+    helpers.retrying({}, function()
+        t.assert_equals(g.client:get_session():get_coordinator(), nil)
     end)
 
     local srv1 = helpers.Server:new({
@@ -200,59 +235,21 @@ add('test_add_new_replicaset_gets_leader', function(g)
         errors.assert('ProbeError', membership.probe_uri(...))
     ]], {srv2.advertise_uri})
 
-    local res = g.cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $uri: String!,
-                $uuid: String!,
-                $replicaset_uuid: String!
-            ) {
-                join_server(
-                    uri: $uri,
-                    instance_uuid: $uuid,
-                    replicaset_uuid: $replicaset_uuid,
-                    roles: ["vshard-storage"],
-                    timeout: 30
-                )
-            }
-        ]],
-        variables = {
-            uri = srv1.advertise_uri,
-            uuid = storage2_1_uuid,
-            replicaset_uuid = storage2_uuid,
-        },
+    edit_topology({
+        replicasets = {{
+            uuid = storage2_uuid,
+            roles = {'vshard-storage'},
+            failover_priority = {storage2_1_uuid, storage2_2_uuid},
+            join_servers = {
+                {uri = srv1.advertise_uri, uuid = storage2_1_uuid},
+                {uri = srv2.advertise_uri, uuid = storage2_2_uuid},
+            },
+        }},
     })
-    t.assert_equals(res['data']['join_server'], true)
 
     helpers.retrying({timeout = 30}, function()
         srv1:connect_net_box()
     end)
-
-    g.cluster:wait_until_healthy()
-
-    res = g.cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $uri: String!,
-                $uuid: String!,
-                $replicaset_uuid: String!
-            ) {
-                join_server(
-                    uri: $uri,
-                    instance_uuid: $uuid,
-                    replicaset_uuid: $replicaset_uuid,
-                    timeout: 30
-                )
-            }
-        ]],
-        variables = {
-            uri = srv2.advertise_uri,
-            uuid = storage2_2_uuid,
-            replicaset_uuid = storage2_uuid,
-        },
-    })
-    t.assert_equals(res['data']['join_server'], true)
-
     helpers.retrying({timeout = 30}, function()
         srv2:connect_net_box()
     end)
@@ -282,6 +279,11 @@ add('test_add_new_replicaset_gets_leader', function(g)
         t.assert_equals(state2, 'RolesConfigured',
             'Replica confapplier must reach RolesConfigured')
     end)
+
+    t.assert_equals(g.client:get_session():get_leaders()[storage2_uuid], nil)
+    edit_topology({
+        replicasets = {{uuid = router_uuid, roles = {'vshard-router', 'failover-coordinator'}}},
+    })
 
     helpers.retrying({timeout = 30}, function()
         local leaders = g.client:get_session():get_leaders()

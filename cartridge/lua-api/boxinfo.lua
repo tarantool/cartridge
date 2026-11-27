@@ -5,6 +5,8 @@
 
 local json = require('json')
 local errors = require('errors')
+local uri_lib = require('uri')
+local format_uri = require('vshard.util').uri_format
 
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
@@ -39,6 +41,30 @@ local function get_crud_info()
     return {
         safe_mode = safe_mode,
     }
+end
+
+local parse_listen = uri_lib.parse_many or function(listen)
+    return {uri_lib.parse(listen)}
+end
+
+local function format_listen(listen)
+    local endpoints = listen and parse_listen(listen)
+    if endpoints == nil or #endpoints == 0 then
+        return nil
+    end
+
+    local addresses = {}
+    local count = type(listen) == 'table' and 1 or #endpoints
+    for i = 1, count do
+        local endpoint = endpoints[i]
+        addresses[i] = format_uri({
+            scheme = endpoint.scheme,
+            host = endpoint.host,
+            service = endpoint.service,
+            ipv6 = endpoint.ipv6,
+        })
+    end
+    return table.concat(addresses, ',')
 end
 
 --- Retrieve `box.cfg` and `box.info` of a remote server.
@@ -139,13 +165,6 @@ local function get_info(uri)
 
         local package = require('tarantool').package
 
-        local listen
-        if type(box_cfg.listen) ~= "table" then
-            listen = box_cfg.listen and tostring(box_cfg.listen)
-        else
-            listen = box_cfg.listen.uri or box_cfg.listen[1].uri
-        end
-
         if next(rocks_cache) == nil then
             local rocks = box.internal.feedback_daemon:generate_feedback().rocks
             rocks.cartridge = nil
@@ -169,7 +188,7 @@ local function get_info(uri)
                 vinyl_dir = box_cfg.vinyl_dir,
                 wal_dir = box_cfg.wal_dir,
                 worker_pool_threads = box_cfg.worker_pool_threads,
-                listen = listen,
+                listen = format_listen(box_cfg.listen),
                 http_host = vars.http_host,
                 http_port = vars.http_port,
                 webui_prefix = vars.webui_prefix,
@@ -280,6 +299,7 @@ _G.__cluster_admin_get_info = get_info
 
 return {
     get_info = get_info,
+    format_listen = format_listen,
 
     set_webui_prefix = set_webui_prefix,
 }

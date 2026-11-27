@@ -152,12 +152,39 @@ function g.test_appointments()
         {A = 'a1', B = 'b1'}
     )
 
-    local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}})
+    local appointment = t.assert(c:get_appointment('A'))
+    t.assert(c:activate('A', 'a1', appointment, {10}))
+    t.assert(c:set_leaders({{'A', 'a2'}}))
+    local appointment = c:get_appointment('A')
+
+    local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}}, true)
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'SessionError',
         err = 'Duplicate key in updates'
     })
+    t.assert_equals(c:get_appointment('A'), appointment)
+
+    t.assert(c:set_leaders({{'A', 'a2'}}, true))
+    t.assert_equals(c:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a2',
+    })
+
+    local peer = create_client():get_session()
+    local appointment = t.assert(peer:get_appointment('B'))
+    local request = c.connection.request
+    c.connection.request = function(self, method, key, ...)
+        if method == 'PUT' and key == '/leaders' then
+            self.request = request
+            t.assert(peer:activate('B', 'b1', appointment, {20}))
+        end
+        return request(self, method, key, ...)
+    end
+
+    t.assert(c:set_leaders({{'A', 'a1'}}, true))
+    t.assert_equals(c:get_leaders(), {A = 'a1', B = 'b1'})
+    t.assert_equals(c:get_vclockkeeper('B').vclock, {20})
 end
 
 function g.test_longpolling()
@@ -290,53 +317,54 @@ function g.test_client_drop_session()
     t.assert_is_not(client:get_session(), session)
 end
 
-function g.test_outage()
-    -- Test case:
-    -- 1. Coordinator C1 acquires a lock and freezes;
-    -- 2. Lock delay expires and stateboard allows C2 to acquire it again;
-    -- 3. C2 writes some decisions and releases a lock;
-    -- 4. C1 comes back;
-    -- Goal: C1 must be informed on his outage
-
-    g.lock_delay = 0
-
-    local payload = {uuid = uuid.str(), uri = 'localhost:9'}
-
+function g.test_stale_session_drop()
     local c1 = create_client():get_session()
-    t.assert_equals(
-        {c1:acquire_lock(payload)},
-        {true}
-    )
-    t.assert_equals(
-        -- C1 can renew expired lock if it wasn't stolen yet
-        {c1:acquire_lock(payload)},
-        {true}
-    )
-
     local c2 = create_client():get_session()
-    t.helpers.retrying({}, function()
-        t.assert_equals(
-            {c2:acquire_lock(payload)},
-            {true}
-        )
-    end)
+    local next_coordinator = {uuid = uuid.str(), uri = 'localhost:11'}
 
-    c2:drop()
+    t.assert(c1:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(c2.connection:request('DELETE', '/lock'))
+    t.assert(c2:acquire_lock(next_coordinator))
 
-    -- C1 can't renew lock after it was stolen by C2
+    t.assert(c1:drop())
+    t.assert_equals(c2:get_coordinator(), next_coordinator)
+    t.assert(c2:acquire_lock(next_coordinator))
+end
+
+function g.test_outage()
+    local payload = {uuid = uuid.str(), uri = 'localhost:9'}
+    local c1 = create_client():get_session()
+    local c2 = create_client():get_session()
+
+    t.assert(c1:acquire_lock(payload))
+    t.assert(c1:acquire_lock(payload))
+    t.assert(c1:set_leaders({{'A', 'a1'}}, true))
+
+    local request = c1.connection.request
+    c1.connection.request = function(self, method, key, ...)
+        if method == 'PUT' and key == '/leaders' then
+            self.request = request
+            t.assert(c2.connection:request('DELETE', '/lock'))
+
+            local ok, err = c1:set_leaders({{'A', 'a2'}}, true)
+            t.assert_equals(ok, nil)
+            t.assert_equals(err.err, 'You are not holding the lock')
+
+            t.assert(c2:acquire_lock(payload))
+            t.assert(c2:set_leaders({{'A', 'a3'}}, true))
+        end
+        return request(self, method, key, ...)
+    end
+
+    local ok, err = c1:set_leaders({{'A', 'a2'}}, true)
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'You are not holding the lock')
+    t.assert_equals(c2:get_leaders(), {A = 'a3'})
+    t.assert_equals(c2:get_vclockkeeper('A').instance_uuid, 'a3')
+
     local ok, err = c1:acquire_lock(payload)
     t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'SessionError',
-        err = 'The lock was stolen'
-    })
-
-    local ok, err = c1:set_leaders({})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'SessionError',
-        err = 'You are not holding the lock'
-    })
+    t.assert_equals(err.err, 'The lock was stolen')
 end
 
 function g.test_client_session()
@@ -431,96 +459,78 @@ function g.test_authentication()
     t.assert_equals({ok, err}, {true, nil})
 end
 
-function g.test_vclockkeeper()
-    local client = create_client()
-    local session = client:get_session()
+function g.test_vclockkeeper_read_error()
+    local session = create_client():get_session()
+    session:drop()
 
-    local ok, err = session:get_vclockkeeper('A')
-    t.assert_equals(ok, nil)
-    t.assert_equals(err, nil)
+    local keeper, err = session:get_vclockkeeper('A')
+    t.assert_equals(keeper, nil)
+    t.assert_str_contains(err.err, 'Connection closed')
+end
 
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-    })
+function g.test_migrate_vclockkeepers()
+    local payload = {uuid = uuid.str(), uri = 'localhost:9'}
+    local session = create_client():get_session()
+    local connection = session.connection
+    t.assert(connection:request('PUT', '/leaders', {value = json.encode({A = 'a2'})}))
+    t.assert(connection:request('PUT', '/vclockkeeper/A', {
+        value = json.encode({instance_uuid = 'a1', vclock = {10}}),
+    }))
+    t.assert(connection:request('PUT', '/vclockkeeper/B', {
+        value = json.encode({instance_uuid = 'b1'}),
+    }))
+    t.assert(connection:request('PUT', '/identification_str', {value = 'cluster-id'}))
 
-    local ok, err = session:set_vclockkeeper('A', 'a1', {[1] = 10})
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
+    t.assert(session:acquire_lock(payload))
+    t.assert_equals(session:get_leaders(), {A = 'a2'})
+    t.assert_equals(session:get_vclockkeepers(), {A = 'a1', B = 'b1'})
+    local appointment = t.assert(session:get_appointment('A'))
+    t.assert_equals(appointment.vclockkeeper.vclock, {10})
+    local ident = t.assert(connection:request('GET', '/identification_str'))
+    t.assert_equals(ident.node.value, 'cluster-id')
 
-    local ok, err = session:set_vclockkeeper('A', 'a1')
-    t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(session:get_vclockkeeper('A'), {
-        replicaset_uuid = 'A',
-        instance_uuid = 'a1',
-        vclock = {[1] = 10},
-    })
+    t.assert(session:activate('A', 'a2', appointment, {20}))
+    session:drop()
 
-    local ok, err = session:set_vclockkeeper('A', 'a2')
-    t.assert_equals({ok, err}, {true, nil})
+    local session = create_client():get_session()
+    t.assert(session:acquire_lock(payload))
     t.assert_equals(session:get_vclockkeeper('A'), {
         replicaset_uuid = 'A',
         instance_uuid = 'a2',
+        vclock = {20},
+    })
+end
+
+function g.test_vclockkeeper()
+    local session = create_client():get_session()
+    t.assert_equals(session:get_leaders(), {})
+    t.assert_equals(session.set_vclockkeeper, nil)
+
+    t.assert(session:activate('A', 'a1', nil, {10}))
+    local ok, err = session:activate('A', 'a2', nil, {20})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
+
+    t.assert(session:acquire_lock({uuid = uuid.str(), uri = 'localhost:9'}))
+    t.assert(session:set_leaders({{'A', 'a1'}}, true))
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+        vclock = {10},
     })
 
-    local chan_success = fiber.channel(1)
-    local chan_fail = fiber.channel(1)
-    local function set_vclockkeeper_async(r, s, vclock)
-        fiber.new(function()
-            local res, err = session:set_vclockkeeper(r, s, vclock)
-            if res ~= nil then
-                local vclockkeeper = {
-                    replicaset_uuid = r,
-                    instance_uuid = s,
-                    vclock = vclock
-                }
-                chan_success:put({res, err, vclockkeeper})
-            else
-                chan_fail:put({res, err})
-            end
-        end)
-    end
+    local appointment = t.assert(session:get_appointment('A'))
+    t.assert(session:activate('A', 'a1', appointment, {101}))
+    local ok, err = session:activate('A', 'a1', appointment, {102})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Vclockkeeper changed between calls')
+    t.assert_equals(session:get_vclockkeeper('A').vclock, {101})
 
-    g.etcd_a.process:kill('STOP')
-    set_vclockkeeper_async('A', 'a3', {[1] = 101})
-    set_vclockkeeper_async('A', 'a3', {[1] = 102})
-    fiber.sleep(0)
-    g.etcd_a.process:kill('CONT')
-
-    local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
-    t.assert_equals({ret1, err1}, {true, nil})
-    local ret2, err2 = unpack(chan_fail:get(0.2))
-    t.assert_equals(ret2, nil)
-    t.assert_equals(err2.class_name, 'EtcdError')
-    t.assert_str_matches(err2.err,
-        'Vclockkeeper changed between calls %- Compare failed %(%d+%): %[%d+ != %d+%]'
-    )
-
-    t.assert_equals(session:get_vclockkeeper('A'), vclockkeeper)
-
-    g.etcd_b.process:kill('STOP')
-    set_vclockkeeper_async('B', 'b1')
-    set_vclockkeeper_async('B', 'b2')
-    fiber.sleep(0)
-    g.etcd_b.process:kill('CONT')
-
-    local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
-    t.assert_equals({ret1, err1}, {true, nil})
-    local ret2, err2 = unpack(chan_fail:get(0.2))
-    t.assert_equals(ret2, nil)
-    t.assert_equals(err2.class_name, 'EtcdError')
-    t.assert_str_matches(err2.err,
-        'Key already exists %(%d+%): ' ..
-        '/etcd2_client_test/vclockkeeper/B'
-    )
-
-    t.assert_equals(session:get_vclockkeeper('B'), vclockkeeper)
+    t.assert(session:delete_replicasets({'A'}))
+    local ok, err = session:activate('A', 'a1', nil, {103})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err, 'Appointment changed')
+    t.assert_equals(session:get_vclockkeeper('A'), nil)
 end
 
 function g.test_quorum()

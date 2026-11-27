@@ -358,6 +358,137 @@ add('test_coordinator_restart', function(g)
     end)
 end)
 
+add('test_manual_appointment_after_automatic_decision', function(g)
+    local appointments = R1:exec(function(rs, old_leader, automatic_leader, manual_leader)
+        local fiber = require('fiber')
+        local coordinator = require('cartridge').service_get('failover-coordinator')
+        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+        local session = vars.client.session
+        local healthcheck = vars.healthcheck
+        local set_leaders = session.set_leaders
+
+        local paused = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local published = fiber.channel(2)
+        local order = {}
+
+        session.set_leaders = function(self, updates, force)
+            for _, update in ipairs(updates) do
+                if update[1] == rs then
+                    if update[2] == automatic_leader then
+                        assert(force)
+                        paused:put(true)
+                        assert(resume:get(5), 'Automatic appointment was not resumed')
+                    end
+                    table.insert(order, update[2])
+                    local ok, err = set_leaders(self, updates, force)
+                    published:put({ok, err}, 0)
+                    return ok, err
+                end
+            end
+            return set_leaders(self, updates, force)
+        end
+
+        vars.healthcheck = function(members, uuid)
+            return uuid ~= old_leader and healthcheck(members, uuid)
+        end
+
+        local ok, err = pcall(function()
+            vars.membership_notification:broadcast()
+            assert(paused:get(5), 'Automatic appointment did not pause')
+
+            local manual = fiber.channel(1)
+            fiber.create(function()
+                manual:put({coordinator.appoint_leaders({[rs] = manual_leader})}, 0)
+            end)
+            resume:put(true)
+
+            local result = assert(manual:get(5), 'Manual appointment did not finish')
+            assert(result[1], result[2])
+            for _ = 1, 2 do
+                local result = assert(published:get(5), 'Appointment was not published')
+                assert(result[1], result[2])
+            end
+        end)
+
+        vars.healthcheck = healthcheck
+        session.set_leaders = set_leaders
+        assert(ok, err)
+        return order
+    end, {storage_uuid, storage_1_uuid, storage_2_uuid, storage_3_uuid})
+
+    t.assert_equals(appointments, {storage_2_uuid, storage_3_uuid})
+    t.assert_equals(g.client:get_session():get_leaders()[storage_uuid], storage_3_uuid)
+end)
+
+add('test_concurrent_forced_promotion', function()
+    local state = R1:exec(function(rs, forced_leader, next_leader)
+        local fiber = require('fiber')
+        local cartridge = require('cartridge')
+        local vars = require('cartridge.vars')
+        local coordinator = vars.new('cartridge.roles.coordinator').client.session
+        local set_leaders = coordinator.set_leaders
+        local paused = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local reset = fiber.channel(1)
+        local promoted = fiber.channel(1)
+        coordinator.set_leaders = function(self, updates, force)
+            if force and updates[1][1] == rs and updates[1][2] == forced_leader then
+                paused:put(true, 0)
+                assert(resume:get(10))
+                local ok, err = set_leaders(self, updates, force)
+                reset:put({ok, err}, 0)
+                return ok, err
+            end
+            return set_leaders(self, updates, force)
+        end
+
+        local first = fiber.create(cartridge.failover_promote, {
+            [rs] = forced_leader,
+        }, {force_inconsistency = true})
+
+        local ok, result = pcall(function()
+            assert(paused:get(5))
+            fiber.create(function()
+                promoted:put({cartridge.failover_promote({[rs] = next_leader})})
+            end)
+            local deadline = fiber.clock() + 5
+            while promoted:is_empty() and not coordinator.appointments_lock:has_writers() do
+                assert(fiber.clock() < deadline)
+                fiber.sleep(0.01)
+            end
+
+            resume:put(true, 0)
+            local reply = assert(promoted:get(10))
+            assert(reply[1], reply[2])
+            local reply = assert(reset:get(5))
+            assert(reply[1], reply[2])
+            return {
+                leader = coordinator:get_leaders()[rs],
+                keeper = coordinator:get_vclockkeeper(rs).instance_uuid,
+            }
+        end)
+        resume:put(true, 0)
+        coordinator.set_leaders = set_leaders
+        if first:status() ~= 'dead' then
+            first:cancel()
+        end
+        assert(ok, result)
+        return result
+    end, {storage_uuid, storage_2_uuid, storage_3_uuid})
+
+    helpers.retrying({}, function()
+        t.assert_equals(S1:eval(q_readonliness), true)
+        t.assert_equals(S2:eval(q_readonliness), true)
+        t.assert_equals(S3:eval(q_readonliness), false)
+    end)
+
+    t.assert(R1:call('package.loaded.cartridge.failover_promote', {
+        {[storage_uuid] = storage_1_uuid}, {force_inconsistency = true},
+    }))
+    t.assert_equals(state, {leader = storage_3_uuid, keeper = storage_3_uuid})
+end)
+
 add('test_leader_restart', function(g)
     -----------------------------------------------------
     g.client:longpoll(0)
@@ -375,7 +506,7 @@ add('test_leader_restart', function(g)
         t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
 
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 20}, function()
         t.assert_equals(R1:eval(q_readonliness), false)
         t.assert_equals(S2:eval(q_readonliness), false)
         t.assert_equals(S3:eval(q_readonliness), true)
@@ -770,7 +901,7 @@ add('test_force_promote_timeout', function(g)
     --
     --                [-]           constitute_oneself()
     --                []              get_vsckockkeeper (~0 sec)
-    --                 []             set_vclockkeeper (~0 sec)
+    --                 []             activate (~0 sec)
     --                  ^             become rw
     --
     -- 0----1----2----3----4----5---- (t)

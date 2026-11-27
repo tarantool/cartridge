@@ -283,55 +283,7 @@ local function assert_promoted_leaders(g, promoted_replicasets)
     end
 end
 
-local function add_stateboard_hooks(g)
-    g.before_test('test_ordinal_changed', function()
-        for _, instance in ipairs(g.cluster.servers) do
-            instance:exec(function()
-                local fiber = require('fiber')
-                rawset(_G, 'netbox_call', package.loaded.errors.netbox_call)
-                package.loaded.errors.netbox_call = function(conn, fn, ...)
-                    if fn == 'set_vclockkeeper' then
-                        fiber.sleep(1)
-                    end
-                    return _G.netbox_call(conn, fn, ...)
-                end
-            end)
-        end
-    end)
-
-    g.after_test('test_ordinal_changed', function()
-        for _, instance in ipairs(g.cluster.servers) do
-            instance:exec(function()
-                package.loaded.errors.netbox_call = _G.netbox_call
-            end)
-        end
-    end)
-end
-
-local function add_etcd2_hooks(g)
-    g.before_test('test_ordinal_changed', function()
-        for _, instance in ipairs(g.cluster.servers) do
-            instance:exec(function()
-                rawset(_G, 'test_etcd2_client_ordinal_errnj', true)
-            end)
-        end
-    end)
-
-    g.after_test('test_ordinal_changed', function()
-        for _, instance in ipairs(g.cluster.servers) do
-            instance:exec(function()
-                rawset(_G, 'test_etcd2_client_ordinal_errnj', nil)
-            end)
-        end
-    end)
-end
-
-add_stateboard_hooks(g_stateboard)
-add_stateboard_hooks(g_manual_stateboard)
-add_etcd2_hooks(g_etcd2)
-add_etcd2_hooks(g_manual_etcd2)
-
-add('test_ordinal_changed', function(g)
+add('test_forced_promotion_after_switchover', function(g)
     local promote_to_replicas = {
         [storage1_uuid] = storage1_2_uuid,
         [storage2_uuid] = storage2_2_uuid,
@@ -368,4 +320,68 @@ add('test_ordinal_changed', function(g)
         [storage1_uuid] = storage1_1_uuid,
         [storage2_uuid] = storage2_1_uuid,
     })
+end)
+
+add('test_switchover_keeps_concurrent_vclockkeeper', function(g)
+    local target = get_server_by_instance_uuid(g, storage1_2_uuid)
+    local concurrent_vclock = {100}
+    helpers.retrying({}, function()
+        local session = g.client:get_session()
+        t.assert_equals(session:get_leaders()[storage1_uuid], storage1_1_uuid)
+        local keeper = session:get_vclockkeeper(storage1_uuid)
+        t.assert(keeper)
+        t.assert_equals(keeper.instance_uuid, storage1_1_uuid)
+    end)
+
+    local result = target:exec(function(rs, old_leader, other_vclock, coordinator_uri)
+        local fiber = require('fiber')
+        local rpc = require('cartridge.rpc')
+        local client = require('cartridge.vars').new('cartridge.failover').client
+        local module = client.state_provider == 'etcd2' and 'etcd2-client' or 'stateboard-client'
+        local observer = require('cartridge.' .. module).new(client.cfg)
+        local other_session = observer:get_session()
+        local session = client:get_session()
+        local activate = session.activate
+        local read = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local written = fiber.channel(1)
+        session.activate = function(self, uuid, instance_uuid, appointment, vclock)
+            if uuid ~= rs then
+                return activate(self, uuid, instance_uuid, appointment, vclock)
+            end
+
+            self.activate = activate
+            read:put(appointment.vclockkeeper.instance_uuid == box.info.uuid, 0)
+            assert(resume:get(5))
+            local ok, err = activate(self, uuid, instance_uuid, appointment, vclock)
+            written:put({ok = ok, err = err, ro = box.info.ro}, 0)
+            return ok, err
+        end
+
+        local ok, result = pcall(function()
+            assert(rpc.call('failover-coordinator', 'force_appoint_leaders',
+                {{[rs] = box.info.uuid}}, {uri = coordinator_uri}))
+            assert(read:get(5))
+            local appointment = assert(other_session:get_appointment(rs))
+            assert(other_session:activate(rs, box.info.uuid, appointment, other_vclock))
+            resume:put(true)
+            return {
+                write = assert(written:get(5)),
+                vclock = assert(other_session:get_vclockkeeper(rs)).vclock,
+            }
+        end)
+
+        resume:put(true, 0)
+        session.activate = activate
+        observer:drop_session()
+        assert(rpc.call('failover-coordinator', 'force_appoint_leaders',
+            {{[rs] = old_leader}}, {uri = coordinator_uri}))
+        assert(ok, result)
+        return result
+    end, {storage1_uuid, storage1_1_uuid, concurrent_vclock, g.coordinator.advertise_uri})
+
+    t.assert_equals(result.vclock, concurrent_vclock)
+    t.assert_equals(result.write.ok, nil)
+    t.assert_equals(result.write.ro, true)
+    t.assert_str_contains(result.write.err.err, 'Vclockkeeper changed between calls')
 end)

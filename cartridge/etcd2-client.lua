@@ -3,10 +3,113 @@ local etcd2 = require('cartridge.etcd2')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local log = require('log')
 
 local ClientError  = errors.new_class('ClientError')
 local SessionError = errors.new_class('SessionError')
+
+local function decode_state(value)
+    local state = json.decode(value)
+    if state.version ~= nil and state.version ~= 1 then
+        return nil, SessionError:new('Unsupported failover state version %s', state.version)
+    end
+    return state
+end
+
+local function read_state(session)
+    local resp, err = session.connection:request('GET', '/leaders')
+    if resp == nil then
+        if err.etcd_code == etcd2.EcodeKeyNotFound then
+            return {}, nil, 0
+        end
+        return nil, err
+    end
+
+    local state, err = decode_state(resp.node.value)
+    return state, err, resp.node.modifiedIndex
+end
+
+local function update_state(session, update, ...)
+    local deadline = fiber.clock() + session.connection.request_timeout
+    local write_err
+    repeat
+        local state, err, index = read_state(session)
+        if state == nil then
+            return nil, err
+        end
+
+        local state, err = update(session, state, index, ...)
+        if state == nil then
+            return nil, err
+        end
+
+        local args = index == 0 and {prevExist = false} or {prevIndex = index}
+        args.value = json.encode(state)
+        local resp
+        resp, write_err = session.connection:request('PUT', '/leaders', args)
+        if resp ~= nil then
+            return true
+        end
+    until (write_err.etcd_code ~= etcd2.EcodeTestFailed and
+           write_err.etcd_code ~= etcd2.EcodeNodeExist) or fiber.clock() >= deadline
+    return nil, write_err
+end
+
+local function check_lock(session)
+    if not session:is_locked() then
+        return nil, SessionError:new('You are not holding the lock')
+    end
+
+    local resp, err = session.connection:request('GET', '/lock')
+    if resp == nil and err.etcd_code ~= etcd2.EcodeKeyNotFound then
+        return nil, err
+    end
+    if resp == nil or resp.node.createdIndex ~= session.lock_epoch then
+        return nil, SessionError:new('You are not holding the lock')
+    end
+    return true
+end
+
+local function migrate_state(session, leaders, index)
+    local replicasets = {}
+    for replicaset_uuid, instance_uuid in pairs(leaders) do
+        replicasets[replicaset_uuid] = {instance_uuid = instance_uuid, revision = index}
+    end
+
+    local resp, err = session.connection:request('GET', '/vclockkeeper')
+    if resp == nil and err.etcd_code ~= etcd2.EcodeKeyNotFound then
+        return nil, err
+    end
+    for _, node in ipairs(resp and resp.node.nodes or {}) do
+        if not node.dir then
+            local replicaset_uuid = node.key:match('[^/]+$')
+            local replicaset = replicasets[replicaset_uuid] or {}
+            local keeper = json.decode(node.value)
+            keeper.revision = node.modifiedIndex
+            replicaset.vclockkeeper = keeper
+            replicasets[replicaset_uuid] = replicaset
+        end
+    end
+    return {version = 1, replicasets = replicasets}
+end
+
+local function claim_state(session, state, index)
+    if state.version == nil then
+        local err
+        state, err = migrate_state(session, state, index)
+        if state == nil then
+            return nil, err
+        end
+    end
+
+    local ok, err = check_lock(session)
+    if ok == nil then
+        return nil, err
+    elseif state.coordinator ~= nil and state.coordinator >= session.lock_epoch then
+        return nil, SessionError:new('The lock was stolen')
+    end
+    state.coordinator = session.lock_epoch
+    return state
+end
 
 local function acquire_lock(session, lock_args)
     checks('etcd2_session', {
@@ -22,60 +125,38 @@ local function acquire_lock(session, lock_args)
         value = json.encode(lock_args),
         ttl = session.lock_delay,
     }
-
-    if session:is_locked() then
-        assert(session.lock_index > 0)
+    local renewing = session.lock_index ~= nil
+    if renewing then
         request_args.prevIndex = session.lock_index
     else
         request_args.prevExist = false
     end
 
-    local resp, err = session.connection:request('PUT', '/lock',
-        request_args
-    )
+    local resp, err = session.connection:request('PUT', '/lock', request_args)
     if resp == nil then
         if err.etcd_code == etcd2.EcodeNodeExist then
             return false
-        else
-            session.connection:close()
-            if err.etcd_code == etcd2.EcodeTestFailed
-            or err.etcd_code == etcd2.EcodeKeyNotFound then
-                return nil, SessionError:new('The lock was stolen')
-            end
-            return nil, err
         end
+        session.connection:close()
+        if err.etcd_code == etcd2.EcodeTestFailed
+        or err.etcd_code == etcd2.EcodeKeyNotFound then
+            return nil, SessionError:new('The lock was stolen')
+        end
+        return nil, err
     end
 
-    local lock_index = resp.node.modifiedIndex
-
-    -- if session is already locked there is no need to renew leaders
-    if session:is_locked() then
-        assert(session.leaders ~= nil)
-        assert(session.leaders_index ~= nil)
-        session.lock_index = lock_index
+    session.lock_index = resp.node.modifiedIndex
+    if renewing then
         return true
     end
 
-    local leaders_value
-    local resp, err = session.connection:request('GET', '/leaders')
-    if resp ~= nil then
-        leaders_value = resp.node.value
-    elseif err.etcd_code == etcd2.EcodeKeyNotFound then
-        leaders_value = '{}'
-    else
+    -- A new epoch fences writes prepared by the previous coordinator.
+    session.lock_epoch = resp.node.createdIndex
+    local ok, err = update_state(session, claim_state)
+    if ok == nil then
+        session:drop()
         return nil, err
     end
-
-    local resp, err = session.connection:request('PUT', '/leaders',
-        {value = leaders_value}
-    )
-    if resp == nil then
-        return nil, err
-    end
-
-    session.leaders = json.decode(resp.node.value)
-    session.leaders_index = resp.node.modifiedIndex
-    session.lock_index = lock_index
     return true
 end
 
@@ -84,128 +165,90 @@ local function get_lock_delay(session)
     return session.lock_delay
 end
 
-local function set_leaders(session, updates)
-    checks('etcd2_session', 'table')
-
-    if not session:is_locked() then
+local function check_owner(session, state)
+    if state.coordinator ~= session.lock_epoch then
         return nil, SessionError:new('You are not holding the lock')
     end
+    return check_lock(session)
+end
 
-    if not session:is_alive() then
-        return nil, SessionError:new('Session is dropped')
-    end
-
-    assert(session.leaders ~= nil)
-    assert(session.leaders_index ~= nil)
-
-    local old_leaders = session.leaders
-    local new_leaders = {}
-    for _, leader in ipairs(updates) do
-        local replicaset_uuid = leader[1]
-        local instance_uuid = leader[2]
-        if new_leaders[replicaset_uuid] ~= nil then
-            return nil, SessionError:new('Duplicate key in updates')
-        end
-
-        new_leaders[replicaset_uuid] = instance_uuid
-    end
-
-    for replicaset_uuid, instance_uuid in pairs(old_leaders) do
-        if new_leaders[replicaset_uuid] == nil then
-            new_leaders[replicaset_uuid] = instance_uuid
-        end
-    end
-
-    if session._set_leaders_mutex == nil then
-        session._set_leaders_mutex = fiber.channel(1)
-    end
-    session._set_leaders_mutex:put(box.NULL)
-
-    local resp, err = SessionError:pcall(function()
-        return session.connection:request('PUT', '/leaders', {
-            value = json.encode(new_leaders),
-            prevIndex = session.leaders_index,
-        })
-    end)
-
-    session._set_leaders_mutex:get()
-
-    if resp == nil then
+local function set_leaders_impl(session, state, index, leaders, force)
+    local ok, err = check_owner(session, state)
+    if ok == nil then
         return nil, err
     end
 
-    session.leaders = new_leaders
-    session.leaders_index = resp.node.modifiedIndex
+    local seen = {}
+    for _, leader in ipairs(leaders) do
+        local replicaset_uuid, instance_uuid = unpack(leader)
+        if seen[replicaset_uuid] then
+            return nil, SessionError:new('Duplicate key in updates')
+        end
+        seen[replicaset_uuid] = true
 
-    return true
+        local replicaset = state.replicasets[replicaset_uuid] or {}
+        replicaset.instance_uuid = instance_uuid
+        replicaset.revision = index + 1
+        local keeper = replicaset.vclockkeeper
+        if force and (keeper == nil or keeper.instance_uuid ~= instance_uuid) then
+            replicaset.vclockkeeper = {instance_uuid = instance_uuid, revision = index + 1}
+        end
+        state.replicasets[replicaset_uuid] = replicaset
+    end
+    return state
+end
+
+local function set_leaders(session, updates, force)
+    checks('etcd2_session', 'table', '?boolean')
+    if not session:is_locked() then
+        return nil, SessionError:new('You are not holding the lock')
+    end
+    return update_state(session, set_leaders_impl, updates, force)
+end
+
+local function delete_replicasets_impl(session, state, _, replicasets)
+    local ok, err = check_owner(session, state)
+    if ok == nil then
+        return nil, err
+    end
+
+    for _, replicaset_uuid in ipairs(replicasets) do
+        state.replicasets[replicaset_uuid] = nil
+    end
+    return state
 end
 
 local function delete_replicasets(session, replicasets)
     checks('etcd2_session', 'table')
-
     if not session:is_locked() then
         return nil, SessionError:new('You are not holding the lock')
     end
+    return update_state(session, delete_replicasets_impl, replicasets)
+end
 
-    if not session:is_alive() then
-        return nil, SessionError:new('Session is dropped')
+local function collect_leaders(state)
+    if state.version == nil then
+        return state
     end
 
-    assert(session.leaders ~= nil)
-    assert(session.leaders_index ~= nil)
-
-    local new_leaders = table.copy(session.leaders)
-
-    for _, replicaset_uuid in ipairs(replicasets) do
-        if new_leaders[replicaset_uuid] == nil then
-            new_leaders[replicaset_uuid] = nil
-        end
+    local leaders = {}
+    for replicaset_uuid, replicaset in pairs(state.replicasets) do
+        leaders[replicaset_uuid] = replicaset.instance_uuid
     end
-
-    if session._set_leaders_mutex == nil then
-        session._set_leaders_mutex = fiber.channel(1)
-    end
-    session._set_leaders_mutex:put(box.NULL)
-
-    local resp, err = SessionError:pcall(function()
-        return session.connection:request('PUT', '/leaders', {
-            value = json.encode(new_leaders),
-            prevIndex = session.leaders_index,
-        })
-    end)
-    for _, replicaset_uuid in ipairs(replicasets) do
-        session.connection:request('DELETE', '/vclockkeeper/'..replicaset_uuid)
-    end
-
-    session._set_leaders_mutex:get()
-
-    if resp == nil then
-        return nil, err
-    end
-
-    session.leaders = new_leaders
-    session.leaders_index = resp.node.modifiedIndex
-
-    return true
+    return leaders
 end
 
 local function get_leaders(session)
     checks('etcd2_session')
-
-    if session:is_locked() then
-        return session.leaders
-    elseif not session:is_alive() then
+    if not session:is_alive() then
         return nil, SessionError:new('Session is dropped')
     end
 
-    local resp, err = session.connection:request('GET', '/leaders')
-    if resp ~= nil then
-        return json.decode(resp.node.value)
-    elseif err.etcd_code == etcd2.EcodeKeyNotFound then
-        return {}
-    else
+    local state, err = read_state(session)
+    if state == nil then
         return nil, err
     end
+    return collect_leaders(state)
 end
 
 local function get_coordinator(session)
@@ -227,93 +270,119 @@ local function get_coordinator(session)
     end
 end
 
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, skip_error_on_change)
-    checks('etcd2_session', 'string', 'string', '?table', '?boolean')
-    assert(session.connection ~= nil)
-    local request_args = {}
+local function get_vclockkeepers(session)
+    checks('etcd2_session')
+    local state, err = read_state(session)
+    if state == nil then
+        return nil, err
+    end
 
-    local resp, err = session.connection:request('GET',
-        '/vclockkeeper/'..replicaset_uuid)
-
-    if err ~= nil then
-        if err.etcd_code == etcd2.EcodeKeyNotFound then
-            request_args.prevExist = false
-            goto set_vclockkeeper
-        else
-            return nil, SessionError:new(err)
+    local keepers = {}
+    for replicaset_uuid, replicaset in pairs(state.replicasets) do
+        if replicaset.vclockkeeper ~= nil then
+            keepers[replicaset_uuid] = replicaset.vclockkeeper.instance_uuid
         end
     end
+    return keepers
+end
 
-    do
-        local keeper = json.decode(resp.node.value)
-        if keeper.instance_uuid == instance_uuid and
-        vclock == nil then
-            -- No update needed
-            return true
-        end
+local function get_appointment(session, replicaset_uuid)
+    checks('etcd2_session', 'string')
+    local state, err = read_state(session)
+    if state == nil then
+        return nil, err
+    elseif state.version == nil then
+        return nil
     end
 
-    request_args.prevIndex = resp.node.modifiedIndex
-
-    ::set_vclockkeeper::
-    -- there must be no interventions between get_vclockkeeper and
-    -- set_vclockkeeper during consistent switchover
-
-    -- for testing purpose only:
-    if rawget(_G, 'test_etcd2_client_ordinal_errnj') == true then
-        fiber.sleep(1)
+    local replicaset = state.replicasets[replicaset_uuid]
+    if replicaset == nil or replicaset.instance_uuid == nil then
+        return nil
     end
 
-    local vclockkeeper = json.encode({
-        instance_uuid = instance_uuid,
-        vclock = vclock and setmetatable(vclock, {_serialize = 'sequence'}),
-    })
-
-    request_args.value = vclockkeeper
-
-    local resp, err = session.connection:request('PUT',
-        '/vclockkeeper/'.. replicaset_uuid, request_args)
-
-    if resp == nil then
-        if err.etcd_code == etcd2.EcodeTestFailed then
-            err.err = ('Vclockkeeper changed between calls - %s'):format(err.err)
-            if skip_error_on_change == true then
-                log.error(err.err)
-                return true
-            end
-        end
-
-        return nil, SessionError:new(err)
-    end
-
-    session.vclockkeeper_index = nil
-    session.replicaset_uuid = nil
-    return true
+    local keeper = replicaset.vclockkeeper
+    return {
+        instance_uuid = replicaset.instance_uuid,
+        revision = replicaset.revision,
+        vclockkeeper = keeper,
+        keeper_revision = keeper and keeper.revision or 0,
+    }
 end
 
 local function get_vclockkeeper(session, replicaset_uuid)
     checks('etcd2_session', 'string')
-    assert(session.connection ~= nil)
+    local state, err = read_state(session)
+    if state == nil then
+        return nil, SessionError:new(err)
+    end
 
-    local resp, err = session.connection:request('GET',
-        '/vclockkeeper/'..replicaset_uuid)
+    local replicaset = state.replicasets and state.replicasets[replicaset_uuid]
+    local keeper = replicaset and replicaset.vclockkeeper
+    if keeper == nil then
+        return nil, nil, 0
+    end
+    return {
+        replicaset_uuid = replicaset_uuid,
+        instance_uuid = keeper.instance_uuid,
+        vclock = keeper.vclock,
+    }, nil, keeper.revision
+end
 
-    if err ~= nil then
-        if err.etcd_code == etcd2.EcodeKeyNotFound then
-            return nil
-        else
-            return SessionError:new(err)
+local function store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
+    setmetatable(vclock, {_serialize = 'sequence'})
+    local replicaset = state.replicasets[replicaset_uuid] or {}
+    replicaset.vclockkeeper = {
+        instance_uuid = instance_uuid,
+        revision = index + 1,
+        vclock = vclock,
+    }
+    state.replicasets[replicaset_uuid] = replicaset
+    return state
+end
+
+local function recover_vclockkeeper(session, state, index, replicaset_uuid, instance_uuid, vclock)
+    if state.coordinator ~= nil or (state.version == nil and index ~= 0) then
+        return nil, SessionError:new('Appointment changed')
+    elseif state.version == nil then
+        local err
+        state, err = migrate_state(session, state, index)
+        if state == nil then
+            return nil, err
         end
     end
 
-    local vclockkeeper = json.decode(resp.node.value)
-    vclockkeeper.replicaset_uuid = replicaset_uuid
+    local replicaset = state.replicasets[replicaset_uuid]
+    local keeper = replicaset and replicaset.vclockkeeper
+    if keeper ~= nil and keeper.instance_uuid ~= instance_uuid then
+        return nil, SessionError:new('Vclockkeeper changed between calls')
+    end
+    return store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
+end
 
-    -- vclockkeeper_index will be checked in set_vclockkeeper
-    session.vclockkeeper_index = resp.node.modifiedIndex
-    session.vclockkeeper_replicaset = replicaset_uuid
+local function activate_impl(session, state, index, replicaset_uuid, instance_uuid, appointment, vclock)
+    if appointment == nil then
+        return recover_vclockkeeper(session, state, index, replicaset_uuid, instance_uuid, vclock)
+    end
 
-    return vclockkeeper
+    local replicaset = state.replicasets and state.replicasets[replicaset_uuid]
+    if replicaset == nil
+    or replicaset.instance_uuid ~= instance_uuid
+    or replicaset.revision ~= appointment.revision
+    then
+        return nil, SessionError:new('Appointment changed')
+    end
+
+    local keeper = replicaset.vclockkeeper
+    local keeper_revision = keeper and keeper.revision or 0
+    if keeper_revision ~= appointment.keeper_revision then
+        return nil, SessionError:new('Vclockkeeper changed between calls')
+    end
+    return store_vclockkeeper(state, index, replicaset_uuid, instance_uuid, vclock)
+end
+
+local function activate(session, replicaset_uuid, instance_uuid, appointment, vclock)
+    checks('etcd2_session', 'string', 'string', '?table', 'table')
+    return update_state(session, activate_impl, replicaset_uuid, instance_uuid, appointment, vclock)
 end
 
 local function is_locked(session)
@@ -334,6 +403,7 @@ local function drop(session)
     -- save lock_index locally before request yields
     local lock_index = session.lock_index
     session.lock_index = nil
+    session.lock_epoch = nil
     if lock_index ~= nil then
         pcall(function()
             session.connection:request('DELETE', '/lock', {
@@ -356,8 +426,10 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
-        set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
+        get_vclockkeepers = get_vclockkeepers,
+        get_appointment = get_appointment,
+        activate = activate,
         drop = drop,
         delete_replicasets = delete_replicasets,
     },
@@ -382,8 +454,8 @@ local function get_session(client)
         connection = connection,
         lock_delay = client.cfg.lock_delay,
 
-        lock_index = nil, -- used by session:acquire_lock() and :drop()
-        leaders_index = nil, -- used by session:set_leaders() and :acquire_lock()
+        lock_index = nil,
+        lock_epoch = nil,
         longpoll_index = nil, -- used by client:longpoll()
     }
     client.session = setmetatable(session, session_mt)
@@ -436,7 +508,11 @@ local function longpoll(client, timeout)
         end
 
         if resp ~= nil then
-            return json.decode(resp.node.value)
+            local state, err = decode_state(resp.node.value)
+            if state == nil then
+                return nil, err
+            end
+            return collect_leaders(state)
         end
 
         if fiber.clock() < deadline then

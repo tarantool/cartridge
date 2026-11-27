@@ -60,6 +60,11 @@ local function acquire_lock(lock_args)
     return true
 end
 
+local function owns_lock()
+    return lock.session_id == box.session.id()
+        and clock.monotonic() < lock.session_expiry
+end
+
 local function set_leaders_impl(leaders)
     if type(leaders) ~= 'table' then
         local err = string.format(
@@ -69,23 +74,20 @@ local function set_leaders_impl(leaders)
         error(err, 2)
     end
 
-    if lock.session_id ~= box.session.id() then
+    if not owns_lock() then
         return nil, 'You are not holding the lock'
     end
 
     local ordinal = box.sequence.leader_audit:next()
     for _, leader in ipairs(leaders) do
         local replicaset_uuid, instance_uuid = unpack(leader)
-        box.space.leader:upsert(
-            {replicaset_uuid, instance_uuid}, {{'=', 2, instance_uuid}}
-        )
+        box.space.leader:replace({replicaset_uuid, instance_uuid, ordinal})
         box.space.leader_audit:insert({
             ordinal, fiber.time(), replicaset_uuid, instance_uuid
         })
     end
-    notification:broadcast()
-
     box.on_commit(function()
+        notification:broadcast()
         for _, leader in ipairs(leaders) do
             log.info('Replicaset %s: new leader %s', leader[1], leader[2])
         end
@@ -150,35 +152,12 @@ local function get_coordinator()
     end
 end
 
-local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vclock)
-    checks('string', 'string', '?number', '?table')
-
-    local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
-    if ordinal ~= (vclockkeeper and vclockkeeper.ordinal)
-    and vclockkeeper.instance_uuid == instance_uuid
-    and vclock == nil
-    then
-        -- No update needed
-        return true
-    elseif ordinal ~= (vclockkeeper and vclockkeeper.ordinal) then
-        return nil, string.format(
-            "Ordinal comparison failed (requested %s, current %s)",
-            ordinal, (vclockkeeper and vclockkeeper.ordinal)
-        )
-    end
-
+local function store_vclockkeeper(replicaset_uuid, instance_uuid, vclock)
     local audit = box.space.vclockkeeper_audit:insert({nil, fiber.time(),
         replicaset_uuid, instance_uuid, vclock
     })
 
-    box.space.vclockkeeper:upsert(
-        {replicaset_uuid, instance_uuid, audit.ordinal, vclock},
-        {
-            {'=', 2, instance_uuid},
-            {'=', 3, audit.ordinal},
-            {'=', 4, vclock or box.NULL},
-        }
-    )
+    box.space.vclockkeeper:replace({replicaset_uuid, instance_uuid, audit.ordinal, vclock})
 
     box.on_commit(function()
         log.info('Replicaset %s: new vclockkeeper %s%s',
@@ -186,17 +165,33 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
             vclock == nil and ' (forceful)' or ''
         )
     end)
+end
 
+local function force_appoint_leaders_impl(leaders)
+    local ok, err = set_leaders_impl(leaders)
+    if ok == nil then
+        return nil, err
+    end
+
+    for _, leader in ipairs(leaders) do
+        local replicaset_uuid, instance_uuid = unpack(leader)
+        local keeper = box.space.vclockkeeper:get(replicaset_uuid)
+        if keeper == nil or keeper.instance_uuid ~= instance_uuid then
+            store_vclockkeeper(replicaset_uuid, instance_uuid)
+        end
+    end
     return true
 end
 
-local function set_vclockkeeper(...)
-    return box.atomic(set_vclockkeeper_impl, ...)
+local function force_appoint_leaders(...)
+    return box.atomic(force_appoint_leaders_impl, ...)
 end
 
-local function delete_replicasets(replicasets)
+local function delete_replicasets_impl(replicasets)
     checks('table')
-    box.begin()
+    if not owns_lock() then
+        return nil, 'You are not holding the lock'
+    end
     for _, replicaset_uuid in ipairs(replicasets) do
         local deleted = box.space.leader:delete(replicaset_uuid)
         box.space.vclockkeeper:delete(replicaset_uuid)
@@ -207,7 +202,11 @@ local function delete_replicasets(replicasets)
             end)
         end
     end
-    box.commit()
+    return true
+end
+
+local function delete_replicasets(...)
+    return box.atomic(delete_replicasets_impl, ...)
 end
 
 local function get_vclockkeeper(replicaset_uuid)
@@ -216,6 +215,56 @@ local function get_vclockkeeper(replicaset_uuid)
         vclockkeeper = vclockkeeper:tomap({names_only = true})
     end
     return vclockkeeper
+end
+
+local function get_vclockkeepers()
+    local keepers = {}
+    for _, keeper in box.space.vclockkeeper:pairs() do
+        keepers[keeper.replicaset_uuid] = keeper.instance_uuid
+    end
+    return keepers
+end
+
+local function get_appointment(replicaset_uuid)
+    checks('string')
+    local leader = box.space.leader:get(replicaset_uuid)
+    if leader == nil then
+        return nil
+    end
+
+    local keeper = get_vclockkeeper(replicaset_uuid)
+    local keeper_revision = keeper and keeper.ordinal or 0
+    return {
+        instance_uuid = leader.instance_uuid,
+        revision = leader.ordinal or 0,
+        vclockkeeper = keeper,
+        keeper_revision = keeper_revision,
+    }
+end
+
+local function activate_impl(replicaset_uuid, instance_uuid, revision, keeper_revision, vclock)
+    checks('string', 'string', '?number', '?number', 'table')
+    local leader = box.space.leader:get(replicaset_uuid)
+    local keeper = box.space.vclockkeeper:get(replicaset_uuid)
+    if revision == nil then
+        if leader ~= nil or lock.coordinator ~= nil or box.space.coordinator_audit:len() ~= 0 then
+            return nil, 'Appointment changed'
+        end
+        if keeper ~= nil and keeper.instance_uuid ~= instance_uuid then
+            return nil, 'Vclockkeeper changed between calls'
+        end
+    elseif leader == nil or leader.instance_uuid ~= instance_uuid or (leader.ordinal or 0) ~= revision then
+        return nil, 'Appointment changed'
+    elseif keeper_revision ~= (keeper and keeper.ordinal or 0) then
+        return nil, 'Vclockkeeper changed between calls'
+    end
+
+    store_vclockkeeper(replicaset_uuid, instance_uuid, vclock)
+    return true
+end
+
+local function activate(...)
+    return box.atomic(activate_impl, ...)
 end
 
 local function set_identification_string(new, prev)
@@ -284,10 +333,13 @@ local function cfg()
     rawset(_G, 'get_lock_delay', get_lock_delay)
     rawset(_G, 'acquire_lock', acquire_lock)
     rawset(_G, 'set_leaders', set_leaders)
+    rawset(_G, 'force_appoint_leaders', force_appoint_leaders)
+    rawset(_G, 'activate', activate)
+    rawset(_G, 'get_appointment', get_appointment)
+    rawset(_G, 'get_vclockkeepers', get_vclockkeepers)
     rawset(_G, 'get_leaders', get_leaders)
     rawset(_G, 'longpoll', longpoll)
     rawset(_G, 'get_coordinator', get_coordinator)
-    rawset(_G, 'set_vclockkeeper', set_vclockkeeper)
     rawset(_G, 'get_vclockkeeper', get_vclockkeeper)
     rawset(_G, 'delete_replicasets', delete_replicasets)
     rawset(_G, 'set_identification_string', set_identification_string)
@@ -301,9 +353,13 @@ local function cfg()
     box.schema.func.create('get_lock_delay', { if_not_exists = true })
     box.schema.func.create('acquire_lock', { if_not_exists = true })
     box.schema.func.create('set_leaders', { if_not_exists = true })
+    box.schema.func.create('force_appoint_leaders', { if_not_exists = true })
+    box.schema.func.create('activate', { if_not_exists = true })
+    box.schema.func.create('get_appointment', { if_not_exists = true })
+    box.schema.func.create('get_vclockkeepers', { if_not_exists = true })
     box.schema.func.create('get_leaders', { if_not_exists = true })
     box.schema.func.create('longpoll', { if_not_exists = true })
-    box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
+    box.schema.func.drop('set_vclockkeeper', { if_exists = true })
     box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
     box.schema.func.create('delete_replicasets', { if_not_exists = true })
     box.schema.func.create('set_identification_string', { if_not_exists = true })
@@ -355,12 +411,11 @@ local function cfg()
     })
 
     ------------------------------------------------------------------------
-    box.schema.space.create('leader', {
-        format = {
-            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
-            { name = 'instance_uuid', type = 'string', is_nullable = false },
-        },
-        if_not_exists = true,
+    box.schema.space.create('leader', {if_not_exists = true})
+    box.space.leader:format({
+        { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+        { name = 'instance_uuid', type = 'string', is_nullable = false },
+        { name = 'ordinal', type = 'unsigned', is_nullable = true },
     })
 
     box.space.leader:create_index('replicaset_uuid', {
@@ -442,8 +497,11 @@ local function cfg()
     box.schema.user.grant('client', 'execute', 'function', 'get_lock_delay', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'acquire_lock', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'set_leaders', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'force_appoint_leaders', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'activate', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'get_appointment', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeepers', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_leaders', { if_not_exists = true })
-    box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })

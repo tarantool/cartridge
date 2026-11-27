@@ -43,26 +43,31 @@ Cartridge doesn't support Tarantool 3.0 and higher.
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.18.0
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.3
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.2
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.1
      - \+
      - \-
      - \+
      - \+
+     -
    * - Cartridge 2.17.0
      - \+
      - \-
@@ -1058,6 +1063,54 @@ stateful failover was enabled):
     :scale: 40%
 
 |nbsp|
+
+.. _upgrade-stateful-failover:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Upgrading stateful failover
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A consistent promotion records a new appointment and retains the existing
+vclockkeeper. The appointed instance waits for replication and then records
+its own vclock. The state provider accepts that write only for the appointment
+and vclockkeeper revisions used to start the switchover. Automatic failover
+and forced promotion record the appointment and reset the vclockkeeper in a
+single operation. If the target is already the vclockkeeper, its vclock is
+preserved. Expelling a replicaset removes its appointment and vclockkeeper
+together.
+
+Automatic failover and manual promotion with ``force_inconsistency`` can
+activate a new leader while the previous leader is still writable. A loss of
+membership alone provides no confirmation that the previous leader has stopped
+accepting writes. Cartridge fencing demotes a leader on loss of both access to
+the state provider quorum and connectivity to a replica. It can take effect
+after a replacement is appointed.
+
+When an empty state provider replaces a lost one, an existing leader can
+restore its vclockkeeper until the first coordinator takes control. Start a
+coordinator to resume publishing appointments.
+
+Upgrade all Cartridge instances during the same maintenance window.
+
+#. Pause application writes and stop all Cartridge instances.
+#. Back up the state provider. For Stateboard, stop it, back up its data
+   directory and start the updated Stateboard with that directory. For etcd v2,
+   wait for ``<prefix>/lock`` to expire and back up the keys under the configured
+   prefix.
+#. Start the updated Cartridge instances. With etcd v2, the first coordinator
+   imports the old leader map and vclockkeeper keys into a single document at
+   ``<prefix>/leaders``. The old vclockkeeper keys are retained as migration
+   input. After migration, read current state from the document.
+#. Verify the coordinator, leaders and read-write instances, then resume
+   application writes.
+
+To roll back before resuming writes, stop the updated Cartridge instances and
+restore the provider backup before starting the old version.
+
+In etcd v2, the lock and the state document are separate keys. The coordinator
+checks the lock with a quorum read before updating the document. Taking control
+writes a new coordinator epoch into the document. A previous coordinator's
+outstanding write can succeed only before that epoch is installed.
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Raft failover (beta)
