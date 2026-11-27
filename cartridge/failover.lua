@@ -562,7 +562,7 @@ local function constitute_oneself(active_leaders, opts)
 
     -- Query current vclockkeeper
     -- WARNING: implicit yield
-    local vclockkeeper, err = session:get_vclockkeeper(vars.replicaset_uuid)
+    local vclockkeeper, err, revision = session:get_vclockkeeper(vars.replicaset_uuid)
     fiber.testcancel()
     if err ~= nil then
         return nil, SwitchoverError:new(err)
@@ -626,7 +626,7 @@ local function constitute_oneself(active_leaders, opts)
 
     -- WARNING: implicit yield
     local ok, err = session:set_vclockkeeper(
-        vars.replicaset_uuid, vars.instance_uuid, vclock
+        vars.replicaset_uuid, vars.instance_uuid, vclock, nil, revision
     )
     fiber.testcancel()
 

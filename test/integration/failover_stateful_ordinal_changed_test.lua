@@ -369,3 +369,77 @@ add('test_ordinal_changed', function(g)
         [storage2_uuid] = storage2_1_uuid,
     })
 end)
+
+add('test_switchover_keeps_concurrent_vclockkeeper', function(g)
+    local target = get_server_by_instance_uuid(g, storage1_2_uuid)
+    local concurrent_keeper = helpers.uuid('e')
+    helpers.retrying({}, function()
+        local session = g.client:get_session()
+        t.assert_equals(session:get_leaders()[storage1_uuid], storage1_1_uuid)
+        local keeper = session:get_vclockkeeper(storage1_uuid)
+        t.assert(keeper)
+        t.assert_equals(keeper.instance_uuid, storage1_1_uuid)
+    end)
+
+    local result = target:exec(function(rs, old_leader, other_keeper, coordinator_uri)
+        local fiber = require('fiber')
+        local rpc = require('cartridge.rpc')
+        local client = require('cartridge.vars').new('cartridge.failover').client
+        local module = client.state_provider == 'etcd2' and 'etcd2-client' or 'stateboard-client'
+        local observer = require('cartridge.' .. module).new(client.cfg)
+        local other_session = observer:get_session()
+        local session = client:get_session()
+        local get_vclockkeeper = session.get_vclockkeeper
+        local set_vclockkeeper = session.set_vclockkeeper
+
+        local read = fiber.channel(1)
+        local resume = fiber.channel(1)
+        local written = fiber.channel(1)
+        session.get_vclockkeeper = function(self, uuid)
+            local value, err, revision = get_vclockkeeper(self, uuid)
+            if uuid == rs then
+                self.get_vclockkeeper = get_vclockkeeper
+                read:put(value ~= nil and value.instance_uuid == old_leader, 0)
+                assert(resume:get(5))
+            end
+            return value, err, revision
+        end
+
+        session.set_vclockkeeper = function(self, uuid, ...)
+            local ok, err = set_vclockkeeper(self, uuid, ...)
+            if uuid == rs then
+                written:put({ok = ok, err = err, ro = box.info.ro}, 0)
+            end
+            return ok, err
+        end
+
+        local ok, result = pcall(function()
+            assert(rpc.call('failover-coordinator', 'appoint_leaders',
+                {{[rs] = box.info.uuid}}, {uri = coordinator_uri}))
+            assert(read:get(5))
+            assert(other_session:set_vclockkeeper(rs, other_keeper))
+            resume:put(true)
+            return {
+                write = assert(written:get(5)),
+                keeper = assert(other_session:get_vclockkeeper(rs)).instance_uuid,
+            }
+        end)
+
+        resume:put(true, 0)
+        session.get_vclockkeeper = get_vclockkeeper
+        session.set_vclockkeeper = set_vclockkeeper
+        local restored, err = other_session:set_vclockkeeper(rs, old_leader)
+        observer:drop_session()
+        assert(restored, err)
+        assert(rpc.call('failover-coordinator', 'appoint_leaders',
+            {{[rs] = old_leader}}, {uri = coordinator_uri}))
+        assert(ok, result)
+        return result
+    end, {storage1_uuid, storage1_1_uuid, concurrent_keeper, g.coordinator.advertise_uri})
+
+    t.assert_equals(result.keeper, concurrent_keeper)
+    t.assert_equals(result.write.ok, nil)
+    t.assert_equals(result.write.ro, true)
+    local message = g.is_etcd2 and 'Vclockkeeper changed between calls' or 'Ordinal comparison failed'
+    t.assert_str_contains(result.write.err.err, message)
+end)

@@ -227,37 +227,39 @@ local function get_coordinator(session)
     end
 end
 
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, skip_error_on_change)
-    checks('etcd2_session', 'string', 'string', '?table', '?boolean')
+local function get_vclockkeeper(session, replicaset_uuid)
+    checks('etcd2_session', 'string')
     assert(session.connection ~= nil)
-    local request_args = {}
 
     local resp, err = session.connection:request('GET',
         '/vclockkeeper/'..replicaset_uuid)
 
-    if err ~= nil then
-        if err.etcd_code == etcd2.EcodeKeyNotFound then
-            request_args.prevExist = false
-            goto set_vclockkeeper
-        else
-            return nil, SessionError:new(err)
-        end
+    if resp ~= nil then
+        local vclockkeeper = json.decode(resp.node.value)
+        vclockkeeper.replicaset_uuid = replicaset_uuid
+        return vclockkeeper, nil, resp.node.modifiedIndex
+    elseif err.etcd_code == etcd2.EcodeKeyNotFound then
+        return nil, nil, 0
+    else
+        return nil, SessionError:new(err)
     end
+end
 
-    do
-        local keeper = json.decode(resp.node.value)
-        if keeper.instance_uuid == instance_uuid and
-        vclock == nil then
-            -- No update needed
+local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, skip_error_on_change, index)
+    checks('etcd2_session', 'string', 'string', '?table', '?boolean', '?number|cdata')
+
+    if index == nil then
+        local keeper, err, current_index = get_vclockkeeper(session, replicaset_uuid)
+        if err ~= nil then
+            return nil, err
+        end
+        if keeper ~= nil and keeper.instance_uuid == instance_uuid and vclock == nil then
             return true
         end
+        index = current_index
     end
 
-    request_args.prevIndex = resp.node.modifiedIndex
-
-    ::set_vclockkeeper::
-    -- there must be no interventions between get_vclockkeeper and
-    -- set_vclockkeeper during consistent switchover
+    local request_args = index == 0 and {prevExist = false} or {prevIndex = index}
 
     -- for testing purpose only:
     if rawget(_G, 'test_etcd2_client_ordinal_errnj') == true then
@@ -286,34 +288,7 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock,
         return nil, SessionError:new(err)
     end
 
-    session.vclockkeeper_index = nil
-    session.replicaset_uuid = nil
     return true
-end
-
-local function get_vclockkeeper(session, replicaset_uuid)
-    checks('etcd2_session', 'string')
-    assert(session.connection ~= nil)
-
-    local resp, err = session.connection:request('GET',
-        '/vclockkeeper/'..replicaset_uuid)
-
-    if err ~= nil then
-        if err.etcd_code == etcd2.EcodeKeyNotFound then
-            return nil
-        else
-            return nil, SessionError:new(err)
-        end
-    end
-
-    local vclockkeeper = json.decode(resp.node.value)
-    vclockkeeper.replicaset_uuid = replicaset_uuid
-
-    -- vclockkeeper_index will be checked in set_vclockkeeper
-    session.vclockkeeper_index = resp.node.modifiedIndex
-    session.vclockkeeper_replicaset = replicaset_uuid
-
-    return vclockkeeper
 end
 
 local function is_locked(session)

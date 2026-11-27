@@ -105,34 +105,45 @@ local function get_coordinator(session)
     return coodinator
 end
 
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
-    checks('stateboard_session', 'string', 'string', '?table')
-    assert(session.connection ~= nil)
-
-    local keeper, err = errors.netbox_call(session.connection,
+local function get_vclockkeeper(session, replicaset_uuid)
+    checks('stateboard_session', 'string')
+    local vclockkeeper, err = errors.netbox_call(session.connection,
         'get_vclockkeeper', {replicaset_uuid},
         {timeout = session.call_timeout}
     )
+
     if err ~= nil then
         return nil, SessionError:new(err)
     end
 
-    local ordinal = nil
-    if keeper == nil then
-        -- No keeper persisted
-        goto set_vclockkeeper
-    else
-        ordinal = keeper.ordinal
+    if vclockkeeper == nil then
+        return nil, nil, 0
     end
 
-    if keeper.instance_uuid == instance_uuid
-    and vclock == nil
-    then
-        -- No update needed
-        return true
+    local ordinal = vclockkeeper.ordinal
+    vclockkeeper.ordinal = nil
+    return vclockkeeper, nil, ordinal
+end
+
+local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, _, ordinal)
+    checks('stateboard_session', 'string', 'string', '?table', '?boolean', '?number|cdata')
+    assert(session.connection ~= nil)
+
+    if ordinal == nil then
+        local keeper, err, current_ordinal = get_vclockkeeper(session, replicaset_uuid)
+        if err ~= nil then
+            return nil, err
+        end
+        if keeper ~= nil and keeper.instance_uuid == instance_uuid and vclock == nil then
+            return true
+        end
+        ordinal = current_ordinal
     end
 
-    ::set_vclockkeeper::
+    if ordinal == 0 then
+        ordinal = nil
+    end
+
     local ok, err = errors.netbox_call(session.connection,
         'set_vclockkeeper', {
             replicaset_uuid,
@@ -148,24 +159,6 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
     end
 
     return true
-end
-
-local function get_vclockkeeper(session, replicaset_uuid)
-    checks('stateboard_session', 'string')
-    local vclockkeeper, err = errors.netbox_call(session.connection,
-        'get_vclockkeeper', {replicaset_uuid},
-        {timeout = session.call_timeout}
-    )
-
-    if err ~= nil then
-        return nil, SessionError:new(err)
-    end
-
-    if vclockkeeper ~= nil then
-        vclockkeeper.ordinal = nil
-    end
-
-    return vclockkeeper
 end
 
 local function is_locked(session)
