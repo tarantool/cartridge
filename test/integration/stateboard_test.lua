@@ -149,7 +149,11 @@ function g.test_appointments()
         {A = 'a1', B = 'b1'}
     )
 
-    local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}})
+    t.assert(c:set_vclockkeeper('A', 'a1', {[1] = 10}))
+    t.assert(c:set_leaders({{'A', 'a2'}}))
+    local appointment = c:get_appointment('A')
+
+    local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}}, true)
     t.assert_equals(ok, nil)
     t.assert_equals(err.class_name, 'NetboxCallError')
     if helpers.tarantool_version_ge('2.8.0') then
@@ -159,6 +163,14 @@ function g.test_appointments()
         t.assert_str_matches(err.err, "\"localhost:13301\": Duplicate key exists" ..
             " in unique index 'ordinal' in space 'leader_audit'.*")
     end
+
+    t.assert_equals(c:get_appointment('A'), appointment)
+    t.assert(c:set_leaders({{'A', 'a2'}}, true))
+    t.assert_equals(c:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a2',
+    })
+    t.assert_equals(c:get_vclockkeepers(), {A = 'a2'})
 end
 
 function g.test_longpolling()
@@ -262,7 +274,7 @@ function g.test_outage()
         {true}
     )
 
-    local ok, err = c1:set_leaders({{'A', 'a1'}})
+    local ok, err = c1:set_leaders({{'A', 'a1'}}, true)
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'SessionError',

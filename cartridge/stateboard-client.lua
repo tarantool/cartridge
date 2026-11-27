@@ -45,12 +45,13 @@ local function get_lock_delay(session)
     return lock_delay
 end
 
-local function set_leaders(session, updates)
-    checks('stateboard_session', 'table')
+local function set_leaders(session, updates, force)
+    checks('stateboard_session', 'table', '?boolean')
     assert(session.connection ~= nil)
 
+    local fn = force and 'force_appoint_leaders' or 'set_leaders'
     local ok, err = errors.netbox_call(session.connection,
-        'set_leaders', {updates},
+        fn, {updates},
         {timeout = session.call_timeout}
     )
 
@@ -103,6 +104,44 @@ local function get_coordinator(session)
         return nil, SessionError:new(err)
     end
     return coodinator
+end
+
+local function get_vclockkeepers(session)
+    checks('stateboard_session')
+    local keepers, err = errors.netbox_call(session.connection,
+        'get_vclockkeepers', nil,
+        {timeout = session.call_timeout}
+    )
+
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+    return keepers
+end
+
+local function get_appointment(session, replicaset_uuid)
+    checks('stateboard_session', 'string')
+    local appointment, err = errors.netbox_call(session.connection,
+        'get_appointment', {replicaset_uuid},
+        {timeout = session.call_timeout}
+    )
+
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+    return appointment
+end
+
+local function activate(session, replicaset_uuid, instance_uuid, appointment, vclock)
+    checks('stateboard_session', 'string', 'string', 'table', 'table')
+    local ok, err = errors.netbox_call(session.connection, 'activate', {
+        replicaset_uuid, instance_uuid, appointment.revision, appointment.keeper_revision, vclock,
+    }, {timeout = session.call_timeout})
+
+    if ok == nil then
+        return nil, SessionError:new(err)
+    end
+    return true
 end
 
 local function get_vclockkeeper(session, replicaset_uuid)
@@ -199,6 +238,9 @@ local session_mt = {
         get_coordinator = get_coordinator,
         set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
+        get_vclockkeepers = get_vclockkeepers,
+        get_appointment = get_appointment,
+        activate = activate,
         drop = drop,
         delete_replicasets = delete_replicasets,
     },
@@ -216,6 +258,7 @@ local function get_session(client)
         user = 'client',
         password = client.cfg.password,
         wait_connected = false,
+        fetch_schema = false,
     })
 
     local session = {
